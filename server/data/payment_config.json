@@ -1,0 +1,7 @@
+{
+  "mode": "mock",
+  "paypalClientId": "",
+  "paypalClientSecret": "",
+  "sandbox": true,
+  "currency": "usd"
+}

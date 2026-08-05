@@ -1,0 +1,10 @@
+{
+  "name": "minesweeper-beads-server",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "付费挑战后端服务器",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  }
+}

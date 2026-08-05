@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN" id="html-root">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="admin.title">管理后台 - Bean Boom</title>
+  <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="/styles/admin.css">
+</head>
+<body>
+  <!-- 登录遮罩：未设密码或未登录时显示 -->
+  <div class="admin-auth" id="admin-auth">
+    <div class="admin-auth-card">
+      <h2 id="auth-title" data-i18n="admin.auth.loginTitle">管理后台</h2>
+      <p class="admin-auth-hint" id="auth-hint" data-i18n="admin.auth.loginHint">请输入管理密码</p>
+      <input type="password" id="auth-pwd" class="admin-auth-input" data-i18n-placeholder="admin.auth.loginPlaceholder" placeholder="管理密码" maxlength="32" autocomplete="off">
+      <input type="password" id="auth-pwd2" class="admin-auth-input admin-auth-confirm" data-i18n-placeholder="admin.auth.confirmPlaceholder" placeholder="再次输入密码" maxlength="32" autocomplete="off" style="display:none">
+      <button class="admin-auth-submit" id="auth-submit" data-i18n="admin.auth.loginSubmit">进入后台</button>
+      <p class="admin-auth-err" id="auth-err"></p>
+    </div>
+  </div>
+
+  <div class="admin-container">
+    <header class="admin-header">
+      <h1 data-i18n="admin.header">管理后台</h1>
+      <div class="admin-header-right">
+        <button class="admin-logout" id="admin-logout" data-i18n="admin.logout">退出登录</button>
+        <a href="/" class="admin-back" data-i18n="admin.back">返回游戏</a>
+      </div>
+    </header>
+
+    <div class="admin-body">
+      <!-- 左侧书签导航 -->
+      <nav class="admin-sidebar" id="admin-sidebar">
+        <button class="admin-tab active" data-tab="seo" data-i18n="admin.tab.seo">SEO 基本</button>
+        <button class="admin-tab" data-tab="ads" data-i18n="admin.tab.ads">广告设置</button>
+        <button class="admin-tab" data-tab="activity" data-i18n="admin.tab.activity">网站活动</button>
+        <button class="admin-tab" data-tab="challenge" data-i18n="admin.tab.challenge">付费挑战</button>
+        <button class="admin-tab" data-tab="users" data-i18n="admin.tab.users">用户管理</button>
+        <button class="admin-tab" data-tab="payment" data-i18n="admin.tab.payment">支付参数</button>
+        <button class="admin-tab" data-tab="content" data-i18n="admin.tab.content">内容管理</button>
+      </nav>
+
+      <!-- 右侧内容面板 -->
+      <div class="admin-content">
+
+        <!-- SEO 设置 -->
+        <section class="admin-card active" data-tab-panel="seo">
+          <h2 data-i18n="admin.seo.title">SEO 基本信息</h2>
+          <div class="admin-form">
+            <label class="admin-field">
+              <span class="admin-label" data-i18n="admin.seo.siteTitle">网站标题</span>
+              <input type="text" id="seo-title" maxlength="100" data-i18n-placeholder="admin.seo.placeholder.title" placeholder="Bean Boom - 经典扫雷网页游戏">
+            </label>
+            <label class="admin-field">
+              <span class="admin-label" data-i18n="admin.seo.siteDesc">网站描述</span>
+              <textarea id="seo-description" rows="3" maxlength="200" data-i18n-placeholder="admin.seo.siteDescPlaceholder" placeholder="网站描述，用于搜索引擎"></textarea>
+            </label>
+            <label class="admin-field">
+              <span class="admin-label" data-i18n="admin.seo.keywords">关键词</span>
+              <input type="text" id="seo-keywords" maxlength="200" data-i18n-placeholder="admin.seo.placeholder.keywords" placeholder="扫雷,Bean Boom,网页游戏">
+            </label>
+            <button class="admin-save" id="save-seo" data-i18n="admin.seo.save">保存 SEO</button>
+          </div>
+        </section>
+
+        <!-- Google 广告设置 -->
+        <section class="admin-card" data-tab-panel="ads">
+          <h2 data-i18n="admin.ads.title">Google 广告</h2>
+          <div class="admin-form">
+            <label class="admin-field admin-toggle-field">
+              <span class="admin-label" data-i18n="admin.ads.enable">启用广告</span>
+              <input type="checkbox" id="ads-enabled">
+            </label>
+            <label class="admin-field">
+              <span class="admin-label">AdSense Client ID</span>
+              <input type="text" id="ads-client" maxlength="30" placeholder="ca-pub-xxxxxxxxxxxxxxxx">
+            </label>
+            <div class="admin-field-group">
+              <label class="admin-field">
+                <span class="admin-label" data-i18n="admin.ads.topSlot">顶部横幅 Slot ID</span>
+                <input type="text" id="ads-slot-top" maxlength="20" placeholder="1234567890">
+              </label>
+              <label class="admin-field">
+                <span class="admin-label" data-i18n="admin.ads.midSlot">中间横幅 Slot ID</span>
+                <input type="text" id="ads-slot-inline" maxlength="20" placeholder="1234567890">
+              </label>
+              <label class="admin-field">
+                <span class="admin-label" data-i18n="admin.ads.bottomSlot">底部横幅 Slot ID</span>
+                <input type="text" id="ads-slot-bottom" maxlength="20" placeholder="1234567890">
+              </label>
+            </div>
+            <button class="admin-save" id="save-ads" data-i18n="admin.ads.save">保存广告</button>
+          </div>
+        </section>
+
+        <!-- 网站活动管理 -->
+        <section class="admin-card" data-tab-panel="activity">
+          <h2 data-i18n="admin.act.title">网站活动</h2>
+          <div class="admin-form">
+            <label class="admin-field">
+              <span class="admin-label" data-i18n="admin.act.labelTitle">活动标题</span>
+              <input type="text" id="act-title" maxlength="50" data-i18n-placeholder="admin.act.titlePlaceholder" placeholder="活动标题">
+            </label>
+            <label class="admin-field">
+              <span class="admin-label" data-i18n="admin.act.labelContent">活动内容</span>
+              <textarea id="act-content" rows="4" maxlength="500" data-i18n-placeholder="admin.act.contentPlaceholder" placeholder="活动详细内容"></textarea>
+            </label>
+            <div class="admin-field-group">
+              <label class="admin-field">
+                <span class="admin-label" data-i18n="admin.act.labelDate">活动日期</span>
+                <input type="date" id="act-date">
+              </label>
+              <label class="admin-field admin-toggle-field">
+                <span class="admin-label" data-i18n="admin.act.labelPublish">发布上线</span>
+                <input type="checkbox" id="act-active" checked>
+              </label>
+            </div>
+            <div class="admin-act-buttons">
+              <button class="admin-save" id="add-activity" data-i18n="admin.act.add">添加活动</button>
+              <button class="admin-reset" id="reset-act-form" data-i18n="admin.act.reset">清空表单</button>
+            </div>
+          </div>
+          <div class="admin-act-list" id="act-list"></div>
+        </section>
+
+        <!-- 付费挑战管理 -->
+        <section class="admin-card" data-tab-panel="challenge">
+          <h2 data-i18n="admin.ch.title">付费挑战</h2>
+          <div class="admin-form">
+            <label class="admin-field">
+              <span class="admin-label"><span data-i18n="admin.ch.labelName">挑战名称</span> <small style="color:#888;font-weight:normal" data-i18n="admin.ch.nameAuto">（自动生成）</small></span>
+              <input type="text" id="ch-name" maxlength="50" readonly style="background:#f5f5f5;cursor:default" data-i18n-placeholder="admin.ch.namePlaceholder" placeholder="根据难度、周期、金额自动生成">
+            </label>
+            <div class="admin-field-group">
+              <label class="admin-field">
+                <span class="admin-label" data-i18n="admin.ch.labelDiff">难度</span>
+                <select id="ch-difficulty">
+                  <option value="easy" data-i18n="game.diff.easy">简单</option>
+                  <option value="medium" data-i18n="game.diff.medium">中等</option>
+                  <option value="hard" data-i18n="game.diff.hard">困难</option>
+                </select>
+              </label>
+              <label class="admin-field">
+                <span class="admin-label" data-i18n="admin.ch.labelPeriod">周期</span>
+                <select id="ch-period">
+                  <option value="monthly" data-i18n="admin.ch.periodMonthly">月度（30天）</option>
+                  <option value="yearly" data-i18n="admin.ch.periodYearly">年度（365天）</option>
+                  <option value="custom" data-i18n="admin.ch.periodCustom">自定义天数</option>
+                </select>
+              </label>
+              <label class="admin-field" id="ch-custom-days-field" style="display:none">
+                <span class="admin-label" data-i18n="admin.ch.labelCustomDays">自定义天数</span>
+                <input type="number" id="ch-custom-days" min="1" max="3650" value="15">
+              </label>
+            </div>
+            <div class="admin-field-group">
+              <label class="admin-field">
+                <span class="admin-label" data-i18n="admin.ch.labelTarget">目标完成次数</span>
+                <input type="number" id="ch-target" min="1" max="9999" value="10">
+              </label>
+              <label class="admin-field">
+                <span class="admin-label" data-i18n="admin.ch.labelAmount">金额（美元）</span>
+                <input type="number" id="ch-amount" min="0.01" step="0.01" value="5.00">
+              </label>
+            </div>
+            <label class="admin-field admin-toggle-field">
+              <span class="admin-label" data-i18n="admin.ch.labelActive">启用</span>
+              <input type="checkbox" id="ch-active" checked>
+            </label>
+            <div class="admin-act-buttons">
+              <button class="admin-save" id="add-challenge" data-i18n="admin.ch.add">添加挑战</button>
+              <button class="admin-reset" id="reset-ch-form" data-i18n="admin.ch.reset">清空表单</button>
+            </div>
+          </div>
+          <div class="admin-act-list" id="ch-list"></div>
+        </section>
+
+        <!-- 用户管理 -->
+        <section class="admin-card" data-tab-panel="users">
+          <h2 data-i18n="admin.user.title">用户管理</h2>
+          <div class="admin-user-list" id="user-list"></div>
+        </section>
+
+        <!-- 支付平台参数 -->
+        <section class="admin-card" data-tab-panel="payment">
+          <h2 data-i18n="admin.pay.title">支付平台参数</h2>
+          <div class="admin-form">
+            <label class="admin-field">
+              <span class="admin-label" data-i18n="admin.pay.labelMode">支付模式</span>
+              <select id="pay-mode">
+                <option value="mock" data-i18n="admin.pay.modeMock">Mock 模拟（不产生真实交易）</option>
+                <option value="paypal">PayPal</option>
+              </select>
+            </label>
+            <label class="admin-field">
+              <span class="admin-label">PayPal Client ID</span>
+              <input type="text" id="pay-client-id" maxlength="120" data-i18n-placeholder="admin.pay.paypalClientId" placeholder="PayPal 应用 Client ID">
+            </label>
+            <label class="admin-field">
+              <span class="admin-label">PayPal Client Secret</span>
+              <input type="password" id="pay-client-secret" maxlength="120" data-i18n-placeholder="admin.pay.paypalSecret" placeholder="PayPal 应用 Secret" autocomplete="off">
+            </label>
+            <label class="admin-field admin-toggle-field">
+              <span class="admin-label" data-i18n="admin.pay.labelSandbox">Sandbox 沙盒模式</span>
+              <input type="checkbox" id="pay-sandbox" checked>
+            </label>
+            <label class="admin-field">
+              <span class="admin-label" data-i18n="admin.pay.labelCurrency">货币单位</span>
+              <select id="pay-currency">
+                <option value="usd" data-i18n="admin.pay.usd">USD 美元</option>
+                <option value="cny" data-i18n="admin.pay.cny">CNY 人民币</option>
+                <option value="eur" data-i18n="admin.pay.eur">EUR 欧元</option>
+              </select>
+            </label>
+            <button class="admin-save" id="save-payment" data-i18n="admin.pay.save">保存支付参数</button>
+          </div>
+        </section>
+
+        <!-- 内容管理：底部各模块 -->
+        <section class="admin-card" data-tab-panel="content">
+          <h2 data-i18n="admin.content.title">底部内容管理</h2>
+          <p class="admin-content-hint" data-i18n="admin.content.hint">编辑首页底部「关于我们」「隐私政策」「联系我们」三个模块的内容。留空则使用系统默认文案。</p>
+
+          <div class="admin-content-section">
+            <h3 data-i18n="admin.content.aboutSection">关于我们</h3>
+            <label class="admin-field">
+              <span class="admin-label" data-i18n="admin.content.labelTitle">标题</span>
+              <input type="text" id="content-about-title" maxlength="50" data-i18n-placeholder="admin.content.aboutTitlePlaceholder" placeholder="关于我们">
+            </label>
+            <label class="admin-field">
+              <span class="admin-label" data-i18n="admin.content.labelText">正文</span>
+              <textarea id="content-about-text" rows="4" maxlength="500" data-i18n-placeholder="admin.content.aboutTextPlaceholder" placeholder="关于我们的介绍内容..."></textarea>
+            </label>
+          </div>
+
+          <div class="admin-content-section">
+            <h3 data-i18n="admin.content.privacySection">隐私政策</h3>
+            <label class="admin-field">
+              <span class="admin-label" data-i18n="admin.content.labelTitle">标题</span>
+              <input type="text" id="content-privacy-title" maxlength="50" data-i18n-placeholder="admin.content.privacyTitlePlaceholder" placeholder="隐私政策">
+            </label>
+            <label class="admin-field">
+              <span class="admin-label" data-i18n="admin.content.labelText">正文</span>
+              <textarea id="content-privacy-text" rows="4" maxlength="500" data-i18n-placeholder="admin.content.privacyTextPlaceholder" placeholder="隐私政策内容..."></textarea>
+            </label>
+          </div>
+
+          <div class="admin-content-section">
+            <h3 data-i18n="admin.content.contactSection">联系我们</h3>
+            <label class="admin-field">
+              <span class="admin-label" data-i18n="admin.content.labelTitle">标题</span>
+              <input type="text" id="content-contact-title" maxlength="50" data-i18n-placeholder="admin.content.contactTitlePlaceholder" placeholder="联系我们">
+            </label>
+            <label class="admin-field">
+              <span class="admin-label" data-i18n="admin.content.labelText">正文</span>
+              <textarea id="content-contact-text" rows="4" maxlength="500" data-i18n-placeholder="admin.content.contactTextPlaceholder" placeholder="联系方式介绍..."></textarea>
+            </label>
+            <label class="admin-field">
+              <span class="admin-label" data-i18n="admin.content.labelEmail">邮箱地址</span>
+              <input type="text" id="content-contact-email" maxlength="80" data-i18n-placeholder="admin.content.emailPlaceholder" placeholder="support@example.com">
+            </label>
+          </div>
+
+          <button class="admin-save" id="save-content" data-i18n="admin.content.save">保存内容</button>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/admin.js"></script>
+</body>
+</html>

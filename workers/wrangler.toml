@@ -1,0 +1,14 @@
+name = "bean-boom-cron"
+main = "src/cron.js"
+compatibility_date = "2025-08-01"
+
+# 与 Pages Functions 共享同一个 KV 命名空间
+# 在 Dashboard 创建 KV 后，把 id 填入这里
+[[kv_namespaces]]
+binding = "BEAN_BOOM_KV"
+id = "PLACEHOLDER_REPLACE_AFTER_CREATE"
+preview_id = "PLACEHOLDER_REPLACE_AFTER_CREATE"
+
+# 每分钟检查一次到期挑战
+[triggers]
+crons = ["* * * * *"]

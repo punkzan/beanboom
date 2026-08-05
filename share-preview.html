@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bean Boom 分享卡预览 — 全部6种场景</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a1a;
+    font-family: sans-serif;
+    padding: 20px;
+    color: #fff;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 24px;
+  }
+  h1 span { color: #5dcaa5; }
+  .subtitle {
+    text-align: center;
+    color: #888;
+    margin-bottom: 30px;
+    font-size: 14px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .card-wrap {
+    background: #2a2a2a;
+    border-radius: 12px;
+    padding: 16px;
+    transition: transform 0.2s;
+  }
+  .card-wrap:hover { transform: translateY(-2px); }
+  .card-label {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 12px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    display: inline-block;
+  }
+  .card-label.win { background: #1d9e75; color: #fff; }
+  .card-label.lose { background: #5f5e5a; color: #fff; }
+  .card-label.join { background: #534ab7; color: #fff; }
+  .card-label.done { background: #3b6d11; color: #fff; }
+  .card-label.guest { background: #444; color: #ccc; }
+  .card-label.reg { background: #7f77dd; color: #fff; }
+  .card-preview {
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #333;
+  }
+  .card-preview img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .card-info {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #aaa;
+    text-align: center;
+  }
+  .card-dims {
+    color: #666;
+    font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<h1><span>Bean Boom</span> 分享卡预览</h1>
+<p class="subtitle">全部 6 种场景 — 修复后的最终效果</p>
+
+<div class="grid" id="grid"></div>
+
+<script type="module">
+import { generateShareCard } from './src/core/ShareCard.js';
+
+function fmtIso(d) {
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+}
+const nowIso = fmtIso(new Date());
+
+const scenarios = [
+  // 1. 游客胜利
+  {
+    label: '场景 1：游客胜利',
+    cls: 'win guest',
+    data: {
+      scenario: 1,
+      difficulty: 'medium',
+      timeSeconds: 312,
+      mineCount: 20,
+      revealedCount: 144,
+      totalSafeCells: 144,
+      boardCanvas: null,
+    }
+  },
+  // 2. 游客失败
+  {
+    label: '场景 2：游客失败',
+    cls: 'lose guest',
+    data: {
+      scenario: 2,
+      difficulty: 'hard',
+      timeSeconds: 187,
+      mineCount: 40,
+      revealedCount: 72,
+      totalSafeCells: 216,
+      boardCanvas: null,
+    }
+  },
+  // 3. 注册用户胜利
+  {
+    label: '场景 3：注册用户胜利',
+    cls: 'win reg',
+    data: {
+      scenario: 3,
+      difficulty: 'easy',
+      timeSeconds: 155,
+      mineCount: 10,
+      revealedCount: 90,
+      totalSafeCells: 90,
+      username: 'PlayerLee',
+      wasBest: true,
+      boardCanvas: null,
+      bestScores: { easy: 155, medium: 312, hard: 768 },
+      totalWins: 128,
+      challengesCompleted: 7,
+      totalRefunded: 35,
+      top3Rankings: {
+        easy_daily: { rank: 1, time: 155 },
+        easy_monthly: { rank: 3, time: 155 },
+        easy_all: { rank: 8, time: 155 },
+        medium_daily: { rank: 5, time: 312 },
+        medium_monthly: { rank: 12, time: 312 },
+        hard_yearly: { rank: 20, time: 768 },
+        hard_all: { rank: 35, time: 768 },
+      }
+    }
+  },
+  // 4. 注册用户失败
+  {
+    label: '场景 4：注册用户失败',
+    cls: 'lose reg',
+    data: {
+      scenario: 4,
+      difficulty: 'hard',
+      timeSeconds: 245,
+      mineCount: 40,
+      revealedCount: 98,
+      totalSafeCells: 216,
+      username: 'CoolCat99',
+      boardCanvas: null,
+      bestScores: { easy: 201, medium: 445, hard: 890 },
+      totalWins: 42,
+      challengesCompleted: 2,
+      totalRefunded: 10,
+      top3Rankings: {
+        easy_monthly: { rank: 9, time: 201 },
+        medium_all: { rank: 25, time: 445 },
+      }
+    }
+  },
+  // 5. 注册用户参加挑战
+  {
+    label: '场景 5：注册用户参加挑战',
+    cls: 'join reg',
+    data: {
+      scenario: 5,
+      difficulty: 'hard',
+      username: 'BeanHunter',
+      boardCanvas: null,
+      bestScores: { easy: 188, medium: 356, hard: 622 },
+      totalWins: 56,
+      challengesCompleted: 3,
+      totalRefunded: 15,
+      top3Rankings: {
+        easy_daily: { rank: 2, time: 188 },
+        hard_yearly: { rank: 7, time: 622 },
+        hard_all: { rank: 15, time: 622 },
+      },
+      challenge: {
+        name: '5美元困难月度挑战',
+        difficulty: 'hard',
+        period: 'monthly',
+        amount: 5,
+        targetCount: 30,
+      },
+      participation: {
+        paymentTxId: 'PAY-20250802-ABCD1234',
+      }
+    }
+  },
+  // 6. 注册用户完成挑战
+  {
+    label: '场景 6：注册用户完成挑战',
+    cls: 'done reg',
+    data: {
+      scenario: 6,
+      difficulty: 'medium',
+      username: 'SweepKing',
+      boardCanvas: null,
+      bestScores: { easy: 132, medium: 245, hard: 512 },
+      totalWins: 201,
+      challengesCompleted: 5,
+      totalRefunded: 25,
+      top3Rankings: {
+        easy_daily: { rank: 1, time: 132 },
+        easy_monthly: { rank: 1, time: 132 },
+        easy_yearly: { rank: 2, time: 132 },
+        easy_all: { rank: 3, time: 132 },
+        medium_daily: { rank: 3, time: 245 },
+        medium_monthly: { rank: 5, time: 245 },
+        medium_yearly: { rank: 8, time: 245 },
+        hard_monthly: { rank: 10, time: 512 },
+        hard_yearly: { rank: 18, time: 512 },
+      },
+      challenge: {
+        name: '3美元中等月度挑战',
+        difficulty: 'medium',
+        period: 'monthly',
+        amount: 3,
+        targetCount: 20,
+      },
+      participation: {
+        progress: 20,
+        targetCount: 20,
+        amount: 3,
+        paymentTxId: 'PAY-20250715-EFGH5678',
+        refundTxId: 'RFD-20250802-WXYZ9999',
+      },
+      challengeDays: 18,
+      timeSeconds: 245,
+      mineCount: 20,
+      revealedCount: 100,
+      totalSafeCells: 100,
+    }
+  },
+];
+
+const grid = document.getElementById('grid');
+
+for (const sc of scenarios) {
+  const result = generateShareCard(sc.data);
+
+  const wrap = document.createElement('div');
+  wrap.className = 'card-wrap';
+  wrap.innerHTML = `
+    <div class="card-label ${sc.cls}">${sc.label}</div>
+    <div class="card-preview">
+      <img src="${result.dataUrl}" alt="${sc.label}" />
+    </div>
+    <div class="card-info">
+      尺寸: ${1080}×${sc.data.username ? 1180 : 1080}px
+      <span class="card-dims"> · 场景${sc.data.scenario}</span>
+    </div>
+  `;
+  grid.appendChild(wrap);
+}
+</script>
+
+</body>
+</html>

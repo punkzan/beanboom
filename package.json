@@ -1,0 +1,17 @@
+{
+  "name": "minesweeper-beads",
+  "version": "0.1.0",
+  "description": "Bean Boom - 拼豆风格扫雷网页游戏",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy:cron": "cd workers && npx wrangler deploy",
+    "pages:dev": "wrangler pages dev dist --kv=BEAN_BOOM_KV",
+    "deploy": "vite build"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

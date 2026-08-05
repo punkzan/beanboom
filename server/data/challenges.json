@@ -1,0 +1,58 @@
+[
+  {
+    "id": "ch_msagy4mxra92",
+    "name": "15美元简单月度挑战",
+    "difficulty": "easy",
+    "period": "monthly",
+    "targetCount": 60,
+    "amount": 15,
+    "currency": "usd",
+    "active": true,
+    "createdAt": 1785594643449
+  },
+  {
+    "id": "ch_msagytzhe8l4",
+    "name": "10美元困难月度挑战",
+    "difficulty": "hard",
+    "period": "monthly",
+    "targetCount": 30,
+    "amount": 10,
+    "currency": "usd",
+    "active": true,
+    "createdAt": 1785594676301
+  },
+  {
+    "id": "ch_msah14x0vlfy",
+    "name": "50美元困难年度挑战",
+    "difficulty": "hard",
+    "period": "yearly",
+    "targetCount": 365,
+    "amount": 50,
+    "currency": "usd",
+    "active": true,
+    "createdAt": 1785594783780
+  },
+  {
+    "id": "ch_msah1jj7h7se",
+    "name": "100美元困难月度挑战",
+    "difficulty": "hard",
+    "period": "monthly",
+    "targetCount": 500,
+    "amount": 100,
+    "currency": "usd",
+    "active": true,
+    "createdAt": 1785594802723
+  },
+  {
+    "id": "ch_msbr4me7qap3",
+    "name": "1美元简单3天挑战",
+    "difficulty": "easy",
+    "period": "custom",
+    "customDays": 3,
+    "targetCount": 10,
+    "amount": 1,
+    "currency": "usd",
+    "active": true,
+    "createdAt": 1785672208735
+  }
+]

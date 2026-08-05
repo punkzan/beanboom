@@ -1,0 +1,568 @@
+/* === 管理后台 === */
+body {
+  align-items: center;
+  padding: 20px 12px 40px;
+}
+
+.admin-container {
+  width: 860px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 书签布局 */
+.admin-body {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.admin-sidebar {
+  width: 150px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: sticky;
+  top: 20px;
+}
+
+.admin-tab {
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #888780;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.12s, color 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.admin-tab:hover {
+  background: #f1efe8;
+  color: #555;
+}
+.admin-tab.active {
+  background: #5dcaa5;
+  color: #04342c;
+}
+
+.admin-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-content .admin-card {
+  display: none;
+}
+.admin-content .admin-card.active {
+  display: flex;
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-header h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #2c2c2a;
+}
+
+.admin-back {
+  font-size: 13px;
+  color: #378add;
+  text-decoration: none;
+  background: #eef5fc;
+  border-radius: 8px;
+  padding: 6px 14px;
+}
+.admin-back:hover {
+  background: #dcebf8;
+}
+
+.admin-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-card h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2c2c2a;
+  border-bottom: 2px solid #f1efe8;
+  padding-bottom: 10px;
+}
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-field-group {
+  display: flex;
+  gap: 12px;
+}
+.admin-field-group .admin-field {
+  flex: 1;
+}
+
+.admin-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #888780;
+}
+
+.admin-field input[type="text"],
+.admin-field input[type="date"],
+.admin-field input[type="number"],
+.admin-field input[type="password"],
+.admin-field select,
+.admin-field textarea {
+  border: 2px solid #cfcdc3;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+  width: 100%;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.admin-field input:focus,
+.admin-field select:focus,
+.admin-field textarea:focus {
+  border-color: #5dcaa5;
+}
+
+.admin-toggle-field {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.admin-toggle-field input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.admin-save {
+  background: #5dcaa5;
+  color: #04342c;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  align-self: flex-start;
+  -webkit-tap-highlight-color: transparent;
+}
+.admin-save:hover {
+  background: #4bbf99;
+}
+.admin-save.flashed {
+  background: #fac775;
+  color: #5a3d0a;
+}
+
+.admin-reset {
+  background: #f1efe8;
+  color: #888780;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.admin-reset:hover {
+  background: #e8e6dd;
+}
+
+.admin-act-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+/* 活动列表 */
+.admin-act-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 2px solid #f1efe8;
+  padding-top: 14px;
+}
+
+.admin-act-empty {
+  text-align: center;
+  color: #888780;
+  font-size: 13px;
+  padding: 16px 0;
+}
+
+.admin-act-item {
+  background: #f8f7f3;
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-act-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.admin-act-status {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+.admin-act-status.on {
+  background: #e8f4ee;
+  color: #1d9e75;
+}
+.admin-act-status.off {
+  background: #f1efe8;
+  color: #888780;
+}
+.admin-act-date {
+  font-size: 12px;
+  color: #888780;
+}
+.admin-act-t {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c2c2a;
+}
+
+.admin-act-text {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.5;
+}
+
+.admin-act-ops {
+  display: flex;
+  gap: 8px;
+}
+.admin-act-toggle,
+.admin-act-del {
+  border: none;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.admin-act-toggle {
+  background: #e8f4ee;
+  color: #1d9e75;
+}
+.admin-act-toggle:hover {
+  background: #d4eedd;
+}
+.admin-act-del {
+  background: #fde8f0;
+  color: #d4537e;
+}
+.admin-act-del:hover {
+  background: #fbd0de;
+}
+
+/* 用户管理 */
+.admin-user-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 2px solid #f1efe8;
+  padding-top: 14px;
+}
+
+.admin-user-item {
+  background: #f8f7f3;
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-user-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-user-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #2c2c2a;
+}
+
+.admin-user-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #fef3d6;
+  color: #8a6d1a;
+}
+
+.admin-user-region {
+  font-size: 12px;
+  color: #888780;
+}
+
+.admin-user-date {
+  font-size: 12px;
+  color: #888780;
+  margin-left: auto;
+}
+
+.admin-user-pts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-user-pt {
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  border: 1px solid #eee;
+}
+
+.admin-user-pt-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-pt-status {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.admin-pt-status.on { background: #e8f4ee; color: #1d9e75; }
+.admin-pt-status.refunded { background: #eef0fc; color: #3a5bcc; }
+.admin-pt-status.off { background: #f1efe8; color: #888780; }
+
+.admin-pt-name {
+  font-weight: 600;
+  color: #555;
+}
+
+.admin-pt-amount {
+  color: #888780;
+  margin-left: auto;
+}
+
+.admin-pt-detail {
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #f9f9f7;
+  line-height: 1.8;
+}
+.admin-pt-detail-refunded {
+  background: #f0f7f0;
+  border: 1px solid #d5e8d5;
+}
+.admin-pt-detail-expired {
+  background: #faf7f7;
+  border: 1px solid #e8e0e0;
+}
+
+.admin-pt-progress-bar {
+  height: 6px;
+  background: #ece8dc;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+.admin-pt-progress-fill {
+  height: 100%;
+  background: #5dcaa5;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.admin-pt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+.admin-pt-row > span:first-child {
+  color: #aaa;
+}
+.admin-pt-refund-amt {
+  color: #2e7d32;
+  font-weight: 600;
+  font-size: 13px;
+}
+.admin-pt-tx {
+  color: #bbb;
+  font-family: monospace;
+  word-break: break-all;
+  max-width: 55%;
+  text-align: right;
+}
+
+.admin-user-nopt {
+  font-size: 12px;
+  color: #aaa;
+}
+
+/* === 登录遮罩 === */
+.admin-auth {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 20px;
+}
+.admin-auth-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  padding: 28px 24px;
+  width: 320px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.admin-auth-card h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #2c2c2a;
+  text-align: center;
+}
+.admin-auth-hint {
+  font-size: 13px;
+  color: #888780;
+  text-align: center;
+}
+.admin-auth-input {
+  border: 2px solid #cfcdc3;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+  width: 100%;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.admin-auth-input:focus {
+  border-color: #5dcaa5;
+}
+.admin-auth-submit {
+  background: #5dcaa5;
+  color: #04342c;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.admin-auth-submit:hover {
+  background: #4bbf99;
+}
+.admin-auth-err {
+  font-size: 12px;
+  color: #d4537e;
+  text-align: center;
+  min-height: 16px;
+}
+
+/* header 右侧 */
+.admin-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.admin-logout {
+  background: #fde8f0;
+  color: #d4537e;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.admin-logout:hover {
+  background: #fbd0de;
+}
+
+@media (max-width: 600px) {
+  .admin-auth-card {
+    padding: 22px 18px;
+    width: 100%;
+  }
+  .admin-container {
+    width: 100%;
+  }
+  .admin-card {
+    padding: 16px;
+  }
+  .admin-field-group {
+    flex-direction: column;
+    gap: 14px;
+  }
+  .admin-body {
+    flex-direction: column;
+  }
+  .admin-sidebar {
+    width: 100%;
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .admin-tab {
+    flex: 1;
+    text-align: center;
+    padding: 8px 6px;
+    font-size: 12px;
+    min-width: 70px;
+  }
+}
