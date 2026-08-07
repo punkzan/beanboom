@@ -159,6 +159,7 @@ export const zh = {
   'share.card.progress': '进度',
   'share.card.goal': '目标',
   'share.card.times': (n)=> `${n}次`,
+  'share.card.period': '周期',
   'share.card.fee': '费用',
   'share.card.completed': '完成',
   'share.card.completedTimes': (p,t)=> `${p}/${t}次`,

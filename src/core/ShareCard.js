@@ -1,9 +1,12 @@
 // ShareCard.js - Bean Boom 分享图生成引擎
 // 使用 Canvas 2D 绘制 6 种场景的分享图，输出 PNG data URL
+// 文案通过 i18n (t) 跟随当前语言
 //
 // 场景 1: 游客胜利  场景 2: 游客失败
 // 场景 3: 注册用户胜利  场景 4: 注册用户失败
 // 场景 5: 注册用户参加挑战  场景 6: 注册用户完成挑战
+
+import { t } from '../i18n.js';
 
 const C = {
   MINT:       '#5dcaa5',
@@ -26,10 +29,18 @@ const DIFF_CL = {
   medium: { fill:'#ef9f27', stroke:'#ba7517', light:'#faeeda', text:'#412402' },
   hard:   { fill:'#f0997b', stroke:'#d85a30', light:'#faece7', text:'#4a1b0c' },
 };
-const DIFF_LB = { easy:'简单', medium:'中等', hard:'困难' };
-const PERIOD_LB = { daily:'日榜', monthly:'月榜', yearly:'年榜', all:'总榜' };
 
 // ---- helpers ----
+
+function diffLabel(difficulty) {
+  return t('game.diff.' + (difficulty || 'easy')) || '';
+}
+
+function periodLabel(period, customDays) {
+  if (period === 'yearly') return t('challenge.period.365days');
+  if (period === 'custom') return t('challenge.period.custom', customDays || 30);
+  return t('challenge.period.30days');
+}
 
 function roundRect(ctx, x, y, w, h, r) {
   r = Math.min(r, w/2, h/2);
@@ -48,21 +59,15 @@ function fmtSec(s) {
   return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
 }
 
-function fmtDateShort(ts) {
-  if (!ts) return '—';
-  const d = new Date(ts);
-  return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-}
-
 // ---- section: header bar ----
 
 function drawHeader(ctx, W, y, data) {
   const s = data.scenario;
   let bg, label;
-  if (s === 1 || s === 3) { bg = C.MINT_DARK; label = 'Bean Boom · 胜利时刻'; }
-  else if (s === 2 || s === 4) { bg = C.WARM_GRAY; label = 'Bean Boom · 战绩记录'; }
-  else if (s === 5) { bg = C.PURPLE_DK; label = 'Bean Boom · 付费挑战'; }
-  else { bg = C.FOREST_DK; label = 'Bean Boom · 挑战完成'; }
+  if (s === 1 || s === 3) { bg = C.MINT_DARK; label = t('share.header.win'); }
+  else if (s === 2 || s === 4) { bg = C.WARM_GRAY; label = t('share.header.lose'); }
+  else if (s === 5) { bg = C.PURPLE_DK; label = t('share.header.challenge'); }
+  else { bg = C.FOREST_DK; label = t('share.header.completed'); }
 
   ctx.fillStyle = bg;
   roundRect(ctx, 30, y, W - 60, 52, 10);
@@ -82,12 +87,10 @@ function drawBoardArea(ctx, W, y, h, data) {
   const isWin = (s === 1 || s === 3);
   const bgColor = isWin ? C.MINT : C.LIGHT_BG;
 
-  // Background area
   ctx.fillStyle = bgColor;
   roundRect(ctx, 30, y, W - 60, h, 12);
   ctx.fill();
 
-  // Draw board screenshot from canvas element
   if (data.boardCanvas) {
     try {
       drawCanvasContain(ctx, data.boardCanvas, 40, y + 8, W - 80, h - 16);
@@ -132,51 +135,45 @@ function drawSolidBg(ctx, W, y, h, color, data) {
 function drawDataCards(ctx, W, y, data, isReg) {
   const s = data.scenario;
   const isWin = (s === 1 || s === 3);
-  const cardW = (W - 60 - 20) / 3; // 3 cards with 10px gaps
+  const cardW = (W - 60 - 20) / 3;
   const cardH = 80;
 
   let cards;
   if (s <= 4) {
-    // Game result cards
     cards = [
-      { label: '用时', value: fmtSec(data.timeSeconds || 0) },
-      { label: '雷数', value: String(data.mineCount || 0) },
-      { label: s === 1 || s === 3 ? '翻格' : '进度', value: s === 1 || s === 3 ? `${data.revealedCount||0}/${data.totalSafeCells||0}` : `${data.revealedCount||0}/${data.totalSafeCells||0}` },
+      { label: t('share.card.time'), value: fmtSec(data.timeSeconds || 0) },
+      { label: t('share.card.mines'), value: String(data.mineCount || 0) },
+      { label: s === 1 || s === 3 ? t('share.card.revealed') : t('share.card.progress'), value: `${data.revealedCount||0}/${data.totalSafeCells||0}` },
     ];
   } else if (s === 5) {
-    // Challenge join cards
     cards = [
-      { label: '目标', value: `${data.challenge?.targetCount || 0}次` },
-      { label: '周期', value: data.challenge?.period === 'yearly' ? '365天' : data.challenge?.period === 'custom' ? `${data.challenge?.customDays||30}天` : '30天' },
-      { label: '费用', value: `$${data.challenge?.amount || 0}` },
+      { label: t('share.card.goal'), value: t('share.card.times', data.challenge?.targetCount || 0) },
+      { label: t('share.card.period'), value: periodLabel(data.challenge?.period, data.challenge?.customDays) },
+      { label: t('share.card.fee'), value: `$${data.challenge?.amount || 0}` },
     ];
   } else {
-    // Challenge complete cards
     const p = data.participation || {};
     cards = [
-      { label: '完成', value: `${p.progress||0}/${p.targetCount||0}次` },
-      { label: '退款', value: `$${p.amount || data.challenge?.amount || 0}` },
-      { label: '用时', value: `${data.challengeDays || 0}天` },
+      { label: t('share.card.completed'), value: t('share.card.completedTimes', p.progress||0, p.targetCount||0) },
+      { label: t('share.card.refund'), value: `$${p.amount || data.challenge?.amount || 0}` },
+      { label: t('share.card.time'), value: t('share.card.days', data.challengeDays || 0) },
     ];
   }
 
   for (let i = 0; i < cards.length; i++) {
     const cx = 30 + i * (cardW + 10);
-    // Card bg
     ctx.fillStyle = isWin ? 'rgba(255,255,255,0.92)' : C.WHITE;
     if (s === 5) ctx.fillStyle = 'rgba(255,255,255,0.92)';
     if (s === 6) ctx.fillStyle = 'rgba(255,255,255,0.92)';
     roundRect(ctx, cx, y, cardW, cardH, 10);
     ctx.fill();
 
-    // Label
     ctx.fillStyle = C.GRAY_TXT;
     ctx.font = '13px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText(cards[i].label, cx + cardW/2, y + 12);
 
-    // Value
     ctx.fillStyle = C.BLACK;
     ctx.font = 'bold 22px sans-serif';
     ctx.textBaseline = 'middle';
@@ -202,18 +199,17 @@ function drawBestScores(ctx, W, y, data) {
   }
 
   const items = [
-    { label: '简单最佳', value: bs.easy != null ? fmtSec(bs.easy) : '—', color: DIFF_CL.easy.fill },
-    { label: '中等最佳', value: bs.medium != null ? fmtSec(bs.medium) : '—', color: DIFF_CL.medium.fill },
-    { label: '困难最佳', value: bs.hard != null ? fmtSec(bs.hard) : '—', color: DIFF_CL.hard.fill },
-    { label: '总胜场', value: String(data.totalWins || 0), color: C.PURPLE },
-    { label: '挑战完成', value: String(data.challengesCompleted || 0), color: C.FOREST },
-    { label: '累计退款', value: `$${data.totalRefunded || 0}`, color: C.GOLD },
+    { label: t('share.best.title.easy'), value: bs.easy != null ? fmtSec(bs.easy) : '—', color: DIFF_CL.easy.fill },
+    { label: t('share.best.title.medium'), value: bs.medium != null ? fmtSec(bs.medium) : '—', color: DIFF_CL.medium.fill },
+    { label: t('share.best.title.hard'), value: bs.hard != null ? fmtSec(bs.hard) : '—', color: DIFF_CL.hard.fill },
+    { label: t('share.best.title.wins'), value: String(data.totalWins || 0), color: C.PURPLE },
+    { label: t('share.best.title.completed'), value: String(data.challengesCompleted || 0), color: C.FOREST },
+    { label: t('share.best.title.refunded'), value: `$${data.totalRefunded || 0}`, color: C.GOLD },
   ];
 
   const colW = (W - 60) / items.length;
   for (let i = 0; i < items.length; i++) {
     const cx = 30 + i * colW + colW / 2;
-    // Color dot for all items
     if (items[i].color) {
       ctx.fillStyle = items[i].color;
       ctx.beginPath();
@@ -242,7 +238,6 @@ function drawTop3Grid(ctx, W, y, data) {
   const h = 180;
   const isDark = data.scenario === 3 || data.scenario === 5 || data.scenario === 6;
 
-  // Panel bg
   ctx.fillStyle = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.6)';
   roundRect(ctx, 30, y, W - 60, h, 10);
   ctx.fill();
@@ -253,14 +248,12 @@ function drawTop3Grid(ctx, W, y, data) {
     ctx.stroke();
   }
 
-  // Title
   ctx.fillStyle = isDark ? 'rgba(255,255,255,0.8)' : C.GRAY_TXT;
   ctx.font = 'bold 13px sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
-  ctx.fillText('排行榜最佳名次', 45, y + 8);
+  ctx.fillText(t('share.top3.title'), 45, y + 8);
 
-  // Layout
   const gridX = 45;
   const gridY = y + 28;
   const gridW = W - 90;
@@ -273,7 +266,7 @@ function drawTop3Grid(ctx, W, y, data) {
   ctx.textAlign = 'center';
   ctx.fillStyle = isDark ? 'rgba(255,255,255,0.6)' : C.GRAY_TXT;
   for (let j = 0; j < periods.length; j++) {
-    ctx.fillText(PERIOD_LB[periods[j]], gridX + labelW + j * colW + colW/2, gridY);
+    ctx.fillText(t('lb.tab.' + periods[j]), gridX + labelW + j * colW + colW/2, gridY);
   }
 
   // Rows
@@ -282,7 +275,6 @@ function drawTop3Grid(ctx, W, y, data) {
     const rowY = gridY + 16 + i * rowH;
     const cl = DIFF_CL[diff];
 
-    // Row label
     ctx.fillStyle = cl.fill;
     roundRect(ctx, gridX, rowY + 4, labelW - 8, rowH - 12, 6);
     ctx.fill();
@@ -290,9 +282,8 @@ function drawTop3Grid(ctx, W, y, data) {
     ctx.font = 'bold 12px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(DIFF_LB[diff], gridX + (labelW - 8)/2, rowY + rowH/2);
+    ctx.fillText(t('game.diff.' + diff), gridX + (labelW - 8)/2, rowY + rowH/2);
 
-    // Cells
     for (let j = 0; j < periods.length; j++) {
       const period = periods[j];
       const cellX = gridX + labelW + j * colW;
@@ -306,13 +297,11 @@ function drawTop3Grid(ctx, W, y, data) {
         ctx.fillStyle = cl.light;
         roundRect(ctx, cellX, cellY, cellW, cellH, 6);
         ctx.fill();
-        // Rank
         ctx.fillStyle = cl.text;
         ctx.font = 'bold 14px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(`#${r.rank}`, cellX + cellW/2, cellY + cellH/2 - 8);
-        // Time
         ctx.fillStyle = cl.stroke;
         ctx.font = '10px sans-serif';
         ctx.fillText(fmtSec(r.time), cellX + cellW/2, cellY + cellH/2 + 10);
@@ -324,7 +313,7 @@ function drawTop3Grid(ctx, W, y, data) {
         ctx.font = '14px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('—', cellX + cellW/2, cellY + cellH/2);
+        ctx.fillText(t('share.top3.none'), cellX + cellW/2, cellY + cellH/2);
       }
     }
   }
@@ -335,12 +324,12 @@ function drawTop3Grid(ctx, W, y, data) {
 function drawShareText(ctx, W, y, h, data, isReg) {
   const s = data.scenario;
   let text;
-  if (s === 1) text = '注册后可记录成绩，挑战全球排行榜！';
-  else if (s === 2) text = '差一点就成功了！注册后可查看历史战绩';
-  else if (s === 3) text = '来 Bean Boom 挑战我的成绩！';
-  else if (s === 4) text = '翻了一半就踩雷了...谁来教教我';
-  else if (s === 5) text = '达成目标全额退款！一起来挑战吧';
-  else text = '我做到了，全额退款已到账！你也来挑战吧';
+  if (s === 1) text = t('share.text.scenario1');
+  else if (s === 2) text = t('share.text.scenario2');
+  else if (s === 3) text = t('share.text.scenario3');
+  else if (s === 4) text = t('share.text.scenario4');
+  else if (s === 5) text = t('share.text.scenario5');
+  else text = t('share.text.scenario6');
 
   ctx.fillStyle = isReg ? C.WHITE : (s === 1 ? C.WHITE : C.WARM_GRAY);
   if (s === 2) ctx.fillStyle = C.WARM_GRAY;
@@ -354,7 +343,6 @@ function drawShareText(ctx, W, y, h, data, isReg) {
 // ---- section: brand bar ----
 
 function drawBrandBar(ctx, W, y, h) {
-  // Background
   ctx.fillStyle = C.BLACK;
   roundRect(ctx, 30, y, W - 60, h, 12);
   ctx.fill();
@@ -362,7 +350,6 @@ function drawBrandBar(ctx, W, y, h) {
   const cx = 60;
   const cy = y + h / 2;
 
-  // Logo circle
   ctx.fillStyle = C.MINT;
   ctx.beginPath();
   ctx.arc(cx, cy, 22, 0, Math.PI * 2);
@@ -373,25 +360,21 @@ function drawBrandBar(ctx, W, y, h) {
   ctx.textBaseline = 'middle';
   ctx.fillText('BB', cx, cy);
 
-  // Brand name
   ctx.fillStyle = C.WHITE;
   ctx.font = 'bold 20px sans-serif';
   ctx.textAlign = 'left';
   ctx.fillText('Bean Boom', cx + 32, cy - 8);
 
-  // URL
   ctx.fillStyle = C.MINT;
   ctx.font = '13px sans-serif';
   ctx.fillText('beanboom.game', cx + 32, cy + 12);
 
-  // QR placeholder
   const qrSize = h - 20;
   const qrX = W - 30 - qrSize - 20;
   const qrY = y + 10;
   ctx.fillStyle = C.WHITE;
   roundRect(ctx, qrX, qrY, qrSize, qrSize, 6);
   ctx.fill();
-  // Decorative QR pattern
   ctx.fillStyle = C.BLACK;
   const cellSz = qrSize / 7;
   const pattern = [
@@ -418,9 +401,8 @@ function drawUserBar(ctx, W, y, data) {
   const s = data.scenario;
   const isDark = s === 3 || s === 5 || s === 6;
 
-  if (!data.username) return y; // no bar for guests
+  if (!data.username) return y;
 
-  // Avatar circle
   const avX = 50;
   const avY = y + 20;
   const avR = 16;
@@ -434,17 +416,15 @@ function drawUserBar(ctx, W, y, data) {
   ctx.textBaseline = 'middle';
   ctx.fillText((data.username[0] || 'P').toUpperCase(), avX, avY);
 
-  // Username + info
   ctx.fillStyle = isDark ? C.WHITE : C.BLACK;
   ctx.font = 'bold 16px sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  const diffLabel = DIFF_LB[data.difficulty] || '';
-  ctx.fillText(`${data.username} · ${diffLabel}难度`, avX + avR + 10, avY);
+  const dLabel = diffLabel(data.difficulty);
+  ctx.fillText(t('share.userBar.diff', data.username, dLabel), avX + avR + 10, avY);
 
-  // New record badge
   if (data.wasBest && (s === 3)) {
-    const bx = avX + avR + 10 + ctx.measureText(`${data.username} · ${diffLabel}难度`).width + 10;
+    const bx = avX + avR + 10 + ctx.measureText(t('share.userBar.diff', data.username, dLabel)).width + 10;
     ctx.fillStyle = C.GOLD;
     roundRect(ctx, bx, avY - 10, 60, 20, 10);
     ctx.fill();
@@ -452,7 +432,7 @@ function drawUserBar(ctx, W, y, data) {
     ctx.font = 'bold 11px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('新纪录', bx + 30, avY);
+    ctx.fillText(t('share.userBar.newRecord'), bx + 30, avY);
   }
 
   return y + 44;
@@ -470,14 +450,12 @@ function drawChallengeCard(ctx, W, y, data) {
   roundRect(ctx, 30, y, W - 60, h, 12);
   ctx.fill();
 
-  // Challenge name
   ctx.fillStyle = C.BLACK;
   ctx.font = 'bold 18px sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
-  ctx.fillText(ch.name || '挑战', 50, y + 14);
+  ctx.fillText(ch.name || t('share.card.challengeLabel'), 50, y + 14);
 
-  // Badges
   let bx = 50;
   const by = y + 48;
   const diff = ch.difficulty || 'easy';
@@ -490,24 +468,23 @@ function drawChallengeCard(ctx, W, y, data) {
   ctx.font = 'bold 11px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(DIFF_LB[diff] || '', bx + 30, by + 11);
+  ctx.fillText(diffLabel(diff), bx + 30, by + 11);
   bx += 70;
 
-  const periodLabel = ch.period === 'yearly' ? '365天' : ch.period === 'custom' ? `${ch.customDays||30}天` : '30天';
+  const pLabel = periodLabel(ch.period, ch.customDays);
   ctx.fillStyle = '#f1efe8';
   roundRect(ctx, bx, by, 60, 22, 6);
   ctx.fill();
   ctx.fillStyle = C.WARM_GRAY;
-  ctx.fillText(periodLabel, bx + 30, by + 11);
+  ctx.fillText(pLabel, bx + 30, by + 11);
   bx += 70;
 
   ctx.fillStyle = '#f1efe8';
   roundRect(ctx, bx, by, 80, 22, 6);
   ctx.fill();
   ctx.fillStyle = C.WARM_GRAY;
-  ctx.fillText(`目标${ch.targetCount||0}次`, bx + 40, by + 11);
+  ctx.fillText(t('share.card.target', ch.targetCount||0), bx + 40, by + 11);
 
-  // Amount
   ctx.fillStyle = C.GOLD;
   ctx.font = 'bold 24px sans-serif';
   ctx.textAlign = 'right';
@@ -515,9 +492,8 @@ function drawChallengeCard(ctx, W, y, data) {
   ctx.fillText(`$${ch.amount || 0}`, W - 50, y + 14);
   ctx.fillStyle = C.GRAY_TXT;
   ctx.font = '11px sans-serif';
-  ctx.fillText('挑战费用', W - 50, y + 48);
+  ctx.fillText(t('share.card.challengeFee'), W - 50, y + 48);
 
-  // Progress bar (scenario 6) or payment tx (scenario 5)
   if (s === 6) {
     const pct = Math.min(100, ((p.progress||0) / (p.targetCount||1)) * 100);
     const barX = 50, barY = y + 84, barW = W - 100, barH = 14;
@@ -531,9 +507,8 @@ function drawChallengeCard(ctx, W, y, data) {
     ctx.font = 'bold 13px sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`${p.progress||0}/${p.targetCount||0} 次 · 100%完成`, barX, y + 118);
+    ctx.fillText(t('share.card.done100', p.progress||0, p.targetCount||0), barX, y + 118);
 
-    // Refund badge (aligned with progress text on same row)
     ctx.fillStyle = C.FOREST_DK;
     roundRect(ctx, W - 130, y + 104, 80, 28, 14);
     ctx.fill();
@@ -541,25 +516,25 @@ function drawChallengeCard(ctx, W, y, data) {
     ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`$${p.amount||0} 已退`, W - 90, y + 118);
+    ctx.fillText(t('share.card.refundedAmt', p.amount||0), W - 90, y + 118);
 
-    // TX IDs (merged into one line)
-    ctx.fillStyle = C.GRAY_TXT;
-    ctx.font = '10px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
     const txParts = [];
-    if (p.refundTxId) txParts.push(`退款单号: ${p.refundTxId}`);
-    if (p.paymentTxId) txParts.push(`支付单号: ${p.paymentTxId}`);
-    if (txParts.length) ctx.fillText(txParts.join('  |  '), 50, y + 145);
+    if (p.refundTxId) txParts.push(t('share.card.refundTxLabel') + p.refundTxId);
+    if (p.paymentTxId) txParts.push(t('share.card.payTxLabel') + p.paymentTxId);
+    if (txParts.length) {
+      ctx.fillStyle = C.GRAY_TXT;
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(txParts.join('  |  '), 50, y + 145);
+    }
   } else {
-    // Scenario 5: payment info
     ctx.fillStyle = C.GRAY_TXT;
     ctx.font = '12px sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText(`支付单号: ${p.paymentTxId || '—'}`, 50, y + 84);
-    ctx.fillText(`已支付 $${ch.amount||0} · 挑战已开始`, 50, y + 104);
+    ctx.fillText(t('share.card.payTxLabel') + (p.paymentTxId || '—'), 50, y + 84);
+    ctx.fillText(t('share.card.paidAndStarted', ch.amount||0), 50, y + 104);
   }
 
   return y + h;
@@ -577,7 +552,6 @@ export function generateShareCard(data) {
   canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  // Full background
   const s = data.scenario;
   let fullBg;
   if (s === 1 || s === 3) fullBg = C.MINT;
@@ -588,7 +562,6 @@ export function generateShareCard(data) {
   ctx.fillStyle = fullBg;
   ctx.fillRect(0, 0, W, H);
 
-  // Header
   drawHeader(ctx, W, 20, data);
 
   let cursorY = 84;
@@ -596,32 +569,28 @@ export function generateShareCard(data) {
   if (isReg) {
     cursorY = drawUserBar(ctx, W, cursorY, data) + 8;
   } else {
-    // Guest label
     ctx.fillStyle = s === 1 ? 'rgba(255,255,255,0.7)' : C.GRAY_TXT;
     ctx.font = '14px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`匿名玩家 · ${DIFF_LB[data.difficulty]||''}难度`, W / 2, cursorY + 10);
+    const dLabel = diffLabel(data.difficulty);
+    ctx.fillText(t('share.userBar.anon', dLabel), W / 2, cursorY + 10);
     cursorY += 36;
   }
 
   if (s <= 4) {
-    // Board screenshot area
     const boardH = isReg ? 380 : 420;
     drawBoardArea(ctx, W, cursorY, boardH, data);
     cursorY += boardH + 12;
   } else {
-    // Solid color area with challenge card
     const areaH = 200;
     drawSolidBg(ctx, W, cursorY, areaH, 'rgba(255,255,255,0.1)', data);
     cursorY = drawChallengeCard(ctx, W, cursorY + 10, data) + 12;
   }
 
-  // Data cards
   drawDataCards(ctx, W, cursorY, data, isReg);
   cursorY += 92;
 
-  // Best scores + TOP3 (registered only)
   if (isReg) {
     drawBestScores(ctx, W, cursorY, data);
     cursorY += 90;
@@ -629,12 +598,10 @@ export function generateShareCard(data) {
     cursorY += 192;
   }
 
-  // Share text
   const textH = isReg ? 36 : 56;
   drawShareText(ctx, W, cursorY, textH, data, isReg);
   cursorY += textH + 8;
 
-  // Brand bar
   const brandH = Math.min(120, H - cursorY - 20);
   drawBrandBar(ctx, W, cursorY, brandH);
 
@@ -647,16 +614,22 @@ export function generateShareCard(data) {
 function getShareText(data) {
   const s = data.scenario;
   const time = fmtSec(data.timeSeconds || 0);
-  const diff = DIFF_LB[data.difficulty] || '';
-  const user = data.username || '匿名玩家';
+  const diff = diffLabel(data.difficulty);
+  const user = data.username || t('common.anonymousPlayer');
   const ch = data.challenge || {};
   const p = data.participation || {};
 
-  if (s === 1) return `我在 Bean Boom 赢了${diff}难度！用时${time}。注册就能记录成绩，快来挑战我吧！`;
-  if (s === 2) return `在 Bean Boom 踩雷了...就差一点！注册后就能记录战绩，不服来战！`;
-  if (s === 3) return `${user} 在 Bean Boom ${diff}难度创了新纪录！${time}清除${data.mineCount||0}颗雷。你能更快吗？`;
-  if (s === 4) return `${user} 在 Bean Boom ${diff}难度踩雷了...翻了${data.revealedCount||0}格就阵亡。谁敢来挑战？`;
-  if (s === 5) return `${user} 加入了$${ch.amount||0}${diff}${ch.period==='yearly'?'年度':ch.period==='custom'?`${ch.customDays||30}天`:'月度'}挑战！达成目标全额退款。你敢来吗？`;
-  if (s === 6) return `${user} 完成了$${ch.amount||0}${diff}挑战！${p.progress||0}/${p.targetCount||0}次达标，$${p.amount||0}已全额退还。零成本挑战，快来参加！`;
-  return 'Bean Boom - 经典扫雷网页游戏';
+  if (s === 1) return t('share.txt.scenario1', diff, time);
+  if (s === 2) return t('share.txt.scenario2');
+  if (s === 3) return t('share.txt.scenario3', user, diff, time, data.mineCount||0);
+  if (s === 4) return t('share.txt.scenario4', user, diff, data.revealedCount||0);
+  if (s === 5) {
+    const pKey = ch.period === 'yearly' ? t('challenge.period.yearly') : ch.period === 'custom' ? t('challenge.period.custom', ch.customDays||30) : t('challenge.period.monthly');
+    return t('share.txt.scenario5', user, ch.amount||0, diff, pKey);
+  }
+  if (s === 6) {
+    const pKey = ch.period === 'yearly' ? t('challenge.period.yearly') : ch.period === 'custom' ? t('challenge.period.custom', ch.customDays||30) : t('challenge.period.monthly');
+    return t('share.txt.scenario6', user, p.amount||0, diff, p.progress||0, p.targetCount||0);
+  }
+  return t('share.txt.default');
 }

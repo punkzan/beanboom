@@ -159,6 +159,7 @@ export const en = {
   'share.card.progress': 'Progress',
   'share.card.goal': 'Goal',
   'share.card.times': (n)=> `${n}`,
+  'share.card.period': 'Period',
   'share.card.fee': 'Fee',
   'share.card.completed': 'Done',
   'share.card.completedTimes': (p,t)=> `${p}/${t}`,
