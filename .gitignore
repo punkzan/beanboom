@@ -11,3 +11,5 @@ Thumbs.db
 .wrangler/
 vite.config.js.timestamp-*
 serve.py
+.tmp-*
+*.tmp
