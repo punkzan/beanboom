@@ -277,4 +277,5 @@ app.put('/api/payment-config', async (c) => {
 app.notFound((c) => c.json({ error: 'Not found' }, 404));
 
 // === Pages Functions 导出 ===
-export const onRequest = app.fetch;
+// Hono app.fetch 需要 (request, env, context)，而 Pages onRequest 传入的是 context 对象
+export const onRequest = (ctx) => app.fetch(ctx.request, ctx.env, ctx);
