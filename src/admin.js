@@ -2,6 +2,9 @@ import { getConfig, setConfig, getActivities, addActivity, updateActivity, delet
 import { getAllChallenges, createChallenge, updateChallenge, deleteChallenge, getUsers, getPaymentConfig, updatePaymentConfig } from './core/ChallengeAPI.js';
 import { t, scanI18n, getLang, setLang, onLangChange } from './i18n.js';
 
+// 管理后台始终使用中文
+setLang('zh');
+
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
