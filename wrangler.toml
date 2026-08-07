@@ -1,13 +1,7 @@
 # Cloudflare Pages 配置（前端 + Functions）
 # Pages Functions 在 functions/api/[[route]].js 中
+# KV 绑定在 Cloudflare Dashboard 中配置（Settings → Functions → KV namespace bindings）
 
 name = "bean-boom"
 compatibility_date = "2025-08-01"
 pages_build_output_dir = "dist"
-
-# Pages 不会自动读取此文件的 KV binding，需在 Dashboard 手动绑定。
-# 以下仅用于 wrangler pages dev 本地调试
-[[kv_namespaces]]
-binding = "BEAN_BOOM_KV"
-id = "PLACEHOLDER_REPLACE_AFTER_CREATE"
-preview_id = "PLACEHOLDER_REPLACE_AFTER_CREATE"
