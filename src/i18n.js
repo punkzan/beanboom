@@ -12,7 +12,7 @@ const listeners = [];
 
 let currentLang = detectLang();
 
-/** 检测当前语言: URL 参数 > localStorage > 浏览器偏好 > 默认 zh */
+/** 检测当前语言: URL 参数 > localStorage > 浏览器偏好 > 默认 en */
 function detectLang() {
   // 1. URL 参数 ?lang=en
   const urlParam = new URLSearchParams(window.location.search).get('lang');
@@ -29,8 +29,8 @@ function detectLang() {
   if (navLang.startsWith('en')) return 'en';
   if (navLang.startsWith('zh')) return 'zh';
 
-  // 4. 默认中文
-  return 'zh';
+  // 4. 默认英文
+  return 'en';
 }
 
 /** 获取翻译。支持模板插值：t('key', arg1, arg2) → 键值为函数时调用函数(...args) */
