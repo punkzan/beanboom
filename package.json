@@ -11,6 +11,9 @@
     "pages:dev": "wrangler pages dev dist --kv=BEAN_BOOM_KV",
     "deploy": "vite build"
   },
+  "dependencies": {
+    "hono": "^4.13.1"
+  },
   "devDependencies": {
     "vite": "^5.4.0"
   }
