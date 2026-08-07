@@ -6,8 +6,8 @@ compatibility_date = "2025-08-01"
 # 在 Dashboard 创建 KV 后，把 id 填入这里
 [[kv_namespaces]]
 binding = "BEAN_BOOM_KV"
-id = "PLACEHOLDER_REPLACE_AFTER_CREATE"
-preview_id = "PLACEHOLDER_REPLACE_AFTER_CREATE"
+id = "0eba3123d5514f489a05a2fb85ed9476"
+preview_id = "0eba3123d5514f489a05a2fb85ed9476"
 
 # 每分钟检查一次到期挑战
 [triggers]
