@@ -59,10 +59,10 @@ async function getPayment(env) {
 // === 创建 Hono App ===
 const app = new Hono();
 
-// 全局错误处理 — 捕获所有路由未处理的异常，返回 JSON 错误
+// 全局错误处理 — 避免 Cloudflare 默认返回纯文本 500，让前端能显示具体错误信息
 app.onError((err, c) => {
   return new Response(
-    JSON.stringify({ error: 'unhandled: ' + (err?.message || String(err)), stack: err?.stack }),
+    JSON.stringify({ error: err.message || 'Internal Server Error', stack: err.stack }),
     { status: 500, headers: { 'Content-Type': 'application/json' } }
   );
 });
@@ -78,11 +78,6 @@ app.use('/api/*', cors({
 
 // -- 健康检查 --
 app.get('/api/health', (c) => c.json({ ok: true, time: Date.now() }));
-
-// DEBUG: 测试 endpoint 故意抛出错误
-app.get('/api/_debug_throw', (c) => {
-  throw new Error('intentional throw for debugging');
-});
 
 // -- 获取挑战列表 --
 app.get('/api/challenges', async (c) => {
@@ -187,7 +182,7 @@ app.post('/api/participate', async (c) => {
     await kvPut(c.env, KV_KEYS.participations, parts);
     return c.json(participation);
   } catch (e) {
-    return new Response(JSON.stringify({ error: 'participate failed: ' + e.message, stack: e.stack }), {
+    return new Response(JSON.stringify({ error: e.message || 'Join challenge failed', stack: e.stack }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
