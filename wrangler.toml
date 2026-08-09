@@ -1,7 +1,7 @@
 # Cloudflare Pages 配置（前端 + Functions）
 # Pages Functions 在 functions/api/[[route]].js 中
 
-name = "bean-boom"
+name = "beanboom"
 compatibility_date = "2025-08-01"
 pages_build_output_dir = "dist"
 
