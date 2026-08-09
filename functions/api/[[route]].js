@@ -125,53 +125,57 @@ app.delete('/api/challenges/:id', async (c) => {
 
 // -- 参加挑战 --
 app.post('/api/participate', async (c) => {
-  const body = await c.req.json().catch(() => ({}));
-  const { challengeId, username } = body;
-  if (!challengeId || !username) {
-    return c.json({ error: 'Missing challengeId or username' }, 400);
-  }
-  const challenges = await kvGet(c.env, KV_KEYS.challenges, []);
-  const challenge = challenges.find(ch => ch.id === challengeId);
-  if (!challenge || !challenge.active) {
-    return c.json({ error: 'Challenge not found or inactive' }, 404);
-  }
-  const parts = await kvGet(c.env, KV_KEYS.participations, []);
-  const existing = parts.find(
-    p => p.challengeId === challengeId && p.username === username && p.status === 'active'
-  );
-  if (existing) {
-    return c.json({ error: 'Already participated in this challenge' }, 409);
-  }
+  try {
+    const body = await c.req.json().catch(() => ({}));
+    const { challengeId, username } = body;
+    if (!challengeId || !username) {
+      return c.json({ error: 'Missing challengeId or username' }, 400);
+    }
+    const challenges = await kvGet(c.env, KV_KEYS.challenges, []);
+    const challenge = challenges.find(ch => ch.id === challengeId);
+    if (!challenge || !challenge.active) {
+      return c.json({ error: 'Challenge not found or inactive' }, 404);
+    }
+    const parts = await kvGet(c.env, KV_KEYS.participations, []);
+    const existing = parts.find(
+      p => p.challengeId === challengeId && p.username === username && p.status === 'active'
+    );
+    if (existing) {
+      return c.json({ error: 'Already participated in this challenge' }, 409);
+    }
 
-  const pay = await getPayment(c.env);
-  const payResult = await pay.charge(challenge.amount, username, challengeId);
-  const now = Date.now();
-  const durationMs = challenge.period === 'yearly' ? 365 * 86400000
-    : challenge.period === 'custom' ? (challenge.customDays || 30) * 86400000
-    : 30 * 86400000;
+    const pay = await getPayment(c.env);
+    const payResult = await pay.charge(challenge.amount, username, challengeId);
+    const now = Date.now();
+    const durationMs = challenge.period === 'yearly' ? 365 * 86400000
+      : challenge.period === 'custom' ? (challenge.customDays || 30) * 86400000
+      : 30 * 86400000;
 
-  const participation = {
-    id: genId('pt'),
-    challengeId: challenge.id,
-    challengeName: challenge.name,
-    username,
-    difficulty: challenge.difficulty,
-    period: challenge.period,
-    customDays: challenge.customDays || null,
-    targetCount: challenge.targetCount,
-    amount: challenge.amount,
-    currency: challenge.currency,
-    paymentTxId: payResult.id,
-    status: 'active',
-    progress: 0,
-    joinedAt: now,
-    expiresAt: now + durationMs,
-    refundedAt: null,
-    refundTxId: null,
-  };
-  parts.push(participation);
-  await kvPut(c.env, KV_KEYS.participations, parts);
-  return c.json(participation);
+    const participation = {
+      id: genId('pt'),
+      challengeId: challenge.id,
+      challengeName: challenge.name,
+      username,
+      difficulty: challenge.difficulty,
+      period: challenge.period,
+      customDays: challenge.customDays || null,
+      targetCount: challenge.targetCount,
+      amount: challenge.amount,
+      currency: challenge.currency,
+      paymentTxId: payResult.id,
+      status: 'active',
+      progress: 0,
+      joinedAt: now,
+      expiresAt: now + durationMs,
+      refundedAt: null,
+      refundTxId: null,
+    };
+    parts.push(participation);
+    await kvPut(c.env, KV_KEYS.participations, parts);
+    return c.json(participation);
+  } catch (e) {
+    return c.json({ error: 'participate failed: ' + (e?.message || String(e)) }, 500);
+  }
 });
 
 // -- 获取我的挑战列表 --
