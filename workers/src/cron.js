@@ -4,7 +4,7 @@
  * 与 Pages Functions 共享同一个 BEAN_BOOM_KV 命名空间
  */
 
-// === 工具函数（精简自 functions/api/[[route]].js） ===
+// === 工具函数 ===
 async function kvGet(env, key, defaultValue) {
   try {
     const raw = await env.BEAN_BOOM_KV.get(key);
@@ -53,23 +53,29 @@ async function checkExpirations(env) {
 }
 
 export default {
-  // HTTP fetch handler — 仅用于健康检查，实际逻辑由 cron scheduled 触发
   async fetch(request, env) {
+    // 健康检查端点
     const url = new URL(request.url);
-    if (url.pathname === '/health') {
+    if (url.pathname === '/' || url.pathname === '/health') {
       const parts = await kvGet(env, 'participations', []);
       const activeCount = parts.filter(p => p.status === 'active').length;
-      const expiredCount = parts.filter(p => p.status === 'expired' || p.status === 'refunded').length;
-      return new Response(JSON.stringify({
+      const resolvedCount = parts.filter(p => p.status === 'expired' || p.status === 'refunded').length;
+
+      const body = JSON.stringify({
         ok: true,
         worker: 'bean-boom-cron',
         time: Date.now(),
         participations: parts.length,
         active: activeCount,
-        resolved: expiredCount,
-      }), { headers: { 'Content-Type': 'application/json' } });
+        resolved: resolvedCount,
+      });
+
+      return new Response(body, {
+        headers: { 'Content-Type': 'application/json;charset=utf-8' },
+      });
     }
-    return new Response('Bean Boom Cron Worker — use /health for status', { status: 404 });
+
+    return new Response('Not Found', { status: 404 });
   },
 
   async scheduled(event, env, ctx) {
