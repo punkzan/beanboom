@@ -130,12 +130,12 @@ app.delete('/api/challenges/:id', async (c) => {
 
 // -- 参加挑战 --
 app.post('/api/participate', async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const { challengeId, username } = body;
+  if (!challengeId || !username) {
+    return c.json({ error: 'Missing challengeId or username' }, 400);
+  }
   try {
-    const body = await c.req.json().catch(() => ({}));
-    const { challengeId, username } = body;
-    if (!challengeId || !username) {
-      return c.json({ error: 'Missing challengeId or username' }, 400);
-    }
     const challenges = await kvGet(c.env, KV_KEYS.challenges, []);
     const challenge = challenges.find(ch => ch.id === challengeId);
     if (!challenge || !challenge.active) {
@@ -179,7 +179,10 @@ app.post('/api/participate', async (c) => {
     await kvPut(c.env, KV_KEYS.participations, parts);
     return c.json(participation);
   } catch (e) {
-    return c.json({ error: 'participate failed: ' + (e?.message || String(e)) }, 500);
+    return new Response(JSON.stringify({ error: 'participate failed: ' + e.message, stack: e.stack }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 });
 
