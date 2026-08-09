@@ -53,6 +53,25 @@ async function checkExpirations(env) {
 }
 
 export default {
+  // HTTP fetch handler — 仅用于健康检查，实际逻辑由 cron scheduled 触发
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    if (url.pathname === '/health') {
+      const parts = await kvGet(env, 'participations', []);
+      const activeCount = parts.filter(p => p.status === 'active').length;
+      const expiredCount = parts.filter(p => p.status === 'expired' || p.status === 'refunded').length;
+      return new Response(JSON.stringify({
+        ok: true,
+        worker: 'bean-boom-cron',
+        time: Date.now(),
+        participations: parts.length,
+        active: activeCount,
+        resolved: expiredCount,
+      }), { headers: { 'Content-Type': 'application/json' } });
+    }
+    return new Response('Bean Boom Cron Worker — use /health for status', { status: 404 });
+  },
+
   async scheduled(event, env, ctx) {
     ctx.waitUntil(checkExpirations(env));
   },
