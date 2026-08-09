@@ -1,6 +1,8 @@
 /**
  * Bean Boom Cron Worker — 定期检查付费挑战到期 & 退款
  * 通过 Cloudflare Cron Triggers 每分钟触发
+ * GitHub Actions 自动部署 (push workers/** → deploy)
+ * 健康检查: GET / 或 /health
  * 与 Pages Functions 共享同一个 BEAN_BOOM_KV 命名空间
  */
 
