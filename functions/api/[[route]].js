@@ -79,6 +79,11 @@ app.use('/api/*', cors({
 // -- 健康检查 --
 app.get('/api/health', (c) => c.json({ ok: true, time: Date.now() }));
 
+// DEBUG: 测试 endpoint 故意抛出错误
+app.get('/api/_debug_throw', (c) => {
+  throw new Error('intentional throw for debugging');
+});
+
 // -- 获取挑战列表 --
 app.get('/api/challenges', async (c) => {
   const all = await kvGet(c.env, KV_KEYS.challenges, []);
