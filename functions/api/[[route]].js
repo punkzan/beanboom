@@ -59,6 +59,11 @@ async function getPayment(env) {
 // === 创建 Hono App ===
 const app = new Hono();
 
+// 全局错误处理 — 捕获所有路由未处理的异常，返回 JSON 错误
+app.onError((err, c) => {
+  return c.json({ error: 'unhandled: ' + (err?.message || String(err)), stack: err?.stack }, 500);
+});
+
 // CORS — 对所有 /api/* 路由开放
 app.use('/api/*', cors({
   origin: '*',
