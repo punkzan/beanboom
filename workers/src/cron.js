@@ -20,14 +20,59 @@ async function kvPut(env, key, data) {
   await env.BEAN_BOOM_KV.put(key, JSON.stringify(data));
 }
 
-const mockPayment = {
+// === 支付适配层（仅退款） ===
+const mockRefund = {
   async refund(transactionId, amount) {
     return { id: 'mock_refund_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8), status: 'succeeded' };
   },
 };
 
+function makePaypalRefundAdapter(config) {
+  const baseUrl = config.sandbox ? 'https://api-m.sandbox.paypal.com' : 'https://api-m.paypal.com';
+  let _token = null, _tokenExpires = 0;
+
+  async function getAccessToken() {
+    if (_token && Date.now() < _tokenExpires) return _token;
+    const auth = btoa(config.paypalClientId + ':' + config.paypalClientSecret);
+    const res = await fetch(baseUrl + '/v1/oauth2/token', {
+      method: 'POST',
+      headers: { 'Authorization': 'Basic ' + auth, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'grant_type=client_credentials',
+    });
+    const data = await res.json();
+    if (!res.ok || !data.access_token) throw new Error('PayPal auth failed: ' + (data.error_description || res.status));
+    _token = data.access_token;
+    _tokenExpires = Date.now() + (data.expires_in - 60) * 1000;
+    return _token;
+  }
+
+  return {
+    async refund(captureId, amount, currency) {
+      const token = await getAccessToken();
+      const cc = (currency || 'usd').toUpperCase();
+      const body = amount ? JSON.stringify({ amount: { currency_code: cc, value: String(amount) } }) : null;
+      const res = await fetch(`${baseUrl}/v2/payments/captures/${captureId}/refund`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error('PayPal refund failed: ' + (data.message || res.status));
+      return { id: data.id, status: data.status };
+    },
+  };
+}
+
+async function getRefunder(env) {
+  const config = await kvGet(env, 'payment_config', {
+    mode: 'mock', paypalClientId: '', paypalClientSecret: '', sandbox: true, currency: 'usd',
+  });
+  return config.mode === 'paypal' ? makePaypalRefundAdapter(config) : mockRefund;
+}
+
 async function checkExpirations(env) {
   const parts = await kvGet(env, 'participations', []);
+  const refunder = await getRefunder(env);
   let changed = false;
 
   for (const p of parts) {
@@ -36,7 +81,7 @@ async function checkExpirations(env) {
 
     if (p.progress >= p.targetCount) {
       try {
-        const refund = await mockPayment.refund(p.paymentTxId, p.amount);
+        const refund = await refunder.refund(p.paymentTxId, p.amount, p.currency);
         p.status = 'refunded';
         p.refundedAt = Date.now();
         p.refundTxId = refund.id;

@@ -44,16 +44,83 @@ const mockPayment = {
   },
 };
 
-const paypalPayment = {
-  async charge() { throw new Error('PayPal adapter not implemented'); },
-  async refund() { throw new Error('PayPal refund not implemented'); },
-};
+// PayPal 适配器 — 闭包捕获 env 和配置，支持 createOrder / captureOrder / refund
+function makePaypalAdapter(config) {
+  const baseUrl = config.sandbox ? 'https://api-m.sandbox.paypal.com' : 'https://api-m.paypal.com';
+  let _token = null, _tokenExpires = 0;
+
+  async function getAccessToken() {
+    if (_token && Date.now() < _tokenExpires) return _token;
+    const auth = btoa(config.paypalClientId + ':' + config.paypalClientSecret);
+    const res = await fetch(baseUrl + '/v1/oauth2/token', {
+      method: 'POST',
+      headers: { 'Authorization': 'Basic ' + auth, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'grant_type=client_credentials',
+    });
+    const data = await res.json();
+    if (!res.ok || !data.access_token) throw new Error('PayPal auth failed: ' + (data.error_description || res.status));
+    _token = data.access_token;
+    _tokenExpires = Date.now() + (data.expires_in - 60) * 1000;
+    return _token;
+  }
+
+  return {
+    mode: 'paypal',
+    async createOrder(amount, description, currency, returnUrl, cancelUrl) {
+      const token = await getAccessToken();
+      const cc = (currency || 'usd').toUpperCase();
+      const res = await fetch(baseUrl + '/v2/checkout/orders', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          intent: 'CAPTURE',
+          purchase_units: [{
+            amount: { currency_code: cc, value: String(amount) },
+            description: String(description || '').slice(0, 127),
+          }],
+          application_context: { return_url: returnUrl, cancel_url: cancelUrl },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error('PayPal create order failed: ' + (data.message || res.status));
+      const approveLink = data.links?.find(l => l.rel === 'approve')?.href;
+      return { orderId: data.id, approveUrl: approveLink, status: data.status };
+    },
+    async captureOrder(orderId) {
+      const token = await getAccessToken();
+      const res = await fetch(`${baseUrl}/v2/checkout/orders/${orderId}/capture`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error('PayPal capture failed: ' + (data.message || res.status));
+      const capture = data.purchase_units?.[0]?.payments?.captures?.[0];
+      return { captureId: capture?.id, status: data.status };
+    },
+    async refund(captureId, amount, currency) {
+      const token = await getAccessToken();
+      const cc = (currency || 'usd').toUpperCase();
+      const body = amount ? JSON.stringify({ amount: { currency_code: cc, value: String(amount) } }) : null;
+      const res = await fetch(`${baseUrl}/v2/payments/captures/${captureId}/refund`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error('PayPal refund failed: ' + (data.message || res.status));
+      return { id: data.id, status: data.status };
+    },
+  };
+}
 
 async function getPayment(env) {
   const config = await kvGet(env, KV_KEYS.paymentConfig, {
     mode: 'mock', paypalClientId: '', paypalClientSecret: '', sandbox: true, currency: 'usd',
   });
-  return config.mode === 'paypal' ? paypalPayment : mockPayment;
+  if (config.mode === 'paypal') {
+    return makePaypalAdapter(config);
+  }
+  return { mode: 'mock', ...mockPayment };
 }
 
 // === 创建 Hono App ===
@@ -153,6 +220,23 @@ app.post('/api/participate', async (c) => {
     }
 
     const pay = await getPayment(c.env);
+
+    // PayPal 模式：创建订单 → 返回 approve URL，用户到 PayPal 审批后再回调 capture
+    if (pay.mode === 'paypal') {
+      const origin = new URL(c.req.url).origin;
+      const returnUrl = `${origin}/?pp_return=1`;
+      const cancelUrl = `${origin}/?pp_cancel=1`;
+      const orderResult = await pay.createOrder(
+        challenge.amount, challenge.name, challenge.currency, returnUrl, cancelUrl
+      );
+      return c.json({
+        needsPaypalApproval: true,
+        approveUrl: orderResult.approveUrl,
+        orderId: orderResult.orderId,
+      });
+    }
+
+    // Mock 模式：立即模拟扣款
     const payResult = await pay.charge(challenge.amount, username, challengeId);
     const now = Date.now();
     const durationMs = challenge.period === 'yearly' ? 365 * 86400000
@@ -185,6 +269,54 @@ app.post('/api/participate', async (c) => {
     return new Response(JSON.stringify({ error: e.message || 'Join challenge failed', stack: e.stack }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
+    });
+  }
+});
+
+// -- PayPal 支付回调：审批完成后 capture 支付 + 创建参与记录 --
+app.post('/api/paypal/capture', async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const { orderId, challengeId, username } = body;
+  if (!orderId || !challengeId || !username) {
+    return c.json({ error: 'Missing orderId, challengeId, or username' }, 400);
+  }
+  try {
+    const pay = await getPayment(c.env);
+    if (pay.mode !== 'paypal') {
+      return c.json({ error: 'PayPal mode not enabled' }, 400);
+    }
+    const captureResult = await pay.captureOrder(orderId);
+    if (!captureResult.captureId) {
+      return c.json({ error: 'Payment capture failed: no capture returned' }, 500);
+    }
+    const challenges = await kvGet(c.env, KV_KEYS.challenges, []);
+    const challenge = challenges.find(ch => ch.id === challengeId);
+    if (!challenge) return c.json({ error: 'Challenge not found' }, 404);
+    const parts = await kvGet(c.env, KV_KEYS.participations, []);
+    const existing = parts.find(
+      p => p.challengeId === challengeId && p.username === username && p.status === 'active'
+    );
+    if (existing) return c.json({ error: 'Already participated' }, 409);
+    const now = Date.now();
+    const durationMs = challenge.period === 'yearly' ? 365 * 86400000
+      : challenge.period === 'custom' ? (challenge.customDays || 30) * 86400000
+      : 30 * 86400000;
+    const participation = {
+      id: genId('pt'), challengeId: challenge.id, challengeName: challenge.name,
+      username, difficulty: challenge.difficulty, period: challenge.period,
+      customDays: challenge.customDays || null, targetCount: challenge.targetCount,
+      amount: challenge.amount, currency: challenge.currency,
+      paymentTxId: captureResult.captureId,
+      status: 'active', progress: 0,
+      joinedAt: now, expiresAt: now + durationMs,
+      refundedAt: null, refundTxId: null,
+    };
+    parts.push(participation);
+    await kvPut(c.env, KV_KEYS.participations, parts);
+    return c.json(participation);
+  } catch (e) {
+    return new Response(JSON.stringify({ error: e.message || 'PayPal capture failed', stack: e.stack }), {
+      status: 500, headers: { 'Content-Type': 'application/json' }
     });
   }
 });

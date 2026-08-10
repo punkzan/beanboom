@@ -9,7 +9,7 @@ import { DIFFICULTIES } from './constants.js';
 import { addRecord, getBestTime, getRecords, getYearlyChampions } from './core/Leaderboard.js';
 import { getSeoConfig, getAdsConfig, getActivities, getLatestActivities, getFooterContent } from './core/SiteConfig.js';
 import { register, login, logout, getCurrentUser } from './core/Auth.js';
-import { getChallenges, participate, getMyChallenges, updateProgress } from './core/ChallengeAPI.js';
+import { getChallenges, participate, getMyChallenges, updateProgress, capturePaypalPayment } from './core/ChallengeAPI.js';
 import { generateShareCard } from './core/ShareCard.js';
 import { t, scanI18n, getLang, setLang, onLangChange } from './i18n.js';
 
@@ -566,6 +566,16 @@ challengeList.addEventListener('click', async (e) => {
   btn.textContent = t('common.loading');
   const res = await participate(btn.dataset.chId, user.username);
   if (res.ok) {
+    // PayPal 模式：需要跳转到 PayPal 审批
+    if (res.data.needsPaypalApproval) {
+      sessionStorage.setItem('pp_pending', JSON.stringify({
+        orderId: res.data.orderId,
+        chId: btn.dataset.chId,
+        username: user.username,
+      }));
+      window.location.href = res.data.approveUrl;
+      return;
+    }
     btn.textContent = t('challenge.joined');
     // 缓存挑战数据用于分享 (res.data 直接是 participation 对象)
     const ch = challengesCache.find(c => c.id == btn.dataset.chId);
@@ -993,3 +1003,41 @@ function _tryStartBGM() {
 document.addEventListener('click', _tryStartBGM);
 document.addEventListener('keydown', _tryStartBGM);
 document.addEventListener('touchstart', _tryStartBGM);
+
+// === PayPal 支付回调处理 ===
+(async function handlePaypalReturn() {
+  const qs = window.location.search;
+  // 用户取消 PayPal 支付
+  if (qs.includes('pp_cancel=1')) {
+    sessionStorage.removeItem('pp_pending');
+    window.history.replaceState(null, '', window.location.pathname);
+    return;
+  }
+  // 用户从 PayPal 审批返回
+  if (!qs.includes('pp_return=1')) return;
+  const urlParams = new URLSearchParams(qs);
+  const token = urlParams.get('token'); // PayPal 在 return_url 后追加的 order ID
+  const pendingRaw = sessionStorage.getItem('pp_pending');
+  sessionStorage.removeItem('pp_pending');
+  if (!pendingRaw || !token) {
+    alert('PayPal 回调数据缺失，支付未完成');
+    window.history.replaceState(null, '', window.location.pathname);
+    return;
+  }
+  let pending;
+  try { pending = JSON.parse(pendingRaw); } catch { pending = null; }
+  if (!pending || pending.orderId !== token) {
+    alert('PayPal 订单不匹配，支付未完成');
+    window.history.replaceState(null, '', window.location.pathname);
+    return;
+  }
+  const res = await capturePaypalPayment(token, pending.chId, pending.username);
+  if (res.ok) {
+    alert(t('challenge.joined') || 'Challenge joined!');
+    renderChallengeList();
+    loadMyChallenges();
+  } else {
+    alert('PayPal 支付捕获失败: ' + (res.error || 'unknown'));
+  }
+  window.history.replaceState(null, '', window.location.pathname);
+})();

@@ -99,3 +99,11 @@ export function updatePaymentConfig(config) {
     body: JSON.stringify(config),
   });
 }
+
+/** PayPal 支付捕获：从 PayPal 审批返回后调此接口完成支付并创建参与记录 */
+export function capturePaypalPayment(orderId, challengeId, username) {
+  return request('/paypal/capture', {
+    method: 'POST',
+    body: JSON.stringify({ orderId, challengeId, username }),
+  });
+}

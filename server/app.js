@@ -45,7 +45,7 @@ function savePaymentConfig(d) { saveData(PAYMENT_CONFIG_FILE, d); }
 
 // === 支付适配层 ===
 // mock 模式：模拟支付和退款，不涉及真实资金
-// PayPal 适配层（待启用），通过管理后台 payment_config.json 切换模式
+// PayPal 模式：接入 PayPal Orders API v2，沙箱/正式环境通过 payment_config.json 切换
 
 const mockPayment = {
   async charge(amount, userId, challengeId) {
@@ -56,27 +56,90 @@ const mockPayment = {
   },
 };
 
-// PayPal 适配层（后续启用时实现）
-const paypalPayment = {
-  async charge(amount, userId, challengeId) {
-    // TODO: 创建 PayPal Order，返回 approve URL
-    // const order = await fetch('https://api-m.paypal.com/v2/checkout/orders', {...})
-    throw new Error('PayPal 适配层尚未实现');
-  },
-  async refund(captureId, amount) {
-    // TODO: POST https://api-m.paypal.com/v2/payments/captures/{captureId}/refund
-    throw new Error('PayPal 退款尚未实现');
-  },
-};
+function makePaypalAdapter(config) {
+  const baseUrl = config.sandbox ? 'https://api-m.sandbox.paypal.com' : 'https://api-m.paypal.com';
+  let _token = null, _tokenExpires = 0;
+
+  async function getAccessToken() {
+    if (_token && Date.now() < _tokenExpires) return _token;
+    const auth = Buffer.from(config.paypalClientId + ':' + config.paypalClientSecret).toString('base64');
+    const res = await fetch(baseUrl + '/v1/oauth2/token', {
+      method: 'POST',
+      headers: { 'Authorization': 'Basic ' + auth, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'grant_type=client_credentials',
+    });
+    const data = await res.json();
+    if (!res.ok || !data.access_token) throw new Error('PayPal auth failed: ' + (data.error_description || res.status));
+    _token = data.access_token;
+    _tokenExpires = Date.now() + (data.expires_in - 60) * 1000;
+    return _token;
+  }
+
+  return {
+    mode: 'paypal',
+    async createOrder(amount, description, currency, returnUrl, cancelUrl) {
+      const token = await getAccessToken();
+      const cc = (currency || 'usd').toUpperCase();
+      const res = await fetch(baseUrl + '/v2/checkout/orders', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          intent: 'CAPTURE',
+          purchase_units: [{
+            amount: { currency_code: cc, value: String(amount) },
+            description: String(description || '').slice(0, 127),
+          }],
+          application_context: { return_url: returnUrl, cancel_url: cancelUrl },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error('PayPal create order failed: ' + (data.message || res.status));
+      const approveLink = data.links?.find(l => l.rel === 'approve')?.href;
+      return { orderId: data.id, approveUrl: approveLink, status: data.status };
+    },
+    async captureOrder(orderId) {
+      const token = await getAccessToken();
+      const res = await fetch(`${baseUrl}/v2/checkout/orders/${orderId}/capture`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error('PayPal capture failed: ' + (data.message || res.status));
+      const capture = data.purchase_units?.[0]?.payments?.captures?.[0];
+      return { captureId: capture?.id, status: data.status };
+    },
+    async refund(captureId, amount, currency) {
+      const token = await getAccessToken();
+      const cc = (currency || 'usd').toUpperCase();
+      const body = amount ? JSON.stringify({ amount: { currency_code: cc, value: String(amount) } }) : null;
+      const res = await fetch(`${baseUrl}/v2/payments/captures/${captureId}/refund`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error('PayPal refund failed: ' + (data.message || res.status));
+      return { id: data.id, status: data.status };
+    },
+  };
+}
+
+function getPaypalAdapter() {
+  return makePaypalAdapter(getPaymentConfig());
+}
 
 const payment = {
-  charge(amount, userId, challengeId) {
-    const adapter = getPaymentConfig().mode === 'paypal' ? paypalPayment : mockPayment;
-    return adapter.charge(amount, userId, challengeId);
+  mode() { return getPaymentConfig().mode === 'paypal' ? 'paypal' : 'mock'; },
+  adapter() {
+    return getPaymentConfig().mode === 'paypal' ? getPaypalAdapter() : mockPayment;
   },
-  refund(transactionId, amount) {
-    const adapter = getPaymentConfig().mode === 'paypal' ? paypalPayment : mockPayment;
-    return adapter.refund(transactionId, amount);
+  async charge(amount, userId, challengeId) {
+    const ad = this.adapter();
+    return ad.charge(amount, userId, challengeId);
+  },
+  async refund(transactionId, amount, currency) {
+    const ad = this.adapter();
+    return ad.refund(transactionId, amount, currency);
   },
 };
 
@@ -237,7 +300,25 @@ const server = http.createServer(async (req, res) => {
       sendJSON(res, 409, { error: '你已参加此挑战，请先完成或到期后再试' });
       return;
     }
-    // 模拟支付
+
+    // PayPal 模式：创建订单 → 返回 approve URL
+    if (payment.mode() === 'paypal') {
+      const origin = req.headers.origin || `http://localhost:${PORT}`;
+      const returnUrl = `${origin}/?pp_return=1`;
+      const cancelUrl = `${origin}/?pp_cancel=1`;
+      const paypal = getPaypalAdapter();
+      const orderResult = await paypal.createOrder(
+        challenge.amount, challenge.name, challenge.currency, returnUrl, cancelUrl
+      );
+      sendJSON(res, 200, {
+        needsPaypalApproval: true,
+        approveUrl: orderResult.approveUrl,
+        orderId: orderResult.orderId,
+      });
+      return;
+    }
+
+    // Mock 模式：模拟支付
     const payResult = await payment.charge(challenge.amount, username, challengeId);
     const now = Date.now();
     const durationMs = challenge.period === 'yearly' ? 365 * 86400000
@@ -265,6 +346,54 @@ const server = http.createServer(async (req, res) => {
     parts.push(participation);
     saveParticipations(parts);
     sendJSON(res, 200, participation);
+    return;
+  }
+
+  // === PayPal 支付回调：capture 支付 + 创建参与记录 ===
+  if (pathname === '/api/paypal/capture' && method === 'POST') {
+    const body = await readBody(req);
+    const { orderId, challengeId, username } = body;
+    if (!orderId || !challengeId || !username) {
+      sendJSON(res, 400, { error: '缺少 orderId / challengeId / username' });
+      return;
+    }
+    if (payment.mode() !== 'paypal') {
+      sendJSON(res, 400, { error: '当前未启用 PayPal 模式' });
+      return;
+    }
+    try {
+      const paypal = getPaypalAdapter();
+      const captureResult = await paypal.captureOrder(orderId);
+      if (!captureResult.captureId) {
+        sendJSON(res, 500, { error: 'PayPal capture 失败：未返回 capture ID' });
+        return;
+      }
+      const challenges = getChallenges();
+      const challenge = challenges.find(c => c.id === challengeId);
+      if (!challenge) { sendJSON(res, 404, { error: '挑战不存在' }); return; }
+      const parts = getParticipations();
+      const existing = parts.find(p => p.challengeId === challengeId && p.username === username && p.status === 'active');
+      if (existing) { sendJSON(res, 409, { error: '已参加此挑战' }); return; }
+      const now = Date.now();
+      const durationMs = challenge.period === 'yearly' ? 365 * 86400000
+        : challenge.period === 'custom' ? (challenge.customDays || 30) * 86400000
+        : 30 * 86400000;
+      const participation = {
+        id: genId('pt'), challengeId: challenge.id, challengeName: challenge.name,
+        username, difficulty: challenge.difficulty, period: challenge.period,
+        customDays: challenge.customDays || null, targetCount: challenge.targetCount,
+        amount: challenge.amount, currency: challenge.currency,
+        paymentTxId: captureResult.captureId,
+        status: 'active', progress: 0,
+        joinedAt: now, expiresAt: now + durationMs,
+        refundedAt: null, refundTxId: null,
+      };
+      parts.push(participation);
+      saveParticipations(parts);
+      sendJSON(res, 200, participation);
+    } catch (e) {
+      sendJSON(res, 500, { error: e.message || 'PayPal capture failed' });
+    }
     return;
   }
 
