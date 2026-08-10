@@ -208,15 +208,29 @@ app.post('/api/progress', async (c) => {
     return c.json({ error: 'Missing username or difficulty' }, 400);
   }
   const parts = await kvGet(c.env, KV_KEYS.participations, []);
+  const pay = await getPayment(c.env);
   const updated = [];
+  let completed = 0;
   for (const p of parts) {
     if (p.status === 'active' && p.username === username && p.difficulty === difficulty) {
       p.progress += 1;
       updated.push(p);
+      // 达成目标 → 立即退款，允许用户再次参加
+      if (p.progress >= p.targetCount) {
+        try {
+          const refund = await pay.refund(p.paymentTxId, p.amount);
+          p.status = 'refunded';
+          p.refundedAt = Date.now();
+          p.refundTxId = refund.id;
+          completed++;
+        } catch (err) {
+          // 退款失败不阻断进度更新，Cron Worker 到期时会重试
+        }
+      }
     }
   }
   if (updated.length) await kvPut(c.env, KV_KEYS.participations, parts);
-  return c.json({ updated: updated.length, challenges: updated });
+  return c.json({ updated: updated.length, completed, challenges: updated });
 });
 
 // -- 用户注册同步 --

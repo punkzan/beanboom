@@ -697,7 +697,11 @@ overlayRestart.addEventListener('click', () => {
     // 更新付费挑战进度
     const _cu = getCurrentUser();
     if (_cu) updateProgress(_cu.username, game.difficulty).then(r => {
-      if (r.ok && r.data.updated > 0) loadMyChallenges();
+      if (r.ok && r.data.updated > 0) {
+        loadMyChallenges();
+        // 有挑战完成 → 刷新挑战列表，允许用户再次参加
+        if (r.data.completed > 0) renderChallengeList();
+      }
     });
     if (wasBest) {
       overlayRestart.textContent = t('game.newRecord');

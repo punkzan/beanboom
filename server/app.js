@@ -290,14 +290,27 @@ const server = http.createServer(async (req, res) => {
     }
     const parts = getParticipations();
     let updated = [];
+    let completed = 0;
     for (const p of parts) {
       if (p.status === 'active' && p.username === username && p.difficulty === difficulty) {
         p.progress += 1;
         updated.push(p);
+        // 达成目标 → 立即退款，允许用户再次参加
+        if (p.progress >= p.targetCount) {
+          try {
+            const refund = await payment.refund(p.paymentTxId, p.amount);
+            p.status = 'refunded';
+            p.refundedAt = Date.now();
+            p.refundTxId = refund.id;
+            completed++;
+          } catch (err) {
+            // 退款失败不阻断进度更新，Cron Worker 到期时会重试
+          }
+        }
       }
     }
     if (updated.length) saveParticipations(parts);
-    sendJSON(res, 200, { updated: updated.length, challenges: updated });
+    sendJSON(res, 200, { updated: updated.length, completed, challenges: updated });
     return;
   }
 
