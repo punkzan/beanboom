@@ -956,10 +956,12 @@ applySeoConfig();
 renderAdSlots();
 renderActivities();
 renderActivityNotices();
-renderFooterContent();
 
-// === i18n 初始化 ===
+// === i18n 初始化 ===（必须在 renderFooterContent 之前，否则 scanI18n 会覆盖动态内容）
 scanI18n();
+
+// 底部内容（依赖 scanI18n 之后执行，使用管理后台保存的自定义文案）
+renderFooterContent();
 
 // 语言切换按钮
 document.getElementById('nav-lang-btn').addEventListener('click', () => {
