@@ -6,7 +6,7 @@ import { InputHandler } from './input/InputHandler.js';
 import { SoundManager } from './audio/SoundManager.js';
 import { BGMManager } from './audio/BGMManager.js';
 import { DIFFICULTIES } from './constants.js';
-import { addRecord, getBestTime, getRecords, getYearlyChampions } from './core/Leaderboard.js';
+import { addRecord, getBestTime, getRecords, getYearlyChampions, refreshRecords } from './core/Leaderboard.js';
 import { getSeoConfig, getAdsConfig, getActivities, getLatestActivities, fetchFooterContent } from './core/SiteConfig.js';
 import { register, login, logout, getCurrentUser } from './core/Auth.js';
 import { getChallenges, participate, getMyChallenges, updateProgress, capturePaypalPayment } from './core/ChallengeAPI.js';
@@ -826,9 +826,12 @@ lbPeriodTabs.addEventListener('click', (e) => {
   renderLeaderboard();
 });
 
-// 初始渲染全球排行榜
-renderLeaderboard();
-renderYearlyChampions();
+// 初始渲染全球排行榜（先从服务端拉取全局数据，再渲染）
+(async function initLeaderboard() {
+  await refreshRecords();
+  renderLeaderboard();
+  renderYearlyChampions();
+})();
 
 // === 网站配置：SEO / 广告位 / 网站活动 ===
 

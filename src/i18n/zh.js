@@ -207,7 +207,7 @@ export const zh = {
   'footer.aboutTitle': '关于我们',
   'footer.aboutText': 'Bean Boom 是一款融合经典扫雷玩法与拼豆手工艺术风格的免费网页游戏。我们致力于将怀旧游戏体验与现代视觉设计相结合，为全球玩家提供轻松有趣的休闲游戏。',
   'footer.privacyTitle': '隐私政策',
-  'footer.privacyText': '本游戏所有数据均存储在您的浏览器本地（localStorage），不上传至任何服务器。我们不会收集您的个人身份信息。游戏排行榜中您输入的名称和国家/地区仅保存在本地设备。',
+  'footer.privacyText': '本游戏游戏设置、账户信息等数据存储在您的浏览器本地（localStorage），不上传至服务器。全球排行榜中的成绩（用时、用户名、国家/地区）将上传至服务器以实现全局排名展示。我们不会收集您的密码或个人身份信息。',
   'footer.contactTitle': '联系我们',
   'footer.contactText': '如有建议或合作意向，欢迎通过以下方式联系：',
   'footer.email': '邮箱：support@beads-minesweeper.example',

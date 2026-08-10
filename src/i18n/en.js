@@ -207,7 +207,7 @@ export const en = {
   'footer.aboutTitle': 'About',
   'footer.aboutText': 'Bean Boom is a free online game that blends classic minesweeper gameplay with bead art style. We are dedicated to combining nostalgic gaming with modern visual design, offering a casual and fun experience for players worldwide.',
   'footer.privacyTitle': 'Privacy Policy',
-  'footer.privacyText': 'All game data is stored locally in your browser (localStorage) and is not uploaded to any server. We do not collect your personally identifiable information. The name and country/region you enter on the leaderboard are stored only on your local device.',
+  'footer.privacyText': 'Game settings and account data are stored locally in your browser (localStorage). Leaderboard scores (time, username, country/region) are uploaded to our server to enable global ranking. We do not collect your password or personally identifiable information.',
   'footer.contactTitle': 'Contact Us',
   'footer.contactText': 'For suggestions or collaboration inquiries, please contact us at:',
   'footer.email': 'Email: support@beads-minesweeper.example',

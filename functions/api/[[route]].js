@@ -14,7 +14,19 @@ const KV_KEYS = {
   users: 'users',
   paymentConfig: 'payment_config',
   footerContent: 'footer_content',
+  records: 'records',
 };
+
+// 排行榜各难度存储上限
+const RECORD_LIMITS = { easy: 500, medium: 1000, hard: 2000 };
+
+function todayStr() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
 // === 工具函数 ===
 function genId(prefix) {
@@ -460,6 +472,50 @@ app.put('/api/footer-content', async (c) => {
   };
   await kvPut(c.env, KV_KEYS.footerContent, updated);
   return c.json(updated);
+});
+
+// -- 全球排行榜：获取所有难度成绩 --
+app.get('/api/records', async (c) => {
+  const records = await kvGet(c.env, KV_KEYS.records, { easy: [], medium: [], hard: [] });
+  return c.json(records);
+});
+
+// -- 全球排行榜：提交成绩 --
+app.post('/api/records', async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const { difficulty, time, name, region } = body;
+  if (!difficulty || typeof time !== 'number' || time <= 0 || !name) {
+    return c.json({ error: 'Missing or invalid fields (difficulty, time, name required)' }, 400);
+  }
+  const diff = ['easy', 'medium', 'hard'].includes(difficulty) ? difficulty : null;
+  if (!diff) return c.json({ error: 'Invalid difficulty' }, 400);
+
+  // 反垃圾：同一名字+同一难度+同一成绩 5 秒内重复提交忽略
+  const records = await kvGet(c.env, KV_KEYS.records, { easy: [], medium: [], hard: [] });
+  const list = records[diff] || [];
+  const now = Date.now();
+  const dup = list.find(r =>
+    r.name === name && r.time === time && (now - r.timestamp) < 5000
+  );
+  if (dup) {
+    // 重复提交：直接返回当前成绩列表
+    return c.json({ wasBest: false, duplicated: true, records });
+  }
+
+  const wasBest = list.length === 0 || time < Math.min.apply(null, list.map(r => r.time));
+  const record = {
+    time,
+    timestamp: now,
+    date: todayStr(),
+    name: String(name).slice(0, 12),
+    region: String(region || '').slice(0, 20),
+  };
+  list.push(record);
+  list.sort((a, b) => a.time - b.time);
+  records[diff] = list.slice(0, RECORD_LIMITS[diff] || 500);
+
+  await kvPut(c.env, KV_KEYS.records, records);
+  return c.json({ wasBest, records });
 });
 
 // -- 404 --

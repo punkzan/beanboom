@@ -1,10 +1,13 @@
-// 全球排行榜数据层：基于 localStorage 存储各难度成绩历史，
-// 支持日榜 / 月榜 / 年度榜 / 总榜 查询（单机本地记录）
+// 全球排行榜数据层：服务端 KV 存储（全局可见）+ localStorage 本地缓存降级
+// 支持日榜 / 月榜 / 年度榜 / 总榜 查询
 import { t } from '../i18n.js';
 
 const STORAGE_KEY = 'minesweeper-beads-records';
 const LEGACY_KEY = 'minesweeper-beads-best'; // 旧的单条最佳记录
-const LIMITS = { easy: 100, medium: 2000, hard: 100000 };  // 每难度最多保留且显示条数
+const LIMITS = { easy: 100, medium: 2000, hard: 100000 };  // 前端每难度最多显示条数
+
+const BASE = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE)
+  || 'http://localhost:3002/api';
 
 function todayStr() {
   const d = new Date();
@@ -67,13 +70,59 @@ function migrate() {
 }
 migrate();
 
+// === 服务端 API 调用 ===
+
 /**
- * 添加一条胜利记录
- * @param {string} difficulty - easy | medium | hard
- * @param {number} seconds - 用时（秒）
- * @returns {boolean} 是否为新的最佳成绩（用时最短）
+ * 从服务端拉取全球排行榜数据并更新本地缓存
  */
-export function addRecord(difficulty, seconds, name, region) {
+export async function refreshRecords() {
+  try {
+    const res = await fetch(BASE + '/records');
+    if (!res.ok) return;
+    const data = await res.json();
+    saveAll(data);
+  } catch (e) {
+    // 网络异常：保留 localStorage 缓存，不影响使用
+  }
+}
+
+/**
+ * 提交成绩到服务端，成功后自动刷新本地缓存
+ * @param {string} difficulty
+ * @param {number} seconds
+ * @param {string} name
+ * @param {string} region
+ * @returns {Promise<boolean>} 是否为新的最佳成绩
+ */
+export async function postRecord(difficulty, seconds, name, region) {
+  try {
+    const res = await fetch(BASE + '/records', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ difficulty, time: seconds, name: name || t('common.anonymous'), region: region || '' }),
+    });
+    if (!res.ok) {
+      // 服务端失败时，至少保存到本地
+      addRecordLocal(difficulty, seconds, name, region);
+      return false;
+    }
+    const data = await res.json();
+    if (data.records) {
+      saveAll(data.records);
+    }
+    return data.wasBest || false;
+  } catch (e) {
+    // 网络异常：降级到本地存储
+    return addRecordLocal(difficulty, seconds, name, region);
+  }
+}
+
+// === 纯本地操作（降级/同步读取用） ===
+
+/**
+ * 添加一条胜利记录到本地（仅 localStroage，不调 API）
+ */
+export function addRecordLocal(difficulty, seconds, name, region) {
   const data = loadAll();
   const list = data[difficulty] || [];
   const wasBest = list.length === 0 || seconds < Math.min.apply(null, list.map(r => r.time));
@@ -85,7 +134,22 @@ export function addRecord(difficulty, seconds, name, region) {
 }
 
 /**
- * 获取某难度最佳成绩（总榜第一名），无则 null
+ * 添加一条胜利记录（兼容旧接口：先尝试服务端，失败时本地降级）
+ */
+export function addRecord(difficulty, seconds, name, region) {
+  // 立即本地存储（不等待网络），同时异步提交到服务端
+  const wasBest = addRecordLocal(difficulty, seconds, name, region);
+  postRecord(difficulty, seconds, name, region).then(serverWasBest => {
+    if (serverWasBest) {
+      // 服务端确认是最佳成绩，刷新本地缓存同步服务端数据
+      refreshRecords();
+    }
+  }).catch(() => {});
+  return wasBest;
+}
+
+/**
+ * 获取某难度最佳成绩（总榜第一名），无则 null（读本地缓存）
  */
 export function getBestTime(difficulty) {
   const data = loadAll();
@@ -94,7 +158,7 @@ export function getBestTime(difficulty) {
 }
 
 /**
- * 获取某难度某时间窗口的成绩列表（已按用时升序，取前对应难度上限条）
+ * 获取某难度某时间窗口的成绩列表（已按用时升序，读本地缓存）
  * @param {string} difficulty - easy | medium | hard
  * @param {string} period - daily | monthly | yearly | all
  */
@@ -113,7 +177,7 @@ export function getRecords(difficulty, period = 'all') {
 }
 
 /**
- * 获取当年各难度年度第一名记录（用时最短），无记录则该项为 null
+ * 获取当年各难度年度第一名记录（用时最短），无记录则该项为 null（读本地缓存）
  * @returns {{ easy: object|null, medium: object|null, hard: object|null }}
  */
 export function getYearlyChampions() {

@@ -15,6 +15,7 @@ const PARTICIPATIONS_FILE = path.join(DATA_DIR, 'participations.json');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const PAYMENT_CONFIG_FILE = path.join(DATA_DIR, 'payment_config.json');
 const FOOTER_CONTENT_FILE = path.join(DATA_DIR, 'footer_content.json');
+const RECORDS_FILE = path.join(DATA_DIR, 'records.json');
 
 // 确保数据目录和文件存在
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -23,6 +24,7 @@ if (!fs.existsSync(PARTICIPATIONS_FILE)) fs.writeFileSync(PARTICIPATIONS_FILE, '
 if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, '[]');
 if (!fs.existsSync(PAYMENT_CONFIG_FILE)) fs.writeFileSync(PAYMENT_CONFIG_FILE, JSON.stringify({ mode: 'mock', paypalClientId: '', paypalClientSecret: '', sandbox: true, currency: 'usd' }, null, 2));
 if (!fs.existsSync(FOOTER_CONTENT_FILE)) fs.writeFileSync(FOOTER_CONTENT_FILE, JSON.stringify({ aboutTitle: '', aboutText: '', privacyTitle: '', privacyText: '', contactTitle: '', contactText: '', contactEmail: '' }, null, 2));
+if (!fs.existsSync(RECORDS_FILE)) fs.writeFileSync(RECORDS_FILE, JSON.stringify({ easy: [], medium: [], hard: [] }, null, 2));
 
 // === 数据读写 ===
 function loadData(file) {
@@ -46,6 +48,13 @@ function getPaymentConfig() {
 function savePaymentConfig(d) { saveData(PAYMENT_CONFIG_FILE, d); }
 function getFooterContent() { return loadData(FOOTER_CONTENT_FILE); }
 function saveFooterContent(d) { saveData(FOOTER_CONTENT_FILE, d); }
+function getRecords() { return loadData(RECORDS_FILE); }
+function saveRecords(d) { saveData(RECORDS_FILE, d); }
+const RECORD_LIMITS = { easy: 500, medium: 1000, hard: 2000 };
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 
 // === 支付适配层 ===
 // mock 模式：模拟支付和退款，不涉及真实资金
@@ -542,6 +551,47 @@ const server = http.createServer(async (req, res) => {
     };
     saveFooterContent(updated);
     sendJSON(res, 200, updated);
+    return;
+  }
+
+  // === 全球排行榜：获取所有难度成绩 ===
+  if (pathname === '/api/records' && method === 'GET') {
+    sendJSON(res, 200, getRecords());
+    return;
+  }
+
+  // === 全球排行榜：提交成绩 ===
+  if (pathname === '/api/records' && method === 'POST') {
+    const body = await readBody(req);
+    const { difficulty, time, name, region } = body;
+    if (!difficulty || typeof time !== 'number' || time <= 0 || !name) {
+      sendJSON(res, 400, { error: '缺少必填字段（difficulty, time, name）' });
+      return;
+    }
+    const diff = ['easy', 'medium', 'hard'].includes(difficulty) ? difficulty : null;
+    if (!diff) { sendJSON(res, 400, { error: '无效的难度' }); return; }
+
+    const records = getRecords();
+    const list = records[diff] || [];
+    const now = Date.now();
+    // 反垃圾：同名同难度同成绩 5 秒内重复
+    const dup = list.find(r => r.name === name && r.time === time && (now - r.timestamp) < 5000);
+    if (dup) {
+      sendJSON(res, 200, { wasBest: false, duplicated: true, records });
+      return;
+    }
+
+    const wasBest = list.length === 0 || time < Math.min.apply(null, list.map(r => r.time));
+    const record = {
+      time, timestamp: now, date: todayStr(),
+      name: String(name).slice(0, 12),
+      region: String(region || '').slice(0, 20),
+    };
+    list.push(record);
+    list.sort((a, b) => a.time - b.time);
+    records[diff] = list.slice(0, RECORD_LIMITS[diff] || 500);
+    saveRecords(records);
+    sendJSON(res, 200, { wasBest, records });
     return;
   }
 
