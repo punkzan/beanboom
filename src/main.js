@@ -7,7 +7,7 @@ import { SoundManager } from './audio/SoundManager.js';
 import { BGMManager } from './audio/BGMManager.js';
 import { DIFFICULTIES } from './constants.js';
 import { addRecord, getBestTime, getRecords, getYearlyChampions } from './core/Leaderboard.js';
-import { getSeoConfig, getAdsConfig, getActivities, getLatestActivities, getFooterContent } from './core/SiteConfig.js';
+import { getSeoConfig, getAdsConfig, getActivities, getLatestActivities, fetchFooterContent } from './core/SiteConfig.js';
 import { register, login, logout, getCurrentUser } from './core/Auth.js';
 import { getChallenges, participate, getMyChallenges, updateProgress, capturePaypalPayment } from './core/ChallengeAPI.js';
 import { generateShareCard } from './core/ShareCard.js';
@@ -917,9 +917,9 @@ function renderActivityNotices() {
   }).join('');
 }
 
-// 渲染底部内容（关于我们/隐私政策/联系我们）
-function renderFooterContent() {
-  const fc = getFooterContent();
+// 渲染底部内容（关于我们/隐私政策/联系我们）——从服务端 KV 获取，全局生效
+async function renderFooterContent() {
+  const fc = await fetchFooterContent();
   const fields = [
     { id: 'footer-about', titleKey: 'footer.aboutTitle', textKey: 'footer.aboutText', titleVal: fc.aboutTitle, textVal: fc.aboutText },
     { id: 'footer-privacy', titleKey: 'footer.privacyTitle', textKey: 'footer.privacyText', titleVal: fc.privacyTitle, textVal: fc.privacyText },

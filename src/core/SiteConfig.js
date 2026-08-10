@@ -187,6 +187,7 @@ export function clearAdminPassword() {
 }
 
 // === 底部内容（关于我们/隐私政策/联系我们） ===
+// localStorage 版本（本地回退用）
 export function getFooterContent() {
   return loadConfig().footerContent;
 }
@@ -195,4 +196,31 @@ export function setFooterContent(content) {
   const config = loadConfig();
   config.footerContent = { ...config.footerContent, ...content };
   saveConfig(config);
+}
+
+// API 版本（服务端 KV 存储，全局生效）
+async function apiRequest(endpoint, options = {}) {
+  const res = await fetch(endpoint, { headers: { 'Content-Type': 'application/json' }, ...options });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'API error');
+  return data;
+}
+
+export async function fetchFooterContent() {
+  try {
+    return await apiRequest('/api/footer-content');
+  } catch {
+    // 回退到 localStorage
+    return getFooterContent();
+  }
+}
+
+export async function saveFooterContent(content) {
+  try {
+    return await apiRequest('/api/footer-content', { method: 'PUT', body: JSON.stringify(content) });
+  } catch (e) {
+    // 回退到 localStorage
+    setFooterContent(content);
+    throw e;
+  }
 }

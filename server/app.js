@@ -14,6 +14,7 @@ const CHALLENGES_FILE = path.join(DATA_DIR, 'challenges.json');
 const PARTICIPATIONS_FILE = path.join(DATA_DIR, 'participations.json');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const PAYMENT_CONFIG_FILE = path.join(DATA_DIR, 'payment_config.json');
+const FOOTER_CONTENT_FILE = path.join(DATA_DIR, 'footer_content.json');
 
 // 确保数据目录和文件存在
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -21,6 +22,7 @@ if (!fs.existsSync(CHALLENGES_FILE)) fs.writeFileSync(CHALLENGES_FILE, '[]');
 if (!fs.existsSync(PARTICIPATIONS_FILE)) fs.writeFileSync(PARTICIPATIONS_FILE, '[]');
 if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, '[]');
 if (!fs.existsSync(PAYMENT_CONFIG_FILE)) fs.writeFileSync(PAYMENT_CONFIG_FILE, JSON.stringify({ mode: 'mock', paypalClientId: '', paypalClientSecret: '', sandbox: true, currency: 'usd' }, null, 2));
+if (!fs.existsSync(FOOTER_CONTENT_FILE)) fs.writeFileSync(FOOTER_CONTENT_FILE, JSON.stringify({ aboutTitle: '', aboutText: '', privacyTitle: '', privacyText: '', contactTitle: '', contactText: '', contactEmail: '' }, null, 2));
 
 // === 数据读写 ===
 function loadData(file) {
@@ -42,6 +44,8 @@ function getPaymentConfig() {
   catch { return { mode: 'mock', paypalClientId: '', paypalClientSecret: '', sandbox: true, currency: 'usd' }; }
 }
 function savePaymentConfig(d) { saveData(PAYMENT_CONFIG_FILE, d); }
+function getFooterContent() { return loadData(FOOTER_CONTENT_FILE); }
+function saveFooterContent(d) { saveData(FOOTER_CONTENT_FILE, d); }
 
 // === 支付适配层 ===
 // mock 模式：模拟支付和退款，不涉及真实资金
@@ -515,6 +519,28 @@ const server = http.createServer(async (req, res) => {
       currency: String(body.currency || 'usd').slice(0, 10),
     };
     savePaymentConfig(updated);
+    sendJSON(res, 200, updated);
+    return;
+  }
+
+  // === 底部内容（关于我们/隐私政策/联系我们） ===
+  if (pathname === '/api/footer-content' && method === 'GET') {
+    sendJSON(res, 200, getFooterContent());
+    return;
+  }
+
+  if (pathname === '/api/footer-content' && method === 'PUT') {
+    const body = await readBody(req);
+    const updated = {
+      aboutTitle: String(body.aboutTitle || '').slice(0, 200),
+      aboutText: String(body.aboutText || '').slice(0, 2000),
+      privacyTitle: String(body.privacyTitle || '').slice(0, 200),
+      privacyText: String(body.privacyText || '').slice(0, 2000),
+      contactTitle: String(body.contactTitle || '').slice(0, 200),
+      contactText: String(body.contactText || '').slice(0, 1000),
+      contactEmail: String(body.contactEmail || '').slice(0, 200),
+    };
+    saveFooterContent(updated);
     sendJSON(res, 200, updated);
     return;
   }

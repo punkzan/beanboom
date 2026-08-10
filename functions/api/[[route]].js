@@ -13,6 +13,7 @@ const KV_KEYS = {
   participations: 'participations',
   users: 'users',
   paymentConfig: 'payment_config',
+  footerContent: 'footer_content',
 };
 
 // === 工具函数 ===
@@ -431,6 +432,33 @@ app.put('/api/payment-config', async (c) => {
     currency: String(body.currency || 'usd').slice(0, 10),
   };
   await kvPut(c.env, KV_KEYS.paymentConfig, updated);
+  return c.json(updated);
+});
+
+// -- 底部内容（关于我们/隐私政策/联系我们） --
+const DEFAULT_FOOTER = {
+  aboutTitle: '', aboutText: '',
+  privacyTitle: '', privacyText: '',
+  contactTitle: '', contactText: '', contactEmail: '',
+};
+
+app.get('/api/footer-content', async (c) => {
+  const content = await kvGet(c.env, KV_KEYS.footerContent, DEFAULT_FOOTER);
+  return c.json(content);
+});
+
+app.put('/api/footer-content', async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const updated = {
+    aboutTitle: String(body.aboutTitle || '').slice(0, 200),
+    aboutText: String(body.aboutText || '').slice(0, 2000),
+    privacyTitle: String(body.privacyTitle || '').slice(0, 200),
+    privacyText: String(body.privacyText || '').slice(0, 2000),
+    contactTitle: String(body.contactTitle || '').slice(0, 200),
+    contactText: String(body.contactText || '').slice(0, 1000),
+    contactEmail: String(body.contactEmail || '').slice(0, 200),
+  };
+  await kvPut(c.env, KV_KEYS.footerContent, updated);
   return c.json(updated);
 });
 

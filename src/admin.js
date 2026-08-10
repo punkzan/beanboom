@@ -1,4 +1,4 @@
-import { getConfig, setConfig, getActivities, addActivity, updateActivity, deleteActivity, hasAdminPassword, setAdminPassword, verifyAdminPassword, getFooterContent, setFooterContent } from './core/SiteConfig.js';
+import { getConfig, setConfig, getActivities, addActivity, updateActivity, deleteActivity, hasAdminPassword, setAdminPassword, verifyAdminPassword, fetchFooterContent, saveFooterContent } from './core/SiteConfig.js';
 import { getAllChallenges, createChallenge, updateChallenge, deleteChallenge, getUsers, getPaymentConfig, updatePaymentConfig } from './core/ChallengeAPI.js';
 import { t, scanI18n, getLang, setLang, onLangChange } from './i18n.js';
 
@@ -373,8 +373,8 @@ document.getElementById('save-payment').addEventListener('click', async () => {
 });
 
 // === 底部内容管理 ===
-function loadContentForm() {
-  const fc = getFooterContent();
+async function loadContentForm() {
+  const fc = await fetchFooterContent();
   document.getElementById('content-about-title').value = fc.aboutTitle || '';
   document.getElementById('content-about-text').value = fc.aboutText || '';
   document.getElementById('content-privacy-title').value = fc.privacyTitle || '';
@@ -384,17 +384,21 @@ function loadContentForm() {
   document.getElementById('content-contact-email').value = fc.contactEmail || '';
 }
 
-document.getElementById('save-content').addEventListener('click', () => {
-  setFooterContent({
-    aboutTitle: document.getElementById('content-about-title').value.trim(),
-    aboutText: document.getElementById('content-about-text').value.trim(),
-    privacyTitle: document.getElementById('content-privacy-title').value.trim(),
-    privacyText: document.getElementById('content-privacy-text').value.trim(),
-    contactTitle: document.getElementById('content-contact-title').value.trim(),
-    contactText: document.getElementById('content-contact-text').value.trim(),
-    contactEmail: document.getElementById('content-contact-email').value.trim(),
-  });
-  flash('save-content', t('common.saved'));
+document.getElementById('save-content').addEventListener('click', async () => {
+  try {
+    await saveFooterContent({
+      aboutTitle: document.getElementById('content-about-title').value.trim(),
+      aboutText: document.getElementById('content-about-text').value.trim(),
+      privacyTitle: document.getElementById('content-privacy-title').value.trim(),
+      privacyText: document.getElementById('content-privacy-text').value.trim(),
+      contactTitle: document.getElementById('content-contact-title').value.trim(),
+      contactText: document.getElementById('content-contact-text').value.trim(),
+      contactEmail: document.getElementById('content-contact-email').value.trim(),
+    });
+    flash('save-content', t('common.saved'));
+  } catch {
+    flash('save-content', t('admin.pay.saveFailed'));
+  }
 });
 
 // === 工具 ===
