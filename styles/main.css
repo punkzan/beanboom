@@ -1539,10 +1539,11 @@ body {
 /* === 背景标语 === */
 .bg-slogan {
   position: fixed;
-  top: -10%;
-  left: -15%;
-  width: 130%;
-  height: 125%;
+  /* 扩大到 200% 视口并旋转，确保四角也能被文字覆盖 */
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
   transform: rotate(-8deg);
   display: flex;
   flex-direction: column;
@@ -1569,7 +1570,6 @@ body {
 
 /* 移动端：标语行字号适配 */
 @media (max-width: 600px) {
-  .bg-slogan { left: -20%; width: 140%; }
   .bg-slogan-row {
     font-size: clamp(0.65rem, 2.2vw, 0.85rem);
     line-height: 3.2;

@@ -87,17 +87,43 @@ function getLocalizedChallengeName(c) {
 
 // === 背景标语渲染（多行重复 + 错位排列）===
 const SLOGAN_OFFSETS = [0, 0.8, 1.5, 2, 3.5, 4.2, 5.5, 6.5, 8]; // em
-const SLOGAN_ROWS = 30;
 
 function renderSlogan() {
   const container = document.getElementById('bg-slogan');
   if (!container) return;
   const sloganText = t('common.slogan');
   if (!sloganText) return;
+
+  const separator = '\u2003\u2003'; // 两个全角空格
+  const unit = sloganText + separator;
+
+  // 通过临时元素测量单个重复单元的宽高，从而根据视口动态计算需要多少行/重复
+  let phraseWidth = 0;
+  let rowHeight = 0;
+  const probe = document.createElement('span');
+  probe.className = 'bg-slogan-row';
+  probe.style.visibility = 'hidden';
+  probe.style.position = 'absolute';
+  probe.style.whiteSpace = 'nowrap';
+  probe.style.pointerEvents = 'none';
+  probe.textContent = unit;
+  document.body.appendChild(probe);
+  phraseWidth = probe.offsetWidth || 1;
+  rowHeight = probe.offsetHeight || 1;
+  document.body.removeChild(probe);
+
+  const vw = window.innerWidth || 1920;
+  const vh = window.innerHeight || 1080;
+
+  // 容器是 200% 视口，需要内容完全填满；多给一些余量防止出现白边
+  const reps = Math.max(6, Math.min(50, Math.ceil((vw * 2.5) / phraseWidth) + 3));
+  const rows = Math.max(20, Math.min(120, Math.ceil((vh * 2.2) / rowHeight) + 5));
+
+  const repeatedText = unit.repeat(reps);
   let html = '';
-  for (let i = 0; i < SLOGAN_ROWS; i++) {
+  for (let i = 0; i < rows; i++) {
     const offset = SLOGAN_OFFSETS[i % SLOGAN_OFFSETS.length];
-    html += `<span class="bg-slogan-row" style="padding-left:${offset}em">${sloganText}&emsp;&emsp;${sloganText}&emsp;&emsp;${sloganText}&emsp;&emsp;${sloganText}&emsp;&emsp;${sloganText}&emsp;&emsp;${sloganText}</span>`;
+    html += `<span class="bg-slogan-row" style="padding-left:${offset}em">${repeatedText}</span>`;
   }
   container.innerHTML = html;
 }
