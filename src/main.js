@@ -85,6 +85,23 @@ function getLocalizedChallengeName(c) {
   return t('challenge.cardName', c.amount, diff, period);
 }
 
+// === 背景标语渲染（多行重复 + 错位排列）===
+const SLOGAN_OFFSETS = [0, 0.8, 1.5, 2, 3.5, 4.2, 5.5, 6.5, 8]; // em
+const SLOGAN_ROWS = 30;
+
+function renderSlogan() {
+  const container = document.getElementById('bg-slogan');
+  if (!container) return;
+  const sloganText = t('common.slogan');
+  if (!sloganText) return;
+  let html = '';
+  for (let i = 0; i < SLOGAN_ROWS; i++) {
+    const offset = SLOGAN_OFFSETS[i % SLOGAN_OFFSETS.length];
+    html += `<span class="bg-slogan-row" style="padding-left:${offset}em">${sloganText}&emsp;&emsp;${sloganText}&emsp;&emsp;${sloganText}&emsp;&emsp;${sloganText}&emsp;&emsp;${sloganText}&emsp;&emsp;${sloganText}</span>`;
+  }
+  container.innerHTML = html;
+}
+
 // === UI 更新 ===
 function updateUI() {
   mineCountEl.textContent = game.getRemainingMines();
@@ -979,6 +996,8 @@ onLangChange((lang) => {
   document.getElementById('html-root').setAttribute('lang', lang === 'zh' ? 'zh-CN' : 'en-US');
   // 重新扫描静态文本
   scanI18n();
+  // 重新渲染背景标语
+  renderSlogan();
   // 重新渲染动态内容
   renderNavUser();
   renderChallengeSection();
@@ -1025,6 +1044,8 @@ onLangChange((lang) => {
 
   // 同时预加载（带 crossOrigin）供分享卡 canvas 使用
   initBackgroundImage();
+  // 渲染背景标语
+  renderSlogan();
 })();
 
 // BGM：等待首次用户交互后启动菜单背景音乐（浏览器 autoplay 策略）
