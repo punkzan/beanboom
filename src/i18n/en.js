@@ -19,7 +19,7 @@ export const en = {
   'common.notice': 'Notice',
   'common.serverError': 'Cannot connect to server',
   'common.requestFailed': 'Request failed',
-  'common.slogan': 'Surpass yourself,\nsurpass the world',
+  'common.slogan': 'Surpass\nyourself\nsurpass\nthe world',
 
   // ===== Navigation =====
   'nav.about': 'About',

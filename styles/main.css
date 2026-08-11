@@ -1539,35 +1539,35 @@ body {
 /* === 背景标语 === */
 .bg-slogan {
   position: fixed;
-  top: 45%;
+  top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) rotate(-6deg);
-  font-size: clamp(2rem, 7vw, 5.5rem);
+  transform: translate(-50%, -50%) rotate(-4deg);
+  font-size: clamp(2.5rem, 10vw, 7rem);
   font-weight: 900;
-  color: rgba(255, 255, 255, 0.13);
+  color: rgba(255, 255, 255, 0.12);
   white-space: pre-line;
   text-align: center;
-  line-height: 1.35;
-  letter-spacing: 0.12em;
+  line-height: 1.1;
+  letter-spacing: 0.06em;
   pointer-events: none;
   z-index: -1;
   user-select: none;
   -webkit-user-select: none;
   text-shadow:
-    0 0 40px rgba(255, 255, 255, 0.25),
-    0 0 80px rgba(255, 255, 255, 0.12),
-    0 2px 4px rgba(0, 0, 0, 0.3);
+    0 0 60px rgba(255, 255, 255, 0.2),
+    0 0 120px rgba(255, 255, 255, 0.08),
+    0 4px 8px rgba(0, 0, 0, 0.35);
   max-width: 90vw;
 }
 
-/* 移动端：标语稍小，保持两行可读 */
+/* 移动端：字号适配 */
 @media (max-width: 600px) {
   .bg-slogan {
-    font-size: clamp(1.6rem, 8vw, 3rem);
-    letter-spacing: 0.08em;
+    font-size: clamp(2rem, 12vw, 4rem);
+    line-height: 1.15;
     text-shadow:
-      0 0 24px rgba(255, 255, 255, 0.25),
-      0 0 48px rgba(255, 255, 255, 0.1),
-      0 1px 3px rgba(0, 0, 0, 0.3);
+      0 0 36px rgba(255, 255, 255, 0.22),
+      0 0 72px rgba(255, 255, 255, 0.08),
+      0 2px 6px rgba(0, 0, 0, 0.35);
   }
 }
