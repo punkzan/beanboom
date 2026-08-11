@@ -6,7 +6,7 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background: #f5f3ed;
+  background: transparent;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
