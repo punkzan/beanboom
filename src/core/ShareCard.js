@@ -59,6 +59,24 @@ function fmtSec(s) {
   return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
 }
 
+// ---- section: slogan watermark (background) ----
+
+function drawSloganWatermark(ctx, W, H) {
+  const slogan = t('common.slogan');
+  if (!slogan) return;
+
+  ctx.save();
+  ctx.translate(W / 2, H / 2);
+  ctx.rotate(-8 * Math.PI / 180);
+  ctx.globalAlpha = 0.07;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 52px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(slogan, 0, 0);
+  ctx.restore();
+}
+
 // ---- section: header bar ----
 
 function drawHeader(ctx, W, y, data) {
@@ -561,6 +579,9 @@ export function generateShareCard(data) {
 
   ctx.fillStyle = fullBg;
   ctx.fillRect(0, 0, W, H);
+
+  // 背景标语水印
+  drawSloganWatermark(ctx, W, H);
 
   drawHeader(ctx, W, 20, data);
 

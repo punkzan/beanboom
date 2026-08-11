@@ -1499,3 +1499,20 @@ body {
   width: auto;
   display: inline-block;
 }
+
+/* === 背景标语 === */
+.bg-slogan {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-8deg);
+  font-size: 5vw;
+  font-weight: 800;
+  color: rgba(93, 202, 165, 0.06);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 0;
+  letter-spacing: 0.15em;
+  user-select: none;
+  -webkit-user-select: none;
+}
