@@ -19,7 +19,7 @@ export const zh = {
   'common.notice': '公告',
   'common.serverError': '无法连接服务器',
   'common.requestFailed': '请求失败',
-  'common.slogan': '超越自己，超越世界',
+  'common.slogan': '超越自己，\n超越世界',
 
   // ===== 导航栏 =====
   'nav.about': '关于我们',
