@@ -7,6 +7,7 @@
 // 场景 5: 注册用户参加挑战  场景 6: 注册用户完成挑战
 
 import { t } from '../i18n.js';
+import { getCachedBackgroundImage } from './BackgroundImage.js';
 
 const C = {
   MINT:       '#5dcaa5',
@@ -57,6 +58,54 @@ function fmtSec(s) {
   const m = Math.floor(s / 60);
   const sec = s % 60;
   return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+// hex 转 rgba 字符串
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+// ---- section: background image (cover draw) ----
+
+function drawBackgroundImage(ctx, W, H, overlayColor) {
+  const bgImg = getCachedBackgroundImage();
+  if (!bgImg || !bgImg.width) return false;
+
+  try {
+    // object-fit: cover 算法
+    const imgRatio = bgImg.width / bgImg.height;
+    const canvasRatio = W / H;
+    let sx, sy, sw, sh;
+    if (imgRatio > canvasRatio) {
+      sh = bgImg.height;
+      sw = sh * canvasRatio;
+      sx = (bgImg.width - sw) / 2;
+      sy = 0;
+    } else {
+      sw = bgImg.width;
+      sh = sw / canvasRatio;
+      sx = 0;
+      sy = (bgImg.height - sh) / 2;
+    }
+
+    // 绘制图片（带滤镜增强炫酷感）
+    ctx.save();
+    ctx.filter = 'contrast(1.15) saturate(1.25) brightness(0.85)';
+    ctx.drawImage(bgImg, sx, sy, sw, sh, 0, 0, W, H);
+    ctx.restore();
+
+    // 叠加半透明场景色，保持色调统一
+    ctx.fillStyle = hexToRgba(overlayColor, 0.72);
+    ctx.fillRect(0, 0, W, H);
+
+    return true;
+  } catch (e) {
+    // canvas 被污染或图片跨域 → 降级为纯色（已绘制）
+    return false;
+  }
 }
 
 // ---- section: slogan watermark (background) ----
@@ -579,6 +628,9 @@ export function generateShareCard(data) {
 
   ctx.fillStyle = fullBg;
   ctx.fillRect(0, 0, W, H);
+
+  // 尝试绘制每日背景图片（带场景色遮罩），失败则保持纯色
+  drawBackgroundImage(ctx, W, H, fullBg);
 
   // 背景标语水印
   drawSloganWatermark(ctx, W, H);

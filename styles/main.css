@@ -1500,6 +1500,42 @@ body {
   display: inline-block;
 }
 
+/* === 背景图片层 === */
+.bg-image-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: -3;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  /* CSS 滤镜：增加对比度/饱和度，让图片更炫酷 */
+  filter: contrast(1.15) saturate(1.25) brightness(0.9);
+}
+.bg-image-layer.loaded {
+  opacity: 1;
+}
+
+.bg-image-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+  /* 深色渐变遮罩：保证页面内容可读性 */
+  background: linear-gradient(
+    135deg,
+    rgba(20, 25, 30, 0.72) 0%,
+    rgba(30, 35, 40, 0.65) 50%,
+    rgba(20, 25, 30, 0.75) 100%
+  );
+}
+
 /* === 背景标语 === */
 .bg-slogan {
   position: fixed;
@@ -1508,10 +1544,10 @@ body {
   transform: translate(-50%, -50%) rotate(-8deg);
   font-size: 5vw;
   font-weight: 800;
-  color: rgba(93, 202, 165, 0.06);
+  color: rgba(255, 255, 255, 0.08);
   white-space: nowrap;
   pointer-events: none;
-  z-index: 0;
+  z-index: -1;
   letter-spacing: 0.15em;
   user-select: none;
   -webkit-user-select: none;

@@ -11,6 +11,7 @@ import { getSeoConfig, getAdsConfig, getActivities, getLatestActivities, fetchFo
 import { register, login, logout, getCurrentUser } from './core/Auth.js';
 import { getChallenges, participate, getMyChallenges, updateProgress, capturePaypalPayment } from './core/ChallengeAPI.js';
 import { generateShareCard } from './core/ShareCard.js';
+import { getDailyBackgroundUrl, getFallbackUrl, preloadBackgroundImage, initBackgroundImage } from './core/BackgroundImage.js';
 import { t, scanI18n, getLang, setLang, onLangChange } from './i18n.js';
 
 let game = new Game('easy');
@@ -994,6 +995,37 @@ onLangChange((lang) => {
   // 更新 SEO meta
   document.title = t('common.siteTitle');
 });
+
+// === 每日背景图片 ===
+(function initDailyBackground() {
+  const bgLayer = document.getElementById('bg-image-layer');
+  if (!bgLayer) return;
+
+  const primaryUrl = getDailyBackgroundUrl();
+  const fallbackUrl = getFallbackUrl();
+
+  // 尝试加载主图（Unsplash 精选极限运动）
+  const trySetBg = (url, isFallback) => {
+    const testImg = new Image();
+    testImg.onload = () => {
+      bgLayer.style.backgroundImage = `url("${url}")`;
+      bgLayer.classList.add('loaded');
+    };
+    testImg.onerror = () => {
+      if (!isFallback) {
+        // Unsplash 失败 → 尝试 Picsum 后备
+        trySetBg(fallbackUrl, true);
+      }
+      // 全部失败 → 保持默认纯色背景（body 的 background）
+    };
+    testImg.src = url;
+  };
+
+  trySetBg(primaryUrl, false);
+
+  // 同时预加载（带 crossOrigin）供分享卡 canvas 使用
+  initBackgroundImage();
+})();
 
 // BGM：等待首次用户交互后启动菜单背景音乐（浏览器 autoplay 策略）
 let _bgmStarted = false;
