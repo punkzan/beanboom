@@ -1,0 +1,2 @@
+# GSC HTML 验证：带 .html 后缀直接 200，避免 Cloudflare 的 308 pretty-URL 重定向
+/googlef4ec047f390e8837.html /googlef4ec047f390e8837 200
