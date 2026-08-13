@@ -6,9 +6,9 @@ const STORAGE_KEY = 'minesweeper-beads-site-config';
 // 默认配置
 const DEFAULT_CONFIG = {
   seo: {
-    title: 'Bean Boom - 经典扫雷网页游戏',
-    description: 'Bean Boom 是拼豆风格的经典扫雷游戏，在浏览器中免费游玩。支持简单、中等、困难三种难度，全球排行榜记录你的最佳成绩。',
-    keywords: '扫雷,Bean Boom,网页游戏,在线游戏,minesweeper,免费游戏',
+    title: 'Bean Boom - Free Online Minesweeper Game',
+    description: 'Play Bean Boom, a free online minesweeper game with a unique bead art style. Three difficulty levels, a global leaderboard, and daily hot topics. Play instantly in your browser - no download needed.',
+    keywords: 'bean boom,minesweeper,free minesweeper game,online minesweeper,bead art game,browser game',
   },
   ads: {
     enabled: false,

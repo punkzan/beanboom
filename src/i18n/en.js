@@ -211,7 +211,7 @@ export const en = {
   'footer.privacyText': 'Game settings and account data are stored locally in your browser (localStorage). Leaderboard scores (time, username, country/region) are uploaded to our server to enable global ranking. We do not collect your password or personally identifiable information.',
   'footer.contactTitle': 'Contact Us',
   'footer.contactText': 'For suggestions or collaboration inquiries, please contact us at:',
-  'footer.email': 'Email: support@beads-minesweeper.example',
+  'footer.email': 'Email: fanlnq@163.com',
   'footer.emailPrefix': 'Email: ',
   'footer.activitiesTitle': 'Events',
   'footer.copyright': '© 2026 Bean Boom · Classic Minesweeper Online',

@@ -211,7 +211,7 @@ export const zh = {
   'footer.privacyText': '本游戏游戏设置、账户信息等数据存储在您的浏览器本地（localStorage），不上传至服务器。全球排行榜中的成绩（用时、用户名、国家/地区）将上传至服务器以实现全局排名展示。我们不会收集您的密码或个人身份信息。',
   'footer.contactTitle': '联系我们',
   'footer.contactText': '如有建议或合作意向，欢迎通过以下方式联系：',
-  'footer.email': '邮箱：support@beads-minesweeper.example',
+  'footer.email': '邮箱：fanlnq@163.com',
   'footer.emailPrefix': '邮箱：',
   'footer.activitiesTitle': '网站活动',
   'footer.copyright': '© 2026 Bean Boom · 经典扫雷网页游戏',
