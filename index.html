@@ -60,78 +60,78 @@
   <link rel="stylesheet" href="/styles/main.css">
 </head>
 <body>
-  <!-- 背景图片层 -->
+  <!-- Background image layers -->
   <div class="bg-image-layer" id="bg-image-layer"></div>
   <div class="bg-image-overlay" id="bg-image-overlay"></div>
 
-  <!-- 背景标语 -->
+  <!-- Background slogan -->
   <div class="bg-slogan" id="bg-slogan"></div>
 
-  <!-- 顶部导航栏 -->
+  <!-- Top navigation bar -->
   <nav class="site-nav">
-    <button class="nav-btn" data-nav="about" data-i18n="nav.about">关于我们</button>
-    <button class="nav-btn" data-nav="privacy" data-i18n="nav.privacy">隐私政策</button>
-    <button class="nav-btn" data-nav="contact" data-i18n="nav.contact">联系我们</button>
-    <button class="nav-btn" data-nav="activities" data-i18n="nav.activities">网站活动</button>
+    <button class="nav-btn" data-nav="about" data-i18n="nav.about">About</button>
+    <button class="nav-btn" data-nav="privacy" data-i18n="nav.privacy">Privacy</button>
+    <button class="nav-btn" data-nav="contact" data-i18n="nav.contact">Contact</button>
+    <button class="nav-btn" data-nav="activities" data-i18n="nav.activities">Events</button>
     <button class="nav-btn nav-lang-btn" id="nav-lang-btn" title="Language / 语言">🌐</button>
     <div class="nav-user" id="nav-user">
-      <button class="nav-btn nav-auth-btn" id="nav-login-btn" data-i18n="nav.login">登录</button>
-      <button class="nav-btn nav-auth-btn" id="nav-register-btn" data-i18n="nav.register">注册</button>
+      <button class="nav-btn nav-auth-btn" id="nav-login-btn" data-i18n="nav.login">Log in</button>
+      <button class="nav-btn nav-auth-btn" id="nav-register-btn" data-i18n="nav.register">Sign up</button>
     </div>
   </nav>
 
-  <!-- 顶端活动通知 -->
+  <!-- Top activity notices -->
   <div class="activity-notices" id="activity-notices"></div>
 
-  <!-- 付费挑战（活动通知下方） -->
+  <!-- Paid challenges -->
   <section class="challenge-section" id="challenge-section">
     <div class="challenge-header">
-      <h2 class="challenge-title" data-i18n="challenge.title">🎯 付费挑战</h2>
-      <span class="challenge-hint" data-i18n="challenge.hint">付费参加 · 达成目标全额退还 · 未达成不退</span>
+      <h2 class="challenge-title" data-i18n="challenge.title">🎯 Challenge</h2>
+      <span class="challenge-hint" data-i18n="challenge.hint">Pay to enter · Full refund upon completion · No refund otherwise</span>
     </div>
-    <div class="challenge-login-hint" id="challenge-login-hint" data-i18n="challenge.loginHint">登录/注册账户后即可参加付费挑战</div>
+    <div class="challenge-login-hint" id="challenge-login-hint" data-i18n="challenge.loginHint">Log in or sign up to join challenges</div>
     <div class="challenge-tabs" id="challenge-tabs">
-      <button class="ch-tab active" data-ch-tab="available" data-i18n="challenge.tabAvailable">可参加</button>
-      <button class="ch-tab" data-ch-tab="mine" data-i18n="challenge.tabMine">我的挑战</button>
+      <button class="ch-tab active" data-ch-tab="available" data-i18n="challenge.tabAvailable">Available</button>
+      <button class="ch-tab" data-ch-tab="mine" data-i18n="challenge.tabMine">My Challenges</button>
     </div>
     <div class="challenge-list" id="challenge-list"></div>
     <div class="my-challenges" id="my-challenges"></div>
   </section>
 
-  <!-- 顶部广告位 -->
+  <!-- Top ad slot -->
   <div class="ad-slot ad-top" data-ad-pos="top"></div>
 
   <div class="game-container">
     <header class="game-header">
       <h1 class="game-title">Bean Boom</h1>
       <div class="difficulty-bar">
-        <button class="diff-btn active" data-diff="easy" data-i18n="game.diff.easy">简单</button>
-        <button class="diff-btn" data-diff="medium" data-i18n="game.diff.medium">中等</button>
-        <button class="diff-btn" data-diff="hard" data-i18n="game.diff.hard">困难</button>
+        <button class="diff-btn active" data-diff="easy" data-i18n="game.diff.easy">Easy</button>
+        <button class="diff-btn" data-diff="medium" data-i18n="game.diff.medium">Medium</button>
+        <button class="diff-btn" data-diff="hard" data-i18n="game.diff.hard">Hard</button>
       </div>
       <div class="status-bar">
         <div class="status-item mine-counter">
           <span class="status-icon">●</span>
-          <span class="status-label" data-i18n="game.remain">剩余</span>
+          <span class="status-label" data-i18n="game.remain">Remaining</span>
           <span class="status-value" id="mine-count">10</span>
         </div>
         <div class="status-item timer">
           <span class="status-icon">⏱</span>
-          <span class="status-label" data-i18n="game.time">用时</span>
+          <span class="status-label" data-i18n="game.time">Time</span>
           <span class="status-value" id="timer">00:00</span>
         </div>
-        <button class="restart-btn" id="restart-btn" data-i18n="game.restart">重新开始</button>
-        <button class="sound-btn" id="sound-btn" data-i18n-title="game.sound" title="音效开关">🔊</button>
-        <button class="lb-trigger-btn" id="lb-trigger-btn" data-i18n-title="game.leaderboard" title="全球排行榜">🏆</button>
+        <button class="restart-btn" id="restart-btn" data-i18n="game.restart">Restart</button>
+        <button class="sound-btn" id="sound-btn" data-i18n-title="game.sound" title="Sound">🔊</button>
+        <button class="lb-trigger-btn" id="lb-trigger-btn" data-i18n-title="game.leaderboard" title="Leaderboard">🏆</button>
       </div>
       <div class="mode-bar">
         <button class="mode-btn active" id="mode-reveal" data-mode="reveal">
           <span class="mode-icon">👆</span>
-          <span class="mode-label" data-i18n="game.reveal">翻开</span>
+          <span class="mode-label" data-i18n="game.reveal">Reveal</span>
         </button>
         <button class="mode-btn" id="mode-flag" data-mode="flag">
           <span class="mode-icon">🚩</span>
-          <span class="mode-label" data-i18n="game.flag">标记</span>
+          <span class="mode-label" data-i18n="game.flag">Flag</span>
         </button>
       </div>
     </header>
@@ -143,40 +143,40 @@
           <p class="overlay-subtitle" id="overlay-subtitle"></p>
           <p class="overlay-best" id="overlay-best"></p>
           <div class="overlay-inputs" id="overlay-inputs">
-            <input class="overlay-name-input" id="overlay-name-input" type="text" maxlength="12" data-i18n-placeholder="game.namePlaceholder" placeholder="你的名字">
-            <input class="overlay-region-input" id="overlay-region-input" type="text" maxlength="20" data-i18n-placeholder="game.regionPlaceholder" placeholder="国家/地区">
+            <input class="overlay-name-input" id="overlay-name-input" type="text" maxlength="12" data-i18n-placeholder="game.namePlaceholder" placeholder="Your name">
+            <input class="overlay-region-input" id="overlay-region-input" type="text" maxlength="20" data-i18n-placeholder="game.regionPlaceholder" placeholder="Country/Region">
           </div>
-          <button class="restart-btn" id="overlay-restart" data-i18n="game.playAgain">再来一局</button>
-          <button class="share-trigger-btn" id="overlay-share-btn" style="display:none" data-i18n="share.title">分享战绩</button>
+          <button class="restart-btn" id="overlay-restart" data-i18n="game.playAgain">Play Again</button>
+          <button class="share-trigger-btn" id="overlay-share-btn" style="display:none" data-i18n="share.title">Share</button>
         </div>
       </div>
     </div>
     <footer class="game-footer">
-      <p class="hint-text" id="hint-text" data-i18n="game.hint">点击翻开 · 右键/长按标记 · 双击数字快速展开</p>
+      <p class="hint-text" id="hint-text" data-i18n="game.hint">Click to reveal · Right-click/long-press to flag · Double-click number to expand</p>
     </footer>
   </div>
 
-  <!-- 中间广告位 -->
+  <!-- Inline ad slot -->
   <div class="ad-slot ad-inline" data-ad-pos="inline"></div>
 
-  <!-- 全球排行榜（游戏下方） -->
+  <!-- Global leaderboard -->
   <section class="lb-inline" id="lb-inline">
     <div class="lb-inline-header">
-      <h2 class="lb-inline-title" data-i18n="lb.title">🏆 全球排行榜</h2>
+      <h2 class="lb-inline-title" data-i18n="lb.title">🏆 Global Leaderboard</h2>
       <div class="lb-diff-tabs" id="lb-diff-tabs">
-        <button class="lb-tab" data-lb-diff="easy" data-i18n="game.diff.easy">简单</button>
-        <button class="lb-tab" data-lb-diff="medium" data-i18n="game.diff.medium">中等</button>
-        <button class="lb-tab" data-lb-diff="hard" data-i18n="game.diff.hard">困难</button>
+        <button class="lb-tab" data-lb-diff="easy" data-i18n="game.diff.easy">Easy</button>
+        <button class="lb-tab" data-lb-diff="medium" data-i18n="game.diff.medium">Medium</button>
+        <button class="lb-tab" data-lb-diff="hard" data-i18n="game.diff.hard">Hard</button>
       </div>
       <div class="lb-period-tabs" id="lb-period-tabs">
-        <button class="lb-tab" data-lb-period="daily" data-i18n="lb.tab.daily">日榜</button>
-        <button class="lb-tab" data-lb-period="monthly" data-i18n="lb.tab.monthly">月榜</button>
-        <button class="lb-tab" data-lb-period="yearly" data-i18n="lb.tab.yearly">年度榜</button>
-        <button class="lb-tab" data-lb-period="all" data-i18n="lb.tab.all">总榜</button>
+        <button class="lb-tab" data-lb-period="daily" data-i18n="lb.tab.daily">Daily</button>
+        <button class="lb-tab" data-lb-period="monthly" data-i18n="lb.tab.monthly">Monthly</button>
+        <button class="lb-tab" data-lb-period="yearly" data-i18n="lb.tab.yearly">Yearly</button>
+        <button class="lb-tab" data-lb-period="all" data-i18n="lb.tab.all">All-Time</button>
       </div>
     </div>
     <div class="lb-yearly-champions" id="lb-yearly-champions">
-      <div class="lb-yc-title" data-i18n="lb.yearlyChampTitle">🏆 当年年度榜首</div>
+      <div class="lb-yc-title" data-i18n="lb.yearlyChampTitle">🏆 Yearly Champion</div>
       <div class="lb-yc-cards">
         <div class="lb-yc-card" data-yc-diff="easy"></div>
         <div class="lb-yc-card" data-yc-diff="medium"></div>
@@ -188,65 +188,109 @@
     </div>
   </section>
 
-  <!-- 底部广告位 -->
+  <!-- SEO content (static English text for search engines) -->
+  <section class="seo-content">
+    <div class="seo-card">
+      <h2>Bean Boom - Free Online Minesweeper Game</h2>
+      <p>Bean Boom is a <strong>free online minesweeper game</strong> with a unique bead art style. Inspired by classic minesweeper puzzles and perler bead craft, it brings the timeless logic game to your browser with colorful visuals, three difficulty levels, and a global leaderboard. No download and no registration are required to start playing.</p>
+
+      <h3>How to Play Minesweeper Online</h3>
+      <ol>
+        <li><strong>Reveal tiles</strong> by clicking or tapping cells on the board.</li>
+        <li>Each number tells you how many mines are hidden in the eight adjacent cells.</li>
+        <li><strong>Flag suspected mines</strong> with right-click on desktop or long-press on mobile.</li>
+        <li>Clear every safe cell without hitting a mine to win the game.</li>
+      </ol>
+
+      <h3>Game Features</h3>
+      <ul>
+        <li>Three difficulty levels: Easy, Medium, and Hard</li>
+        <li>Global leaderboard with daily, monthly, and all-time rankings</li>
+        <li>Unique bead art style inspired by perler bead craft</li>
+        <li>Paid challenges with a full refund on goal completion</li>
+        <li>Works on desktop and mobile browsers</li>
+        <li>Play instantly - no download or installation needed</li>
+      </ul>
+
+      <h3>Frequently Asked Questions</h3>
+      <details>
+        <summary>Is Bean Boom free to play?</summary>
+        <p>Yes. The core minesweeper game is completely free. Optional paid challenges are available if you want to compete for rewards.</p>
+      </details>
+      <details>
+        <summary>Do I need to download anything?</summary>
+        <p>No. Bean Boom runs directly in your browser. Just open the page and start playing.</p>
+      </details>
+      <details>
+        <summary>Can I play on my phone?</summary>
+        <p>Yes. Bean Boom works on both desktop and mobile browsers, with touch controls for revealing and flagging tiles.</p>
+      </details>
+      <details>
+        <summary>How does the global leaderboard work?</summary>
+        <p>Your best times are submitted to the server after each game. Compete with players around the world across daily, monthly, and all-time rankings.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- Bottom ad slot -->
   <div class="ad-slot ad-bottom" data-ad-pos="bottom"></div>
 
-  <!-- 底部信息区 -->
+  <!-- Site footer -->
   <footer class="site-footer">
     <div class="footer-grid">
       <section class="footer-section" id="footer-about">
-        <h3 class="footer-title" data-i18n="footer.aboutTitle">关于我们</h3>
-        <p data-i18n="footer.aboutText">Bean Boom 是一款融合经典扫雷玩法与拼豆手工艺术风格的免费网页游戏。我们致力于将怀旧游戏体验与现代视觉设计相结合，为全球玩家提供轻松有趣的休闲游戏。</p>
+        <h3 class="footer-title" data-i18n="footer.aboutTitle">About</h3>
+        <p data-i18n="footer.aboutText">Bean Boom is a free online game that blends classic minesweeper gameplay with bead art style. We are dedicated to combining nostalgic gaming with modern visual design, offering a casual and fun experience for players worldwide.</p>
       </section>
       <section class="footer-section" id="footer-privacy">
-        <h3 class="footer-title" data-i18n="footer.privacyTitle">隐私政策</h3>
-        <p data-i18n="footer.privacyText">本游戏所有数据均存储在您的浏览器本地（localStorage），不上传至任何服务器。我们不会收集您的个人身份信息。游戏排行榜中您输入的名称和国家/地区仅保存在本地设备。</p>
+        <h3 class="footer-title" data-i18n="footer.privacyTitle">Privacy Policy</h3>
+        <p data-i18n="footer.privacyText">Game settings and account data are stored locally in your browser (localStorage). Leaderboard scores (time, username, country/region) are uploaded to our server to enable global ranking. We do not collect your password or personally identifiable information.</p>
       </section>
       <section class="footer-section" id="footer-contact">
-        <h3 class="footer-title" data-i18n="footer.contactTitle">联系我们</h3>
-        <p data-i18n="footer.contactText">如有建议或合作意向，欢迎通过以下方式联系：</p>
-        <p data-i18n="footer.email">邮箱：fanlnq@163.com</p>
+        <h3 class="footer-title" data-i18n="footer.contactTitle">Contact Us</h3>
+        <p data-i18n="footer.contactText">For suggestions or collaboration inquiries, please contact us at:</p>
+        <p data-i18n="footer.email">Email: fanlnq@163.com</p>
       </section>
       <section class="footer-section" id="footer-activities">
-        <h3 class="footer-title" data-i18n="footer.activitiesTitle">网站活动</h3>
+        <h3 class="footer-title" data-i18n="footer.activitiesTitle">Events</h3>
         <div id="activities-content"></div>
       </section>
     </div>
     <div class="footer-copyright">
-      <p data-i18n="footer.copyright">&copy; 2026 Bean Boom · 经典扫雷网页游戏</p>
+      <p data-i18n="footer.copyright">&copy; 2026 Bean Boom · Classic Minesweeper Online</p>
     </div>
   </footer>
 
-  <!-- 账户注册/登录弹窗 -->
+  <!-- Auth modal -->
   <div class="auth-modal" id="auth-modal">
     <div class="auth-modal-content">
-      <h3 class="auth-modal-title" id="auth-modal-title" data-i18n="auth.registerTitle">注册账户</h3>
+      <h3 class="auth-modal-title" id="auth-modal-title" data-i18n="auth.registerTitle">Create Account</h3>
       <div class="auth-form">
-        <input class="auth-input" id="auth-username" type="text" maxlength="16" data-i18n-placeholder="auth.usernamePlaceholder" placeholder="账户名（最多16字符）" autocomplete="username">
-        <input class="auth-input" id="auth-password" type="password" maxlength="32" data-i18n-placeholder="auth.passwordPlaceholder" placeholder="密码（至少4位）" autocomplete="off">
-        <input class="auth-input auth-region-field" id="auth-region" type="text" maxlength="20" data-i18n-placeholder="auth.regionPlaceholder" placeholder="来自国家/地区" autocomplete="off">
-        <input class="auth-input auth-email-field" id="auth-email" type="email" maxlength="80" required data-i18n-placeholder="auth.emailPlaceholder" placeholder="电子邮箱（必填）" autocomplete="email">
+        <input class="auth-input" id="auth-username" type="text" maxlength="16" data-i18n-placeholder="auth.usernamePlaceholder" placeholder="Username (max 16 chars)" autocomplete="username">
+        <input class="auth-input" id="auth-password" type="password" maxlength="32" data-i18n-placeholder="auth.passwordPlaceholder" placeholder="Password (min 4 chars)" autocomplete="off">
+        <input class="auth-input auth-region-field" id="auth-region" type="text" maxlength="20" data-i18n-placeholder="auth.regionPlaceholder" placeholder="Country/Region" autocomplete="off">
+        <input class="auth-input auth-email-field" id="auth-email" type="email" maxlength="80" required data-i18n-placeholder="auth.emailPlaceholder" placeholder="Email address (required)" autocomplete="email">
         <p class="auth-error" id="auth-error"></p>
-        <button class="auth-submit-btn" id="auth-submit" data-i18n="auth.submitRegister">注册</button>
-        <button class="auth-switch" id="auth-switch" data-i18n="auth.switchToLogin">已有账户？去登录</button>
+        <button class="auth-submit-btn" id="auth-submit" data-i18n="auth.submitRegister">Sign Up</button>
+        <button class="auth-switch" id="auth-switch" data-i18n="auth.switchToLogin">Already have an account? Log in</button>
       </div>
-      <button class="auth-close" id="auth-close" data-i18n-title="common.close" title="关闭">×</button>
+      <button class="auth-close" id="auth-close" data-i18n-title="common.close" title="Close">×</button>
     </div>
   </div>
 
-  <!-- 分享图弹窗 -->
+  <!-- Share modal -->
   <div class="share-modal" id="share-modal">
     <div class="share-modal-content">
-      <h3 class="share-modal-title" data-i18n="share.title">分享战绩</h3>
+      <h3 class="share-modal-title" data-i18n="share.title">Share</h3>
       <div class="share-preview-wrap">
-        <img class="share-preview-img" id="share-preview-img" alt="分享图预览">
+        <img class="share-preview-img" id="share-preview-img" alt="Share image preview">
       </div>
       <div class="share-text-box" id="share-text-box"></div>
       <div class="share-actions">
-        <button class="share-btn share-download-btn" id="share-download-btn" data-i18n="share.download">下载图片</button>
-        <button class="share-btn share-copy-btn" id="share-copy-btn" data-i18n="share.copy">复制文案</button>
+        <button class="share-btn share-download-btn" id="share-download-btn" data-i18n="share.download">Download Image</button>
+        <button class="share-btn share-copy-btn" id="share-copy-btn" data-i18n="share.copy">Copy Caption</button>
       </div>
-      <button class="share-close" id="share-close" data-i18n-title="common.close" title="关闭">×</button>
+      <button class="share-close" id="share-close" data-i18n-title="common.close" title="Close">×</button>
     </div>
   </div>
 
