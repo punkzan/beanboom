@@ -14,8 +14,29 @@ const DIFF_META = {
 
 let resvgReady = null;
 function ensureResvg() {
-  if (!resvgReady) resvgReady = initWasm(resvgWasm);
+  if (!resvgReady) {
+    console.log('[og] initWasm start, typeof resvgWasm =', typeof resvgWasm,
+      ', ctor =', resvgWasm && resvgWasm.constructor && resvgWasm.constructor.name,
+      ', isWasmModule =', typeof WebAssembly !== 'undefined' && resvgWasm instanceof WebAssembly.Module);
+    resvgReady = initWasm(resvgWasm).then(
+      (v) => { console.log('[og] initWasm resolved'); return v; },
+      (e) => {
+        console.log('[og] initWasm REJECTED:', e && e.message);
+        resvgReady = null; // allow retry on next request
+        throw e;
+      }
+    );
+  } else {
+    console.log('[og] reusing existing init promise, settled =', typeof resvgReady.status === 'string' ? resvgReady.status : 'unknown');
+  }
   return resvgReady;
+}
+
+function withTimeout(p, ms, label) {
+  return Promise.race([
+    p,
+    new Promise((_, rej) => setTimeout(() => rej(new Error(label + ' timed out after ' + ms + 'ms')), ms)),
+  ]);
 }
 
 function b64ToBuffer(b64) {
@@ -194,17 +215,25 @@ export async function onRequestGet(context) {
   const timeStr = time !== null ? fmtTime(time) : '0:00';
 
   try {
-    await ensureResvg();
+    console.log('[og] request start');
+    await withTimeout(ensureResvg(), 15000, 'initWasm');
     const fonts = [
       { name: 'Inter', data: b64ToBuffer(INTER_400), weight: 400, style: 'normal' },
       { name: 'Inter', data: b64ToBuffer(INTER_700), weight: 700, style: 'normal' },
     ];
-    const svg = await satori(buildElement(diff, timeStr, name, isWin), {
-      width: 1200,
-      height: 630,
-      fonts,
-    });
+    console.log('[og] fonts decoded');
+    const svg = await withTimeout(
+      satori(buildElement(diff, timeStr, name, isWin), {
+        width: 1200,
+        height: 630,
+        fonts,
+      }),
+      15000,
+      'satori'
+    );
+    console.log('[og] satori done, svg len =', svg.length);
     const png = new Resvg(svg, { fitTo: { mode: 'width', value: 1200 } }).render().asPng();
+    console.log('[og] resvg done, png len =', png.length);
     return new Response(png, {
       headers: {
         'content-type': 'image/png',
@@ -212,6 +241,7 @@ export async function onRequestGet(context) {
       },
     });
   } catch (e) {
+    console.log('[og] FAILED:', e && e.message, e && e.stack);
     return new Response('og render failed: ' + (e && e.message ? e.message : 'unknown'), {
       status: 500,
       headers: { 'content-type': 'text/plain' },
