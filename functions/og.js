@@ -12,35 +12,6 @@ const DIFF_META = {
   hard: { label: 'HARD', color: '#e53935' },
 };
 
-// QR code matrix for https://bb.superzan.net (25x25, error correction M)
-const QR_MATRIX = [
-  [1,1,1,1,1,1,1,0,1,0,1,0,0,1,1,0,0,0,1,1,1,1,1,1,1],
-  [1,0,0,0,0,0,1,0,1,1,1,0,0,1,1,0,0,0,1,0,0,0,0,0,1],
-  [1,0,1,1,1,0,1,0,1,1,1,1,0,1,1,0,1,0,1,0,1,1,1,0,1],
-  [1,0,1,1,1,0,1,0,0,1,0,0,1,1,0,1,0,0,1,0,1,1,1,0,1],
-  [1,0,1,1,1,0,1,0,1,1,1,1,0,1,1,0,1,0,1,0,1,1,1,0,1],
-  [1,0,0,0,0,0,1,0,0,0,0,1,1,1,1,0,1,0,1,0,0,0,0,0,1],
-  [1,1,1,1,1,1,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,1,1,1,1],
-  [0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,1,0,0,0,0,0,0,0,0,0],
-  [1,0,0,1,1,1,1,1,1,1,1,1,1,0,0,1,0,1,0,0,1,0,1,1,1],
-  [1,0,1,1,0,0,0,0,1,0,1,1,0,1,1,1,0,0,0,1,1,1,1,1,0],
-  [1,0,1,1,1,1,1,0,1,1,0,0,1,1,0,1,1,1,1,0,0,1,0,0,1],
-  [0,0,0,1,1,0,0,1,1,0,1,0,1,0,0,0,0,1,0,0,0,1,1,1,1],
-  [1,0,1,0,1,1,1,1,1,1,0,1,1,0,0,1,1,1,1,1,0,0,0,0,1],
-  [1,1,1,0,1,0,0,1,0,1,1,0,0,0,1,1,1,0,0,0,1,0,0,1,0],
-  [1,1,1,0,1,1,1,0,0,0,1,1,1,0,1,1,1,1,0,0,1,1,1,1,1],
-  [1,0,0,1,1,0,0,1,0,1,0,1,0,0,1,0,1,0,0,1,0,1,1,0,1],
-  [1,0,0,1,0,1,1,1,1,0,0,0,0,1,0,1,1,1,1,1,1,0,1,1,0],
-  [0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,0,1,0,1,1,0],
-  [1,1,1,1,1,1,1,0,1,0,1,1,0,1,0,0,1,0,1,0,1,0,0,0,1],
-  [1,0,0,0,0,0,1,0,1,1,0,0,1,1,0,1,1,0,0,0,1,0,0,1,0],
-  [1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,1,1,1,1,1,1,0,0,1,1],
-  [1,0,1,1,1,0,1,0,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1],
-  [1,0,1,1,1,0,1,0,0,1,1,0,1,0,0,0,0,0,0,0,1,1,1,1,1],
-  [1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,1,1,1,1,0,1,1,1],
-  [1,1,1,1,1,1,1,0,1,1,1,0,1,1,1,0,1,0,0,0,0,1,0,0,1],
-];
-
 let resvgReady = null;
 function ensureResvg() {
   if (!resvgReady) resvgReady = initWasm(resvgWasm);
@@ -66,44 +37,6 @@ function fmtTime(sec) {
   return m + ':' + String(s).padStart(2, '0');
 }
 
-// Build QR code as a grid of divs (satori-compatible, no img element)
-function qrGrid(cellSize) {
-  var rows = QR_MATRIX.map(function (row) {
-    return {
-      type: 'div',
-      props: {
-        style: { display: 'flex', flexDirection: 'row' },
-        children: row.map(function (cell) {
-          return {
-            type: 'div',
-            props: {
-              style: {
-                width: cellSize,
-                height: cellSize,
-                backgroundColor: cell ? '#2d2d2d' : '#ffffff',
-                display: 'flex',
-              },
-            },
-          };
-        }),
-      },
-    };
-  });
-  return {
-    type: 'div',
-    props: {
-      style: {
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: '#ffffff',
-        padding: 8,
-        borderRadius: 10,
-      },
-      children: rows,
-    },
-  };
-}
-
 function buildElement(diff, timeStr, name, isWin) {
   const meta = DIFF_META[diff];
   const title = isWin ? 'CLEARED!' : 'BOOM!';
@@ -116,151 +49,116 @@ function buildElement(diff, timeStr, name, isWin) {
     props: { style: { width: 28, height: 28, borderRadius: 9999, backgroundColor: color, display: 'flex' } },
   });
 
-  // Outer wrapper div creates the brand border via padding + backgroundColor
   return {
     type: 'div',
     props: {
       style: {
-        width: '100%', height: '100%', display: 'flex',
-        backgroundColor: '#e87b3a', padding: 6,
+        width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
+        justifyContent: 'space-between', padding: 56,
+        backgroundColor: '#f7efe3',
+        backgroundImage: 'linear-gradient(135deg, #fdf9f1 0%, #f5e3cd 100%)',
+        fontFamily: 'Inter', color: '#2d2d2d',
+        border: '6px solid #e87b3a',
       },
       children: [
+        // 顶部：难度 pill + 玩家名 | 品牌
         {
           type: 'div',
           props: {
-            style: {
-              width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
-              justifyContent: 'space-between', padding: 50,
-              backgroundColor: '#f7efe3',
-              backgroundImage: 'linear-gradient(135deg, #fdf9f1 0%, #f5e3cd 100%)',
-              borderRadius: 8,
-              fontFamily: 'Inter', color: '#2d2d2d',
-            },
+            style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
             children: [
-              // Top: difficulty pill + player name | brand
               {
                 type: 'div',
                 props: {
-                  style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+                  style: { display: 'flex', alignItems: 'center', gap: 16 },
                   children: [
                     {
                       type: 'div',
                       props: {
-                        style: { display: 'flex', alignItems: 'center', gap: 16 },
-                        children: [
-                          {
-                            type: 'div',
-                            props: {
-                              style: {
-                                display: 'flex', backgroundColor: meta.color, color: '#ffffff',
-                                fontSize: 26, fontWeight: 700, letterSpacing: 3,
-                                padding: '10px 28px', borderRadius: 9999,
-                              },
-                              children: [meta.label],
-                            },
-                          },
-                          name
-                            ? {
-                                type: 'div',
-                                props: { style: { display: 'flex', fontSize: 28, fontWeight: 400, color: '#6b6257' }, children: ['by ' + name] },
-                              }
-                            : null,
-                        ].filter(Boolean),
+                        style: {
+                          display: 'flex', backgroundColor: meta.color, color: '#ffffff',
+                          fontSize: 26, fontWeight: 700, letterSpacing: 3,
+                          padding: '10px 28px', borderRadius: 9999,
+                        },
+                        children: [meta.label],
                       },
                     },
+                    name
+                      ? {
+                          type: 'div',
+                          props: { style: { display: 'flex', fontSize: 28, fontWeight: 400, color: '#6b6257' }, children: ['by ' + name] },
+                        }
+                      : null,
+                  ].filter(Boolean),
+                },
+              },
+              {
+                type: 'div',
+                props: {
+                  style: { display: 'flex', alignItems: 'center', gap: 12 },
+                  children: [
+                    // 迷你地雷图标
                     {
                       type: 'div',
                       props: {
-                        style: { display: 'flex', alignItems: 'center', gap: 12 },
-                        children: [
-                          {
-                            type: 'div',
-                            props: {
-                              style: {
-                                width: 36, height: 36, borderRadius: 9999, display: 'flex',
-                                backgroundColor: '#2d2d2d',
-                              },
-                              children: [],
-                            },
-                          },
-                          { type: 'div', props: { style: { display: 'flex', fontSize: 32, fontWeight: 700, letterSpacing: 2 }, children: ['BEAN BOOM'] } },
-                        ],
+                        style: {
+                          width: 36, height: 36, borderRadius: 9999, display: 'flex',
+                          backgroundColor: '#2d2d2d',
+                        },
+                        children: [],
                       },
                     },
+                    { type: 'div', props: { style: { display: 'flex', fontSize: 32, fontWeight: 700, letterSpacing: 2 }, children: ['BEAN BOOM'] } },
                   ],
                 },
               },
-              // Middle: main title + subtitle
+            ],
+          },
+        },
+        // 中部：主标题 + 时间
+        {
+          type: 'div',
+          props: {
+            style: { display: 'flex', flexDirection: 'column' },
+            children: [
               {
                 type: 'div',
                 props: {
-                  style: { display: 'flex', flexDirection: 'column' },
+                  style: { display: 'flex', fontSize: 110, fontWeight: 700, letterSpacing: 4, lineHeight: 1.1 },
+                  children: [isWin ? timeStr : title],
+                },
+              },
+              {
+                type: 'div',
+                props: {
+                  style: { display: 'flex', fontSize: 40, fontWeight: 400, color: '#6b6257', marginTop: 8 },
+                  children: [isWin ? title + ' ' + subtitle : subtitle],
+                },
+              },
+            ],
+          },
+        },
+        // 底部：拼豆装饰 + 域名
+        {
+          type: 'div',
+          props: {
+            style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+            children: [
+              {
+                type: 'div',
+                props: {
+                  style: { display: 'flex', gap: 14, alignItems: 'center' },
                   children: [
-                    {
-                      type: 'div',
-                      props: {
-                        style: { display: 'flex', fontSize: 110, fontWeight: 700, letterSpacing: 4, lineHeight: 1.1 },
-                        children: [isWin ? timeStr : title],
-                      },
-                    },
-                    {
-                      type: 'div',
-                      props: {
-                        style: { display: 'flex', fontSize: 40, fontWeight: 400, color: '#6b6257', marginTop: 8 },
-                        children: [isWin ? title + ' ' + subtitle : subtitle],
-                      },
-                    },
+                    bead('#e87b3a'), bead('#4caf50'), bead('#42a5f5'), bead('#ffca28'), bead('#ef5350'), bead('#8d6e63'),
                   ],
                 },
               },
-              // Bottom: beads + QR code + domain
               {
                 type: 'div',
                 props: {
-                  style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' },
+                  style: { display: 'flex', alignItems: 'center', gap: 16 },
                   children: [
-                    // Left: beads + domain
-                    {
-                      type: 'div',
-                      props: {
-                        style: { display: 'flex', flexDirection: 'column', gap: 14 },
-                        children: [
-                          {
-                            type: 'div',
-                            props: {
-                              style: { display: 'flex', gap: 14, alignItems: 'center' },
-                              children: [
-                                bead('#e87b3a'), bead('#4caf50'), bead('#42a5f5'), bead('#ffca28'), bead('#ef5350'), bead('#8d6e63'),
-                              ],
-                            },
-                          },
-                          {
-                            type: 'div',
-                            props: {
-                              style: { display: 'flex', fontSize: 28, fontWeight: 700, color: '#e87b3a' },
-                              children: [SITE],
-                            },
-                          },
-                        ],
-                      },
-                    },
-                    // Right: QR code + "Scan to play" label
-                    {
-                      type: 'div',
-                      props: {
-                        style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 },
-                        children: [
-                          qrGrid(4),
-                          {
-                            type: 'div',
-                            props: {
-                              style: { display: 'flex', fontSize: 16, fontWeight: 700, color: '#6b6257', letterSpacing: 1 },
-                              children: ['SCAN TO PLAY'],
-                            },
-                          },
-                        ],
-                      },
-                    },
+                    { type: 'div', props: { style: { display: 'flex', fontSize: 30, fontWeight: 700, color: '#e87b3a' }, children: [SITE] } },
                   ],
                 },
               },
