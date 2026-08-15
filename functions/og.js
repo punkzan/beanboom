@@ -37,7 +37,7 @@ function fmtTime(sec) {
   return m + ':' + String(s).padStart(2, '0');
 }
 
-function buildElement(diff, timeStr, name, isWin) {
+function buildContent(diff, timeStr, name, isWin) {
   const meta = DIFF_META[diff];
   const title = isWin ? 'CLEARED!' : 'BOOM!';
   const subtitle = isWin
@@ -54,11 +54,10 @@ function buildElement(diff, timeStr, name, isWin) {
     props: {
       style: {
         width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
-        justifyContent: 'space-between', padding: 56,
+        justifyContent: 'space-between', padding: 50,
         backgroundColor: '#f7efe3',
         backgroundImage: 'linear-gradient(135deg, #fdf9f1 0%, #f5e3cd 100%)',
         fontFamily: 'Inter', color: '#2d2d2d',
-        border: '6px solid #e87b3a',
       },
       children: [
         // 顶部：难度 pill + 玩家名 | 品牌
@@ -166,6 +165,20 @@ function buildElement(diff, timeStr, name, isWin) {
           },
         },
       ],
+    },
+  };
+}
+
+function buildElement(diff, timeStr, name, isWin) {
+  // Outer wrapper creates brand border via padding + backgroundColor
+  return {
+    type: 'div',
+    props: {
+      style: {
+        width: '100%', height: '100%', display: 'flex',
+        backgroundColor: '#e87b3a', padding: 6,
+      },
+      children: [buildContent(diff, timeStr, name, isWin)],
     },
   };
 }
