@@ -1287,6 +1287,58 @@ body {
   padding-top: 14px;
 }
 
+.footer-links {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  padding: 10px 0 6px;
+}
+
+.footer-links a {
+  font-size: 13px;
+  color: #e87b3a;
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  text-decoration: underline;
+}
+
+.footer-friend-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  justify-content: center;
+  padding: 6px 0;
+}
+
+.footer-fl-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #999;
+  white-space: nowrap;
+}
+
+.friend-links-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  align-items: center;
+}
+
+.friend-links-list a {
+  font-size: 13px;
+  color: #b8b8b8;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.friend-links-list a:hover {
+  color: #e87b3a;
+  text-decoration: underline;
+}
+
 .footer-copyright p {
   font-size: 12px;
   color: #aaa8a0;
@@ -1496,6 +1548,42 @@ body {
   display: flex;
   gap: 10px;
 }
+.share-platforms {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 12px 0 4px;
+  flex-wrap: wrap;
+}
+.share-platform-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: transform 0.15s ease, opacity 0.2s ease;
+}
+.share-platform-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: #fff;
+}
+.share-platform-btn:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+.sp-native { background: #e87b3a; }
+.sp-x { background: #1a1a1a; }
+.sp-reddit { background: #ff4500; }
+.sp-facebook { background: #1877f2; }
+.sp-whatsapp { background: #25d366; }
+.sp-telegram { background: #26a5e4; }
+.sp-bluesky { background: #0285ff; }
+.sp-pinterest { background: #e60023; }
 .share-btn {
   flex: 1;
   padding: 10px;
@@ -1516,6 +1604,31 @@ body {
 .share-copy-btn {
   background: #7f77dd;
   color: #fff;
+}
+.share-copy-link-btn {
+  background: #5b8def;
+  color: #fff;
+}
+.share-toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(45, 45, 45, 0.95);
+  color: #fff;
+  padding: 10px 22px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 2000;
+  white-space: nowrap;
+}
+.share-toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 .share-close {
   position: absolute;

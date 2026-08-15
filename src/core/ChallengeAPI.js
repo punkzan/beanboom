@@ -107,3 +107,33 @@ export function capturePaypalPayment(orderId, challengeId, username) {
     body: JSON.stringify({ orderId, challengeId, username }),
   });
 }
+
+// === 友情链接（管理后台 CRUD） ===
+
+/** 获取所有友情链接（含未上线，管理后台用） */
+export function getFriendLinks() {
+  return request('/friend-links?all=true');
+}
+
+/** 添加友情链接 */
+export function addFriendLink(link) {
+  return request('/friend-links', {
+    method: 'POST',
+    body: JSON.stringify(link),
+  });
+}
+
+/** 更新友情链接 */
+export function updateFriendLink(id, patch) {
+  return request('/friend-links/' + id, {
+    method: 'PUT',
+    body: JSON.stringify(patch),
+  });
+}
+
+/** 删除友情链接 */
+export function deleteFriendLink(id) {
+  return request('/friend-links/' + id, {
+    method: 'DELETE',
+  });
+}

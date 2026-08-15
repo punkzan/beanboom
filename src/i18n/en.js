@@ -147,6 +147,9 @@ export const en = {
   'share.title': 'Share',
   'share.download': 'Download Image',
   'share.copy': 'Copy Caption',
+  'share.copyLink': 'Copy Link',
+  'share.copyLinkSuccess': 'Share link copied!',
+  'share.toast.opened': (p) => `Opening ${p}...`,
   'share.generateFail': 'Failed to generate share card, please retry',
 
   'share.header.win': 'Bean Boom · Victory',
@@ -354,6 +357,29 @@ export const en = {
   'admin.content.contactTextPlaceholder': 'Contact information...',
   'admin.content.emailPlaceholder': 'support@example.com',
   'admin.content.save': 'Save Content',
+
+  // ===== Friend Links Management =====
+  'admin.tab.links': 'Links',
+  'admin.links.title': 'Friend Links',
+  'admin.links.hint': 'Add friend links displayed at the bottom of the homepage. Supports sorting and online/offline toggle.',
+  'admin.links.labelName': 'Site Name',
+  'admin.links.labelUrl': 'URL',
+  'admin.links.labelSort': 'Sort (lower comes first)',
+  'admin.links.labelActive': 'Online',
+  'admin.links.namePlaceholder': 'Partner site name',
+  'admin.links.urlPlaceholder': 'https://example.com',
+  'admin.links.add': 'Add Link',
+  'admin.links.reset': 'Clear Form',
+  'admin.links.none': 'No friend links yet',
+  'admin.links.nameRequired': 'Site name is required',
+  'admin.links.added': 'Added',
+  'admin.links.addFailed': 'Failed to add',
+  'admin.links.confirmDelete': 'Confirm delete?',
+  'admin.links.deleting': 'Deleting...',
+  'admin.links.deleteFailed': 'Failed to delete',
+
+  // ===== Homepage Friend Links =====
+  'footer.friendLinksTitle': 'Friend Links',
 
   // ===== Backend =====
   'server.running': (p)=> `Challenge backend running: http://localhost:${p}`,

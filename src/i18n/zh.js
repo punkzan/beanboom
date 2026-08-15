@@ -147,6 +147,9 @@ export const zh = {
   'share.title': '分享战绩',
   'share.download': '下载图片',
   'share.copy': '复制文案',
+  'share.copyLink': '复制链接',
+  'share.copyLinkSuccess': '分享链接已复制！',
+  'share.toast.opened': (p) => `正在打开 ${p} 分享...`,
   'share.generateFail': '分享图生成失败，请重试',
 
   'share.header.win': 'Bean Boom · 胜利时刻',
@@ -354,6 +357,29 @@ export const zh = {
   'admin.content.contactTextPlaceholder': '联系方式介绍...',
   'admin.content.emailPlaceholder': 'support@example.com',
   'admin.content.save': '保存内容',
+
+  // ===== 友情链接管理 =====
+  'admin.tab.links': '友情链接',
+  'admin.links.title': '友情链接管理',
+  'admin.links.hint': '添加友情链接，显示在首页底部。支持排序和上下线控制。',
+  'admin.links.labelName': '网站名称',
+  'admin.links.labelUrl': '链接地址',
+  'admin.links.labelSort': '排序（数字越小越靠前）',
+  'admin.links.labelActive': '上线',
+  'admin.links.namePlaceholder': '对方网站名称',
+  'admin.links.urlPlaceholder': 'https://example.com',
+  'admin.links.add': '添加链接',
+  'admin.links.reset': '清空表单',
+  'admin.links.none': '暂无友情链接',
+  'admin.links.nameRequired': '请填写网站名称',
+  'admin.links.added': '已添加',
+  'admin.links.addFailed': '添加失败',
+  'admin.links.confirmDelete': '确认删除？',
+  'admin.links.deleting': '删除中...',
+  'admin.links.deleteFailed': '删除失败',
+
+  // ===== 首页友情链接 =====
+  'footer.friendLinksTitle': '友情链接',
 
   // ===== 后端 =====
   'server.running': (p)=> `付费挑战后端运行中: http://localhost:${p}`,

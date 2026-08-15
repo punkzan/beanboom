@@ -1,5 +1,5 @@
 import { getConfig, setConfig, getActivities, addActivity, updateActivity, deleteActivity, hasAdminPassword, setAdminPassword, verifyAdminPassword, fetchFooterContent, saveFooterContent } from './core/SiteConfig.js';
-import { getAllChallenges, createChallenge, updateChallenge, deleteChallenge, getUsers, getPaymentConfig, updatePaymentConfig } from './core/ChallengeAPI.js';
+import { getAllChallenges, createChallenge, updateChallenge, deleteChallenge, getUsers, getPaymentConfig, updatePaymentConfig, getFriendLinks, addFriendLink, updateFriendLink, deleteFriendLink } from './core/ChallengeAPI.js';
 import { t, scanI18n, getLang, setLang, onLangChange } from './i18n.js';
 
 // 管理后台始终使用中文
@@ -401,6 +401,96 @@ document.getElementById('save-content').addEventListener('click', async () => {
   }
 });
 
+// === 友情链接 ===
+async function loadFriendLinkList() {
+  const res = await getFriendLinks();
+  const list = res.ok ? res.data : [];
+  const container = document.getElementById('link-list');
+  if (!list.length) {
+    container.innerHTML = '<p class="admin-act-empty">' + t('admin.links.none') + '</p>';
+    return;
+  }
+  container.innerHTML = list.map(l => `
+    <div class="admin-act-item">
+      <div class="admin-act-info">
+        <span class="admin-act-status ${l.active ? 'on' : 'off'}">${l.active ? t('activity.online') : t('activity.offline')}</span>
+        <span class="admin-act-date">#${l.sort || 0}</span>
+        <span class="admin-act-t">${escapeHtml(l.name)}</span>
+      </div>
+      <div class="admin-act-text"><a href="${escapeHtml(l.url)}" target="_blank" rel="noopener" style="color:#1976d2">${escapeHtml(l.url)}</a></div>
+      <div class="admin-act-ops">
+        <button class="admin-act-toggle" data-link-id="${l.id}" data-link-active="${!l.active}">
+          ${l.active ? t('activity.goOffline') : t('activity.goOnline')}
+        </button>
+        <button class="admin-act-del" data-link-id="${l.id}">${t('common.delete')}</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('add-link').addEventListener('click', async () => {
+  const name = document.getElementById('link-name').value.trim();
+  const url = document.getElementById('link-url').value.trim();
+  if (!name) { flash('add-link', t('admin.links.nameRequired')); return; }
+  const link = {
+    name,
+    url,
+    sort: parseInt(document.getElementById('link-sort').value) || 0,
+    active: document.getElementById('link-active').checked,
+  };
+  const res = await addFriendLink(link);
+  if (res.ok) {
+    resetLinkForm();
+    loadFriendLinkList();
+    flash('add-link', t('admin.links.added'));
+  } else {
+    flash('add-link', res.error || t('admin.links.addFailed'));
+  }
+});
+
+document.getElementById('reset-link-form').addEventListener('click', resetLinkForm);
+
+function resetLinkForm() {
+  document.getElementById('link-name').value = '';
+  document.getElementById('link-url').value = '';
+  document.getElementById('link-sort').value = '0';
+  document.getElementById('link-active').checked = true;
+}
+
+document.getElementById('link-list').addEventListener('click', async (e) => {
+  const toggleBtn = e.target.closest('.admin-act-toggle');
+  const delBtn = e.target.closest('.admin-act-del');
+  if (toggleBtn) {
+    const res = await updateFriendLink(toggleBtn.dataset.linkId, { active: toggleBtn.dataset.linkActive === 'true' });
+    if (res.ok) loadFriendLinkList();
+  } else if (delBtn) {
+    if (delBtn.dataset.confirming === '1') {
+      delBtn.textContent = t('admin.links.deleting');
+      delBtn.disabled = true;
+      const res = await deleteFriendLink(delBtn.dataset.linkId);
+      if (res.ok) {
+        loadFriendLinkList();
+      } else {
+        delBtn.disabled = false;
+        delBtn.textContent = res.error || t('admin.links.deleteFailed');
+        delBtn.style.color = '#e53935';
+        setTimeout(() => { delBtn.textContent = t('common.delete'); delBtn.style.color = ''; delBtn.dataset.confirming = ''; }, 2000);
+      }
+    } else {
+      delBtn.dataset.confirming = '1';
+      delBtn.textContent = t('admin.links.confirmDelete');
+      delBtn.style.color = '#e53935';
+      setTimeout(() => {
+        if (delBtn.dataset.confirming === '1') {
+          delBtn.dataset.confirming = '';
+          delBtn.textContent = t('common.delete');
+          delBtn.style.color = '';
+        }
+      }, 3000);
+    }
+  }
+});
+
 // === 工具 ===
 function flash(btnId, text) {
   const btn = document.getElementById(btnId);
@@ -495,6 +585,7 @@ function initAdmin() {
   loadUserList();
   loadPaymentForm();
   loadContentForm();
+  loadFriendLinkList();
 }
 
 if (!hasAdminPassword()) {
@@ -517,6 +608,7 @@ onLangChange((lang) => {
     loadActivityList();
     loadChallengeList();
     loadUserList();
+    loadFriendLinkList();
     autoChallengeName();
   }
 });

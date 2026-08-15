@@ -7,7 +7,7 @@ import { SoundManager } from './audio/SoundManager.js';
 import { BGMManager } from './audio/BGMManager.js';
 import { DIFFICULTIES } from './constants.js';
 import { addRecord, getBestTime, getRecords, getYearlyChampions, refreshRecords } from './core/Leaderboard.js';
-import { getSeoConfig, getAdsConfig, getActivities, getLatestActivities, fetchFooterContent } from './core/SiteConfig.js';
+import { getSeoConfig, getAdsConfig, getActivities, getLatestActivities, fetchFooterContent, fetchFriendLinks } from './core/SiteConfig.js';
 import { register, login, logout, getCurrentUser } from './core/Auth.js';
 import { getChallenges, participate, getMyChallenges, updateProgress, capturePaypalPayment } from './core/ChallengeAPI.js';
 import { generateShareCard } from './core/ShareCard.js';
@@ -264,6 +264,7 @@ const shareCloseBtn = document.getElementById('share-close');
 let lastShareDataUrl = null;
 let lastShareText = '';
 let lastChallengeShareData = null; // 缓存最近参加/完成的挑战数据
+let lastShareScore = null; // 缓存最近分享的战绩（用于生成 /share 深链 + 动态 OG）
 
 // 获取用户在某榜单的最佳排名
 function getUserBestRank(difficulty, period, username) {
@@ -367,6 +368,11 @@ function showShareCard(data) {
     const result = generateShareCard(data);
     lastShareDataUrl = result.dataUrl;
     lastShareText = result.shareText;
+    // 缓存战绩参数：win 场景才带时间（失败局分享纯品牌链接）
+    const win = data.scenario === 1 || data.scenario === 3 || data.scenario === 6;
+    lastShareScore = data.timeSeconds > 0 && win
+      ? { diff: data.difficulty, time: data.timeSeconds, name: data.username || '', win: true }
+      : { diff: data.difficulty, time: data.timeSeconds > 0 ? data.timeSeconds : null, name: data.username || '', win };
     sharePreviewImg.src = result.dataUrl;
     shareTextBox.textContent = result.shareText;
     shareModal.classList.add('visible');
@@ -406,11 +412,152 @@ shareCopyBtn.addEventListener('click', () => {
       setTimeout(() => { shareCopyBtn.textContent = t('share.copy'); }, 2000);
     }).catch(() => {
       fallbackCopyText(lastShareText);
+      shareCopyBtn.textContent = t('common.copySuccess');
+      setTimeout(() => { shareCopyBtn.textContent = t('share.copy'); }, 2000);
     });
   } else {
     fallbackCopyText(lastShareText);
+    shareCopyBtn.textContent = t('common.copySuccess');
+    setTimeout(() => { shareCopyBtn.textContent = t('share.copy'); }, 2000);
   }
 });
+
+// === 社交平台一键分享 ===
+const SITE_URL = 'https://bb.superzan.net/';
+
+function buildShareUrl(platform) {
+  const utm = `utm_source=${platform}&utm_medium=share&utm_campaign=score`;
+  // 有战绩时生成 /share 深链：社交平台抓取时展示动态 OG 战绩卡
+  if (lastShareScore) {
+    const p = new URLSearchParams({ utm_source: platform, utm_medium: 'share', utm_campaign: 'score' });
+    if (lastShareScore.time) p.set('time', String(lastShareScore.time));
+    if (lastShareScore.name) p.set('name', lastShareScore.name);
+    if (lastShareScore.diff) p.set('diff', lastShareScore.diff);
+    p.set('w', lastShareScore.win ? '1' : '0');
+    return `${SITE_URL}share?${p.toString()}`;
+  }
+  return `${SITE_URL}?${utm}`;
+}
+
+// 构建 OG 图公开 URL（Pinterest media 参数需要）
+function buildOgImageUrl() {
+  if (!lastShareScore) return null;
+  const p = new URLSearchParams();
+  if (lastShareScore.time) p.set('time', String(lastShareScore.time));
+  if (lastShareScore.name) p.set('name', lastShareScore.name);
+  if (lastShareScore.diff) p.set('diff', lastShareScore.diff);
+  p.set('w', lastShareScore.win ? '1' : '0');
+  return `${SITE_URL}og?${p.toString()}`;
+}
+
+// Reddit 专用标题：简短有力，含难度+时间+品牌名
+function getRedditTitle() {
+  if (lastShareScore && lastShareScore.win && lastShareScore.time) {
+    const diffLabel = { easy: 'Easy', medium: 'Medium', hard: 'Hard' }[lastShareScore.diff] || 'Easy';
+    const m = Math.floor(lastShareScore.time / 60);
+    const s = lastShareScore.time % 60;
+    const timeStr = `${m}:${String(s).padStart(2, '0')}`;
+    const namePart = lastShareScore.name ? `${lastShareScore.name} · ` : '';
+    return `${namePart}${diffLabel} mode cleared in ${timeStr} — Bean Boom Minesweeper`;
+  }
+  return lastShareText || 'Bean Boom — Free Online Minesweeper';
+}
+
+function trackShare(method) {
+  try {
+    if (typeof gtag === 'function') gtag('event', 'share', { method });
+  } catch (e) { /* GA 未加载时忽略 */ }
+}
+
+const PLATFORM_INTENTS = {
+  twitter: (text, url, ogImage) => `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+  reddit: (text, url, ogImage) => `https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(getRedditTitle())}`,
+  facebook: (text, url, ogImage) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+  whatsapp: (text, url, ogImage) => `https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`,
+  telegram: (text, url, ogImage) => `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
+  bluesky: (text, url, ogImage) => `https://bsky.app/intent/compose?text=${encodeURIComponent(text + ' ' + url)}`,
+  pinterest: (text, url, ogImage) => `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&media=${encodeURIComponent(ogImage || url)}&description=${encodeURIComponent(text)}`,
+};
+
+// Toast 提示
+const shareToast = document.getElementById('share-toast');
+let toastTimer = null;
+function showToast(msg) {
+  if (!shareToast) return;
+  shareToast.textContent = msg;
+  shareToast.classList.add('visible');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => shareToast.classList.remove('visible'), 2500);
+}
+
+const PLATFORM_LABELS = {
+  twitter: 'X', reddit: 'Reddit', facebook: 'Facebook',
+  whatsapp: 'WhatsApp', telegram: 'Telegram', bluesky: 'Bluesky', pinterest: 'Pinterest',
+};
+
+// 移动端：系统分享面板（可携带战绩 PNG）
+async function shareViaNative() {
+  trackShare('native');
+  if (!navigator.share) return;
+  try {
+    if (lastShareDataUrl) {
+      const blob = await (await fetch(lastShareDataUrl)).blob();
+      const file = new File([blob], 'bean-boom.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], text: lastShareText + ' ' + buildShareUrl('native'), title: 'Bean Boom' });
+        return;
+      }
+    }
+    await navigator.share({ text: lastShareText + ' ' + buildShareUrl('native'), title: 'Bean Boom' });
+  } catch (e) { /* 用户取消或分享失败，静默 */ }
+}
+
+document.querySelectorAll('.share-platform-btn').forEach(btn => {
+  const platform = btn.dataset.sharePlatform;
+  // 不支持 Web Share API 的环境隐藏系统分享按钮
+  if (platform === 'native' && !navigator.share) {
+    btn.style.display = 'none';
+    return;
+  }
+  btn.addEventListener('click', () => {
+    if (platform === 'native') {
+      shareViaNative();
+      return;
+    }
+    trackShare(platform);
+    const intent = PLATFORM_INTENTS[platform];
+    if (intent) {
+      const shareUrl = buildShareUrl(platform);
+      const ogImage = buildOgImageUrl();
+      // 必须在用户点击的同步调用栈内打开，避免被弹窗拦截
+      window.open(intent(lastShareText, shareUrl, ogImage), '_blank', 'noopener,width=680,height=580');
+      showToast(t('share.toast.opened', PLATFORM_LABELS[platform] || platform));
+    }
+  });
+});
+
+// Copy Link 按钮
+const shareCopyLinkBtn = document.getElementById('share-copy-link-btn');
+if (shareCopyLinkBtn) {
+  shareCopyLinkBtn.addEventListener('click', () => {
+    const link = buildShareUrl('copy');
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(link).then(() => {
+        shareCopyLinkBtn.textContent = t('common.copySuccess');
+        showToast(t('share.copyLinkSuccess'));
+        setTimeout(() => { shareCopyLinkBtn.textContent = t('share.copyLink'); }, 2000);
+      }).catch(() => {
+        fallbackCopyText(link);
+        shareCopyLinkBtn.textContent = t('common.copySuccess');
+        setTimeout(() => { shareCopyLinkBtn.textContent = t('share.copyLink'); }, 2000);
+      });
+    } else {
+      fallbackCopyText(link);
+      shareCopyLinkBtn.textContent = t('common.copySuccess');
+      setTimeout(() => { shareCopyLinkBtn.textContent = t('share.copyLink'); }, 2000);
+    }
+  });
+}
 
 function fallbackCopyText(text) {
   const ta = document.createElement('textarea');
@@ -419,7 +566,7 @@ function fallbackCopyText(text) {
   ta.style.opacity = '0';
   document.body.appendChild(ta);
   ta.select();
-  try { document.execCommand('copy'); shareCopyBtn.textContent = t('common.copySuccess'); setTimeout(() => { shareCopyBtn.textContent = t('share.copy'); }, 2000); } catch(e) {}
+  try { document.execCommand('copy'); } catch(e) {}
   document.body.removeChild(ta);
 }
 
@@ -1010,6 +1157,24 @@ scanI18n();
 // 底部内容（依赖 scanI18n 之后执行，使用管理后台保存的自定义文案）
 renderFooterContent();
 
+// 友情链接（从服务端 KV 获取，全局生效）
+renderFriendLinks();
+
+async function renderFriendLinks() {
+  const links = await fetchFriendLinks();
+  const container = document.getElementById('friend-links-list');
+  const wrapper = document.getElementById('footer-friend-links');
+  if (!container || !wrapper) return;
+  if (!links.length) {
+    wrapper.style.display = 'none';
+    return;
+  }
+  wrapper.style.display = '';
+  container.innerHTML = links.map(l =>
+    `<a href="${escapeHtml(l.url)}" target="_blank" rel="noopener nofollow">${escapeHtml(l.name)}</a>`
+  ).join('');
+}
+
 // 语言切换按钮
 document.getElementById('nav-lang-btn').addEventListener('click', () => {
   const next = getLang() === 'zh' ? 'en' : 'zh';
@@ -1033,6 +1198,7 @@ onLangChange((lang) => {
   renderActivityNotices();
   applySeoConfig();
   renderFooterContent();
+  renderFriendLinks();
   // 更新触摸设备提示
   if (isTouchDevice) hintText.textContent = t('game.touchHint');
   // 更新游戏状态中的 overlay 文本（如果可见）

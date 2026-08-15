@@ -224,3 +224,12 @@ export async function saveFooterContent(content) {
     throw e;
   }
 }
+
+// === 友情链接（首页读取，管理后台 CRUD） ===
+export async function fetchFriendLinks() {
+  try {
+    return await apiRequest('/api/friend-links');
+  } catch {
+    return [];
+  }
+}

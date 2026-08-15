@@ -1,0 +1,49 @@
+# Cloudflare Pages caching headers
+
+# Vite hashed build assets (JS/CSS with content hash) — immutable, 1 year
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# CSS without hash — revalidate daily
+/styles/*
+  Cache-Control: public, max-age=86400, must-revalidate
+
+# Audio files — 30 days
+/audio/*
+  Cache-Control: public, max-age=2592000
+/sounds/*
+  Cache-Control: public, max-age=2592000
+
+# OG cover image — 7 days
+/og-cover.png
+  Cache-Control: public, max-age=604800
+
+# Favicon files — 7 days
+/favicon.svg
+  Cache-Control: public, max-age=604800
+/favicon.ico
+  Cache-Control: public, max-age=604800
+/apple-touch-icon.png
+  Cache-Control: public, max-age=604800
+/icon-192.png
+  Cache-Control: public, max-age=604800
+/icon-512.png
+  Cache-Control: public, max-age=604800
+
+# HTML pages — no cache, always revalidate
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# SEO files — 1 hour
+/robots.txt
+  Cache-Control: public, max-age=3600
+/sitemap.xml
+  Cache-Control: public, max-age=3600
+
+# Dynamic OG score card (Pages Function) — 1 day at CDN edge
+/og
+  Cache-Control: public, max-age=86400
+
+# Share deep link landing (Pages Function) — 1 hour
+/share
+  Cache-Control: public, max-age=3600

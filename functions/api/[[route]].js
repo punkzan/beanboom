@@ -14,6 +14,7 @@ const KV_KEYS = {
   users: 'users',
   paymentConfig: 'payment_config',
   footerContent: 'footer_content',
+  friendLinks: 'friend_links',
   records: 'records',
 };
 
@@ -516,6 +517,58 @@ app.post('/api/records', async (c) => {
 
   await kvPut(c.env, KV_KEYS.records, records);
   return c.json({ wasBest, records });
+});
+
+// -- 友情链接 --
+app.get('/api/friend-links', async (c) => {
+  const all = await kvGet(c.env, KV_KEYS.friendLinks, []);
+  const showAll = c.req.query('all') === 'true';
+  const list = showAll ? all : all.filter(l => l.active);
+  list.sort((a, b) => (a.sort || 0) - (b.sort || 0) || a.createdAt - b.createdAt);
+  return c.json(list);
+});
+
+app.post('/api/friend-links', async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const name = String(body.name || '').trim();
+  const url = String(body.url || '').trim();
+  if (!name || !url) return c.json({ error: 'Missing name or url' }, 400);
+  const links = await kvGet(c.env, KV_KEYS.friendLinks, []);
+  const item = {
+    id: genId('fl'),
+    name: name.slice(0, 100),
+    url: url.slice(0, 500),
+    sort: parseInt(body.sort) || 0,
+    active: body.active !== false,
+    createdAt: Date.now(),
+  };
+  links.push(item);
+  await kvPut(c.env, KV_KEYS.friendLinks, links);
+  return c.json(item);
+});
+
+app.put('/api/friend-links/:id', async (c) => {
+  const id = c.req.param('id');
+  const body = await c.req.json().catch(() => ({}));
+  const links = await kvGet(c.env, KV_KEYS.friendLinks, []);
+  const idx = links.findIndex(l => l.id === id);
+  if (idx === -1) return c.json({ error: 'Friend link not found' }, 404);
+  const patch = {};
+  if (body.name !== undefined) patch.name = String(body.name).trim().slice(0, 100);
+  if (body.url !== undefined) patch.url = String(body.url).trim().slice(0, 500);
+  if (body.sort !== undefined) patch.sort = parseInt(body.sort) || 0;
+  if (body.active !== undefined) patch.active = !!body.active;
+  links[idx] = { ...links[idx], ...patch, id };
+  await kvPut(c.env, KV_KEYS.friendLinks, links);
+  return c.json(links[idx]);
+});
+
+app.delete('/api/friend-links/:id', async (c) => {
+  const id = c.req.param('id');
+  let links = await kvGet(c.env, KV_KEYS.friendLinks, []);
+  links = links.filter(l => l.id !== id);
+  await kvPut(c.env, KV_KEYS.friendLinks, links);
+  return c.json({ ok: true });
 });
 
 // -- 404 --

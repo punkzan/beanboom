@@ -1,0 +1,24 @@
+{
+  "name": "Bean Boom - Free Online Minesweeper Game",
+  "short_name": "Bean Boom",
+  "description": "A free online minesweeper game with a unique bead art style. Three difficulty levels, global leaderboard, and daily challenges.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5f3ed",
+  "theme_color": "#e87b3a",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

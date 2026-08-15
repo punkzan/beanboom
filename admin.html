@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="zh-CN" id="html-root">
 <head>
+  <!-- Preconnect to analytics -->
+  <link rel="preconnect" href="https://www.googletagmanager.com">
+  <link rel="preconnect" href="https://www.google-analytics.com">
+
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-8VV5G44NTR"></script>
   <script>
@@ -14,6 +18,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <title data-i18n="admin.title">管理后台 - Bean Boom</title>
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
   <link rel="stylesheet" href="/styles/main.css">
   <link rel="stylesheet" href="/styles/admin.css">
 </head>
@@ -49,6 +58,7 @@
         <button class="admin-tab" data-tab="users" data-i18n="admin.tab.users">用户管理</button>
         <button class="admin-tab" data-tab="payment" data-i18n="admin.tab.payment">支付参数</button>
         <button class="admin-tab" data-tab="content" data-i18n="admin.tab.content">内容管理</button>
+        <button class="admin-tab" data-tab="links" data-i18n="admin.tab.links">友情链接</button>
       </nav>
 
       <!-- 右侧内容面板 -->
@@ -273,6 +283,37 @@
           </div>
 
           <button class="admin-save" id="save-content" data-i18n="admin.content.save">保存内容</button>
+        </section>
+
+        <!-- 友情链接管理 -->
+        <section class="admin-card" data-tab-panel="links">
+          <h2 data-i18n="admin.links.title">友情链接管理</h2>
+          <p class="admin-content-hint" data-i18n="admin.links.hint">添加友情链接，显示在首页底部。支持排序和上下线控制。</p>
+          <div class="admin-form">
+            <label class="admin-field">
+              <span class="admin-label" data-i18n="admin.links.labelName">网站名称</span>
+              <input type="text" id="link-name" maxlength="100" data-i18n-placeholder="admin.links.namePlaceholder" placeholder="对方网站名称">
+            </label>
+            <label class="admin-field">
+              <span class="admin-label" data-i18n="admin.links.labelUrl">链接地址</span>
+              <input type="url" id="link-url" maxlength="500" data-i18n-placeholder="admin.links.urlPlaceholder" placeholder="https://example.com">
+            </label>
+            <div class="admin-field-group">
+              <label class="admin-field">
+                <span class="admin-label" data-i18n="admin.links.labelSort">排序（数字越小越靠前）</span>
+                <input type="number" id="link-sort" min="0" max="9999" value="0">
+              </label>
+              <label class="admin-field admin-toggle-field">
+                <span class="admin-label" data-i18n="admin.links.labelActive">上线</span>
+                <input type="checkbox" id="link-active" checked>
+              </label>
+            </div>
+            <div class="admin-act-buttons">
+              <button class="admin-save" id="add-link" data-i18n="admin.links.add">添加链接</button>
+              <button class="admin-reset" id="reset-link-form" data-i18n="admin.links.reset">清空表单</button>
+            </div>
+          </div>
+          <div class="admin-act-list" id="link-list"></div>
         </section>
 
       </div>

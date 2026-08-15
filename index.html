@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en-US" id="html-root">
 <head>
+  <!-- Preconnect to analytics -->
+  <link rel="preconnect" href="https://www.googletagmanager.com">
+  <link rel="preconnect" href="https://www.google-analytics.com">
+
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-8VV5G44NTR"></script>
   <script>
@@ -20,6 +24,14 @@
   <link rel="canonical" href="https://bb.superzan.net/">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#f5f3ed">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+  <link rel="manifest" href="/manifest.json">
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
@@ -250,10 +262,12 @@
       <section class="footer-section" id="footer-about">
         <h3 class="footer-title" data-i18n="footer.aboutTitle">About</h3>
         <p data-i18n="footer.aboutText">Bean Boom is a free online game that blends classic minesweeper gameplay with bead art style. We are dedicated to combining nostalgic gaming with modern visual design, offering a casual and fun experience for players worldwide.</p>
+        <p><a href="/about">Learn more &rarr;</a></p>
       </section>
       <section class="footer-section" id="footer-privacy">
         <h3 class="footer-title" data-i18n="footer.privacyTitle">Privacy Policy</h3>
         <p data-i18n="footer.privacyText">Game settings and account data are stored locally in your browser (localStorage). Leaderboard scores (time, username, country/region) are uploaded to our server to enable global ranking. We do not collect your password or personally identifiable information.</p>
+        <p><a href="/privacy-policy">Full privacy policy &rarr;</a></p>
       </section>
       <section class="footer-section" id="footer-contact">
         <h3 class="footer-title" data-i18n="footer.contactTitle">Contact Us</h3>
@@ -264,6 +278,15 @@
         <h3 class="footer-title" data-i18n="footer.activitiesTitle">Events</h3>
         <div id="activities-content"></div>
       </section>
+    </div>
+    <div class="footer-links">
+      <a href="/how-to-play">How to Play</a>
+      <a href="/about">About</a>
+      <a href="/privacy-policy">Privacy Policy</a>
+    </div>
+    <div class="footer-friend-links" id="footer-friend-links" style="display:none">
+      <span class="footer-fl-title" data-i18n="footer.friendLinksTitle">Friend Links</span>
+      <div class="friend-links-list" id="friend-links-list"></div>
     </div>
     <div class="footer-copyright">
       <p data-i18n="footer.copyright">&copy; 2026 Bean Boom · Classic Minesweeper Online</p>
@@ -295,13 +318,42 @@
         <img class="share-preview-img" id="share-preview-img" alt="Share image preview">
       </div>
       <div class="share-text-box" id="share-text-box"></div>
+      <div class="share-platforms" id="share-platforms">
+        <button class="share-platform-btn sp-native" id="share-native-btn" data-share-platform="native" title="Share via apps" aria-label="Share via apps">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3.5a1 1 0 0 0-2 0v9.2l-3-3a1 1 0 0 0-1.4 1.4l4.7 4.7a1 1 0 0 0 1.4 0l4.7-4.7a1 1 0 0 0-1.4-1.4l-3 3V3.5zM5 18a1 1 0 0 1 1-1h12a1 1 0 0 1 0 2H6a1 1 0 0 1-1-1z"/></svg>
+        </button>
+        <button class="share-platform-btn sp-x" data-share-platform="twitter" title="X (Twitter)" aria-label="Share to X">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.7 3H20l-5.4 6.2L20.9 21h-5.3l-4.1-5.4L6.8 21H4.5l5.8-6.6L3.5 3h5.4l3.7 4.9L17.7 3zm-1.1 16.1h1.3L7.3 4.4H5.9l10.7 14.7z"/></svg>
+        </button>
+        <button class="share-platform-btn sp-reddit" data-share-platform="reddit" title="Reddit" aria-label="Share to Reddit">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5a1.6 1.6 0 0 0-1.55 1.24L7.1 4.3a4.7 4.7 0 0 0-6.5 4.35c0 1.2.46 2.3 1.2 3.14-.06.4-.1.8-.1 1.21C1.7 16.5 6.4 19.5 12 19.5s10.3-3 10.3-6.5c0-.4-.04-.8-.1-1.2A4.66 4.66 0 0 0 23.4 8.6a4.7 4.7 0 0 0-6.5-4.3l-3.35-.57A1.6 1.6 0 0 0 12 2.5zm-4.5 7.3a1.55 1.55 0 1 1 0 3.1 1.55 1.55 0 0 1 0-3.1zm9 0a1.55 1.55 0 1 1 0 3.1 1.55 1.55 0 0 1 0-3.1zM12 13.4c1.8 0 3.3.9 3.4 1.05a.7.7 0 0 1-.8 1.1c-.05-.03-1.25-.75-2.6-.75s-2.55.72-2.6.75a.7.7 0 0 1-.8-1.1c.1-.15 1.6-1.05 3.4-1.05z"/></svg>
+        </button>
+        <button class="share-platform-btn sp-facebook" data-share-platform="facebook" title="Facebook" aria-label="Share to Facebook">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 21v-8h2.7l.4-3.1h-3.1V7.9c0-.9.25-1.5 1.55-1.5h1.65V3.6c-.3-.04-1.3-.13-2.4-.13-2.4 0-4 1.45-4 4.1v2.3H7.5V13h2.75v8h3.25z"/></svg>
+        </button>
+        <button class="share-platform-btn sp-whatsapp" data-share-platform="whatsapp" title="WhatsApp" aria-label="Share to WhatsApp">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8A9.1 9.1 0 0 0 4.3 16.6L3 21.5l5-1.3A9.1 9.1 0 1 0 12 2.8zm0 1.8a7.3 7.3 0 0 1 0 14.6 7.3 7.3 0 0 1-3.7-1l-.4-.24-2.5.66.67-2.43-.25-.4A7.3 7.3 0 0 1 12 4.6zm-2.9 3.3c-.2 0-.5.08-.7.35-.25.3-.8.95-.8 2.1 0 1.15.8 2.5 1 2.7.2.2 1.7 2.7 4.2 3.6 2 .8 2.4.65 2.85.6.45-.03 1.4-.55 1.6-1.1.2-.55.2-1 .14-1.1-.06-.1-.22-.16-.46-.28-.24-.12-1.4-.7-1.6-.77-.22-.08-.38-.12-.54.12-.16.24-.62.8-.76.96-.14.16-.28.18-.52.06-.24-.12-1-.37-1.9-1.2-.7-.63-1.2-1.4-1.33-1.64-.14-.24-.02-.37.1-.49.1-.1.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.16-.4-.32-.4-.46-.4h-.02z"/></svg>
+        </button>
+        <button class="share-platform-btn sp-telegram" data-share-platform="telegram" title="Telegram" aria-label="Share to Telegram">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.9 4.3 2.9 11.6c-1 .4-1 1.8.05 2.1l4.7 1.5 1.3 4.9c.3 1 1.6 1.2 2.1.3l2.1-3.2 4.4 3.2c.8.6 1.9.15 2.1-.8l2.7-13.5c.3-1.3-1-2.2-2.1-1.8zM8.4 14.2l9.3-6.6c.3-.2.6.2.35.45l-7.5 7-.3 3-1.85-3.85z"/></svg>
+        </button>
+        <button class="share-platform-btn sp-bluesky" data-share-platform="bluesky" title="Bluesky" aria-label="Share to Bluesky">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9.7C9.9 6.6 5.6 3.4 3.8 5.2c-1.7 1.7.6 5.7 7.6 7-7 1.3-9.3 5.3-7.6 7 1.8 1.8 6.1-1.4 8.2-4.5 2.1 3.1 6.4 6.3 8.2 4.5 1.7-1.7-.6-5.7-7.6-7 7-1.3 9.3-5.3 7.6-7-1.8-1.8-6.1 1.4-8.2 4.5z"/></svg>
+        </button>
+        <button class="share-platform-btn sp-pinterest" data-share-platform="pinterest" title="Pinterest" aria-label="Share to Pinterest">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.5 2 4 5.6 4 9c0 2 .8 3.8 2.2 4.9.2.1.4 0 .5-.2l.2-.7c0-.2 0-.3-.1-.5-.5-.6-.8-1.5-.8-2.5 0-3.2 2.4-6 6.2-6 3.4 0 5.2 2 5.2 4.8 0 3.6-1.6 6.6-4 6.6-1.3 0-2.3-1.1-2-2.4.4-1.5 1.1-3.2 1.1-4.3 0-1-.5-1.8-1.6-1.8-1.3 0-2.4 1.4-2.4 3.2 0 1.2.4 2 .4 2l-1.6 6.8c-.5 2-.1 4.4 0 4.6.1.1.2.1.3 0 .2-.2 2-2.5 2.6-4.7l1-3.8c.5.9 1.8 1.6 3.1 1.6 4.1 0 6.9-3.7 6.9-8.7C20 5 16.8 2 12 2z"/></svg>
+        </button>
+      </div>
       <div class="share-actions">
         <button class="share-btn share-download-btn" id="share-download-btn" data-i18n="share.download">Download Image</button>
         <button class="share-btn share-copy-btn" id="share-copy-btn" data-i18n="share.copy">Copy Caption</button>
+        <button class="share-btn share-copy-link-btn" id="share-copy-link-btn" data-i18n="share.copyLink">Copy Link</button>
       </div>
       <button class="share-close" id="share-close" data-i18n-title="common.close" title="Close">×</button>
     </div>
   </div>
+
+  <div class="share-toast" id="share-toast"></div>
 
   <script type="module" src="/src/main.js"></script>
 </body>
