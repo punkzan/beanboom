@@ -1,9 +1,14 @@
 // 动态 OG 战绩卡渲染：/og?diff=hard&time=128&name=Punk&w=1
 // satori (JSX -> SVG) + resvg-wasm (SVG -> PNG)，Cloudflare Pages Function
 import satori from 'satori';
-import { Resvg, initWasm } from '@resvg/resvg-wasm';
+// Vendored copy of @resvg/resvg-wasm patched to instantiate the wasm module
+// synchronously. The stock async WebAssembly.instantiate() op was hanging
+// forever in ~30% of edge isolates, tripping workerd's hang detector (1101)
+// and poisoning every request served by that isolate.
+import { Resvg, initWasm } from './resvg-wasm-sync.js';
 import resvgWasm from './resvg.wasm';
 import { INTER_400, INTER_700 } from './og-fonts.js';
+import { FALLBACK_B64 } from './og-fallback-b64.js';
 
 const SITE = 'bb.superzan.net';
 const DIFF_META = {
@@ -12,24 +17,55 @@ const DIFF_META = {
   hard: { label: 'HARD', color: '#e53935' },
 };
 
-let resvgReady = null;
-function ensureResvg() {
-  if (!resvgReady) {
-    console.log('[og] initWasm start, typeof resvgWasm =', typeof resvgWasm,
-      ', ctor =', resvgWasm && resvgWasm.constructor && resvgWasm.constructor.name,
-      ', isWasmModule =', typeof WebAssembly !== 'undefined' && resvgWasm instanceof WebAssembly.Module);
-    resvgReady = initWasm(resvgWasm).then(
-      (v) => { console.log('[og] initWasm resolved'); return v; },
-      (e) => {
-        console.log('[og] initWasm REJECTED:', e && e.message);
-        resvgReady = null; // allow retry on next request
-        throw e;
-      }
-    );
-  } else {
-    console.log('[og] reusing existing init promise, settled =', typeof resvgReady.status === 'string' ? resvgReady.status : 'unknown');
-  }
-  return resvgReady;
+// Kick off WASM instantiation at module evaluation (isolate creation) and
+// track readiness with a flag. CRITICAL: never await this promise inside a
+// request. In ~40% of edge isolates the underlying wasm compile/instantiate
+// op never settles; awaiting it taints the whole request (workerd raises
+// "Promise will never complete" and turns the response into a 1101 error
+// page, no matter what the handler returns afterwards). Un-awaited pending
+// promises are harmless — the ?probe=1 endpoint serves fine in every isolate.
+let wasmReady = false;
+initWasm(resvgWasm).then(
+  () => {
+    wasmReady = true;
+    console.log('[og] background initWasm resolved');
+  },
+  (e) => console.log('[og] background initWasm rejected:', e && e.message)
+);
+
+// The request that triggers lazy module evaluation on a fresh isolate runs in
+// "global scope" for workerd: any runtime op (setTimeout, async I/O, even the
+// ops satori performs on first use) throws "Disallowed operation called
+// within global scope" and the whole request dies with 1101. Subsequent
+// requests on the same isolate are normal. So request #1 on every isolate
+// must be 100% synchronous — serve the inlined fallback and warm the render
+// pipeline afterwards via waitUntil (runs after the response is out the
+// door, so failures cannot taint the delivered response).
+let isolateWarmed = false;
+
+function fallbackResponse() {
+  return new Response(b64ToBuffer(FALLBACK_B64), {
+    headers: {
+      'content-type': 'image/png',
+      'cache-control': 'public, max-age=600',
+    },
+  });
+}
+
+async function warmUpPipeline() {
+  // Exercise the full satori + Resvg path once so every lazy init (yoga wasm,
+  // font decode caches) happens here, inside a waitUntil context.
+  const fonts = [
+    { name: 'Inter', data: b64ToBuffer(INTER_400), weight: 400, style: 'normal' },
+    { name: 'Inter', data: b64ToBuffer(INTER_700), weight: 700, style: 'normal' },
+  ];
+  const svg = await satori(buildElement('easy', '0:42', 'warmup', true), {
+    width: 1200,
+    height: 630,
+    fonts,
+  });
+  new Resvg(svg, { fitTo: { mode: 'width', value: 1200 } }).render().asPng();
+  console.log('[og] warm-up render complete');
 }
 
 function withTimeout(p, ms, label) {
@@ -214,26 +250,49 @@ export async function onRequestGet(context) {
   const isWin = time !== null && u.searchParams.get('w') !== '0';
   const timeStr = time !== null ? fmtTime(time) : '0:00';
 
+  // Sync diagnostic endpoint (never awaits initWasm)
+  if (u.searchParams.get('probe') === '1') {
+    return new Response(JSON.stringify({
+      typeofWasm: typeof resvgWasm,
+      ctor: resvgWasm && resvgWasm.constructor && resvgWasm.constructor.name,
+      isWasmModule: typeof WebAssembly !== 'undefined' && resvgWasm instanceof WebAssembly.Module,
+    }), { headers: { 'content-type': 'application/json' } });
+  }
+
+  // Request #1 on this isolate: pure sync fallback, then warm the pipeline
+  // in the background. Never await anything here — see comment above.
+  if (!isolateWarmed) {
+    isolateWarmed = true;
+    try {
+      context.waitUntil(
+        warmUpPipeline().catch((e) => console.log('[og] warm-up failed:', e && e.message))
+      );
+    } catch (e) {
+      console.log('[og] waitUntil unavailable:', e && e.message);
+    }
+    return fallbackResponse();
+  }
+
+  if (!wasmReady) {
+    // Warm-up still in flight (or poisoned): sync fallback, no awaits.
+    return fallbackResponse();
+  }
+
   try {
-    console.log('[og] request start');
-    await withTimeout(ensureResvg(), 15000, 'initWasm');
     const fonts = [
       { name: 'Inter', data: b64ToBuffer(INTER_400), weight: 400, style: 'normal' },
       { name: 'Inter', data: b64ToBuffer(INTER_700), weight: 700, style: 'normal' },
     ];
-    console.log('[og] fonts decoded');
     const svg = await withTimeout(
       satori(buildElement(diff, timeStr, name, isWin), {
         width: 1200,
         height: 630,
         fonts,
       }),
-      15000,
+      10000,
       'satori'
     );
-    console.log('[og] satori done, svg len =', svg.length);
     const png = new Resvg(svg, { fitTo: { mode: 'width', value: 1200 } }).render().asPng();
-    console.log('[og] resvg done, png len =', png.length);
     return new Response(png, {
       headers: {
         'content-type': 'image/png',
@@ -241,10 +300,7 @@ export async function onRequestGet(context) {
       },
     });
   } catch (e) {
-    console.log('[og] FAILED:', e && e.message, e && e.stack);
-    return new Response('og render failed: ' + (e && e.message ? e.message : 'unknown'), {
-      status: 500,
-      headers: { 'content-type': 'text/plain' },
-    });
+    console.log('[og] dynamic render failed:', e && e.message);
+    return fallbackResponse();
   }
 }
