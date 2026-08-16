@@ -9,6 +9,7 @@ import { Resvg, initWasm } from './resvg-wasm-sync.js';
 import resvgWasm from './resvg.wasm';
 import { INTER_400, INTER_700 } from './og-fonts.js';
 import { FALLBACK_B64 } from './og-fallback-b64.js';
+import { QR_DATA_URL } from './og-qr-dataurl.js';
 
 const SITE = 'bb.superzan.net';
 const DIFF_META = {
@@ -194,27 +195,64 @@ function buildContent(diff, timeStr, name, isWin) {
             ],
           },
         },
-        // 底部：拼豆装饰 + 域名
+        // 底部：拼豆装饰 + 域名（左） | QR 码（右）
         {
           type: 'div',
           props: {
-            style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+            style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' },
             children: [
+              // Left: beads + domain
               {
                 type: 'div',
                 props: {
-                  style: { display: 'flex', gap: 14, alignItems: 'center' },
+                  style: { display: 'flex', flexDirection: 'column', gap: 14 },
                   children: [
-                    bead('#e87b3a'), bead('#4caf50'), bead('#42a5f5'), bead('#ffca28'), bead('#ef5350'), bead('#8d6e63'),
+                    {
+                      type: 'div',
+                      props: {
+                        style: { display: 'flex', gap: 14, alignItems: 'center' },
+                        children: [
+                          bead('#e87b3a'), bead('#4caf50'), bead('#42a5f5'), bead('#ffca28'), bead('#ef5350'), bead('#8d6e63'),
+                        ],
+                      },
+                    },
+                    {
+                      type: 'div',
+                      props: {
+                        style: { display: 'flex', fontSize: 30, fontWeight: 700, color: '#e87b3a' },
+                        children: [SITE],
+                      },
+                    },
                   ],
                 },
               },
+              // Right: QR code + "Scan to play" label
+              // Single <img> with data URL (625 per-cell divs caused 1102 CPU limit)
               {
                 type: 'div',
                 props: {
-                  style: { display: 'flex', alignItems: 'center', gap: 16 },
+                  style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 },
                   children: [
-                    { type: 'div', props: { style: { display: 'flex', fontSize: 30, fontWeight: 700, color: '#e87b3a' }, children: [SITE] } },
+                    {
+                      type: 'img',
+                      props: {
+                        src: QR_DATA_URL,
+                        style: {
+                          width: 116,
+                          height: 116,
+                          backgroundColor: '#ffffff',
+                          padding: 8,
+                          borderRadius: 10,
+                        },
+                      },
+                    },
+                    {
+                      type: 'div',
+                      props: {
+                        style: { display: 'flex', fontSize: 16, fontWeight: 700, color: '#6b6257', letterSpacing: 1 },
+                        children: ['SCAN TO PLAY'],
+                      },
+                    },
                   ],
                 },
               },
