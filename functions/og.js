@@ -24,7 +24,7 @@ const DIFF_META = {
 // op never settles; awaiting it taints the whole request (workerd raises
 // "Promise will never complete" and turns the response into a 1101 error
 // page, no matter what the handler returns afterwards). Un-awaited pending
-// promises are harmless — the ?probe=1 endpoint serves fine in every isolate.
+// promises are harmless — un-awaited code cannot taint the response.
 let wasmReady = false;
 initWasm(resvgWasm).then(
   () => {
@@ -287,15 +287,6 @@ export async function onRequestGet(context) {
   const name = sanitizeName(u.searchParams.get('name'));
   const isWin = time !== null && u.searchParams.get('w') !== '0';
   const timeStr = time !== null ? fmtTime(time) : '0:00';
-
-  // Sync diagnostic endpoint (never awaits initWasm)
-  if (u.searchParams.get('probe') === '1') {
-    return new Response(JSON.stringify({
-      typeofWasm: typeof resvgWasm,
-      ctor: resvgWasm && resvgWasm.constructor && resvgWasm.constructor.name,
-      isWasmModule: typeof WebAssembly !== 'undefined' && resvgWasm instanceof WebAssembly.Module,
-    }), { headers: { 'content-type': 'application/json' } });
-  }
 
   // Request #1 on this isolate: pure sync fallback, then warm the pipeline
   // in the background. Never await anything here — see comment above.
