@@ -8,6 +8,7 @@
 
 import { t } from '../i18n.js';
 import { getCachedBackgroundImage } from './BackgroundImage.js';
+import { QR_MATRIX, QR_SIZE } from './qr-matrix.js';
 
 const C = {
   MINT:       '#5dcaa5',
@@ -443,20 +444,13 @@ function drawBrandBar(ctx, W, y, h) {
   roundRect(ctx, qrX, qrY, qrSize, qrSize, 6);
   ctx.fill();
   ctx.fillStyle = C.BLACK;
-  const cellSz = qrSize / 7;
-  const pattern = [
-    [1,1,1,0,1,0,1],
-    [1,0,1,1,0,1,1],
-    [1,1,0,1,1,0,0],
-    [0,1,1,0,1,1,0],
-    [1,0,1,1,0,0,1],
-    [0,1,0,0,1,1,1],
-    [1,1,1,0,1,1,0],
-  ];
-  for (let r = 0; r < 7; r++) {
-    for (let c2 = 0; c2 < 7; c2++) {
-      if (pattern[r][c2]) {
-        ctx.fillRect(qrX + c2 * cellSz + 2, qrY + r * cellSz + 2, cellSz - 4, cellSz - 4);
+  const margin = Math.max(3, Math.floor(qrSize * 0.08));
+  const drawSize = qrSize - margin * 2;
+  const cellSz = drawSize / QR_SIZE;
+  for (let r = 0; r < QR_SIZE; r++) {
+    for (let c2 = 0; c2 < QR_SIZE; c2++) {
+      if (QR_MATRIX[r][c2]) {
+        ctx.fillRect(qrX + margin + c2 * cellSz, qrY + margin + r * cellSz, cellSz + 0.5, cellSz + 0.5);
       }
     }
   }
