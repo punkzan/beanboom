@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Minesweeper Patterns - 1-1, 1-2 &amp; 1-2-1 Explained with Examples | Bean Boom</title>
+  <meta name="description" content="Learn every essential minesweeper pattern: 1-1, 1-2, 1-2-1, 1-2-2-1, corner patterns and wall reductions. Clear examples show exactly where the mines are.">
+  <meta name="keywords" content="minesweeper patterns,minesweeper 1-2 pattern,minesweeper 1-1 pattern,minesweeper logic,minesweeper combinations">
+  <link rel="canonical" href="https://bb.superzan.net/minesweeper-patterns">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#e87b3a">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Bean Boom">
+  <meta property="og:url" content="https://bb.superzan.net/minesweeper-patterns">
+  <meta property="og:title" content="Minesweeper Patterns - 1-1, 1-2 &amp; 1-2-1 Explained with Examples | Bean Boom">
+  <meta property="og:description" content="Learn every essential minesweeper pattern: 1-1, 1-2, 1-2-1, 1-2-2-1, corner patterns and wall reductions. Clear examples show exactly where the mines are.">
+  <meta property="og:image" content="https://bb.superzan.net/og-cover.png">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Minesweeper Patterns - 1-1, 1-2 &amp; 1-2-1 Explained">
+  <meta name="twitter:description" content="Master the classic minesweeper patterns with clear examples.">
+  <meta name="twitter:image" content="https://bb.superzan.net/og-cover.png">
+
+  <!-- Structured Data: Article -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Minesweeper Patterns: Every Classic Pattern Explained",
+    "description": "A visual guide to every essential minesweeper pattern: 1-1, 1-2, 1-2-1, 1-2-2-1, corner patterns, and wall reductions.",
+    "inLanguage": "en",
+    "url": "https://bb.superzan.net/minesweeper-patterns",
+    "image": "https://bb.superzan.net/og-cover.png",
+    "author": { "@type": "Organization", "name": "Bean Boom" },
+    "publisher": { "@type": "Organization", "name": "Bean Boom" }
+  }
+  </script>
+
+  <!-- Structured Data: Breadcrumb -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bb.superzan.net/" },
+      { "@type": "ListItem", "position": 2, "name": "Minesweeper Patterns", "item": "https://bb.superzan.net/minesweeper-patterns" }
+    ]
+  }
+  </script>
+
+  <!-- Structured Data: FAQ -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Do minesweeper patterns work in every game?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Patterns are pure logic: if the number configuration matches, the conclusion is always true, regardless of the board. They work in every minesweeper game including Bean Boom." }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the most useful minesweeper pattern?",
+        "acceptedAnswer": { "@type": "Answer", "text": "The 1-2 pattern is the most frequently used. Once you internalize it, you will spot safe cells and mines along walls almost instantly." }
+      },
+      {
+        "@type": "Question",
+        "name": "Can patterns solve a minesweeper board without guessing?",
+        "acceptedAnswer": { "@type": "Answer", "text": "On most boards, combinations of patterns plus counting solve everything. In classic minesweeper some boards end in an unavoidable 50/50 guess, but patterns greatly reduce how often you need to guess." }
+      }
+    ]
+  }
+  </script>
+
+  <!-- Preconnect -->
+  <link rel="preconnect" href="https://www.googletagmanager.com">
+  <link rel="preconnect" href="https://www.google-analytics.com">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8VV5G44NTR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-8VV5G44NTR');
+  </script>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f3ed; color: #2d2d2d; line-height: 1.7; }
+    .container { max-width: 760px; margin: 0 auto; padding: 24px 20px 60px; }
+    .header { text-align: center; padding: 40px 0 24px; }
+    .header a { display: inline-block; background: #e87b3a; color: #fff; text-decoration: none; padding: 10px 28px; border-radius: 24px; font-weight: 600; font-size: 15px; margin-bottom: 20px; }
+    .breadcrumb { font-size: 0.85em; color: #999; margin-bottom: 8px; }
+    .breadcrumb a { color: #e87b3a; text-decoration: none; }
+    h1 { font-size: 2em; margin-bottom: 8px; }
+    .subtitle { color: #666; font-size: 1.05em; margin-bottom: 32px; }
+    h2 { font-size: 1.4em; margin: 32px 0 12px; color: #e87b3a; }
+    h3 { font-size: 1.15em; margin: 20px 0 8px; }
+    p { margin-bottom: 14px; }
+    ol, ul { margin: 0 0 16px 20px; }
+    li { margin-bottom: 6px; }
+    .pattern { background: #fff; border: 1px solid #e0ddd5; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    .pattern h3 { margin-top: 0; }
+    .board { font-family: 'Courier New', Courier, monospace; font-size: 1.05em; background: #f5f3ed; border-radius: 6px; padding: 12px 16px; margin: 10px 0; overflow-x: auto; white-space: pre; line-height: 1.5; }
+    .legend { font-size: 0.9em; color: #777; margin-bottom: 20px; }
+    .cta { text-align: center; margin: 40px 0; }
+    .cta a { display: inline-block; background: #e87b3a; color: #fff; text-decoration: none; padding: 14px 40px; border-radius: 28px; font-size: 1.1em; font-weight: 700; }
+    .faq details { background: #fff; border: 1px solid #e0ddd5; border-radius: 8px; padding: 12px 16px; margin: 8px 0; }
+    .faq summary { font-weight: 600; cursor: pointer; }
+    .faq p { margin-top: 8px; color: #555; }
+    .footer { text-align: center; padding: 24px 0; color: #999; font-size: 0.85em; border-top: 1px solid #e0ddd5; margin-top: 40px; }
+    .footer a { color: #e87b3a; text-decoration: none; }
+    .nav-links { display: flex; gap: 16px; justify-content: center; margin: 16px 0; flex-wrap: wrap; }
+    .nav-links a { color: #e87b3a; text-decoration: none; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <a href="/">&#8592; Play Bean Boom</a>
+      <div class="breadcrumb"><a href="/">Home</a> &rsaquo; Minesweeper Patterns</div>
+      <h1>Minesweeper Patterns</h1>
+      <p class="subtitle">The classic number configurations that let you find mines and safe cells instantly.</p>
+    </div>
+
+    <div class="legend">Legend in the diagrams: <code>? ?</code> = covered cell, numbers are revealed cells, <code>■</code> = guaranteed mine, <code>□</code> = guaranteed safe cell.</div>
+
+    <p>Minesweeper is a logic game, and logic repeats itself. The same number configurations appear in almost every game, and each one has a guaranteed conclusion. Players who memorize these <strong>minesweeper patterns</strong> solve boards dramatically faster than players who reason from scratch. This guide covers every pattern you need, from the basic 1-1 to the famous 1-2-1.</p>
+    <p>All patterns below apply to <a href="/">Bean Boom</a> and every classic minesweeper game. If you are new to the game, start with the <a href="/how-to-play">rules guide</a> first.</p>
+
+    <h2>The 1-1 Pattern</h2>
+    <div class="pattern">
+      <p>Two "1" cells sit side by side against a wall (or any already-revealed area). Both 1s share the same two covered neighbors, so there is exactly one mine in those two cells. That satisfies <em>both</em> 1s &mdash; which means every other covered cell touching the second 1 is safe.</p>
+      <div class="board">■ □ ?
+1 1 □ ?
+? ? 1 1</div>
+      <p>The mine is under one of the two cells between the 1s; the cells marked □ beyond them are safe to reveal.</p>
+    </div>
+    <p>The 1-1 pattern is the single most common pattern in the game. Train your eyes to scan rows of 1s along walls &mdash; each pair hands you free safe cells.</p>
+
+    <h2>The 1-2 Pattern</h2>
+    <div class="pattern">
+      <p>A "1" next to a "2" along a wall. The 2 needs two mines among its three covered neighbors; the 1 can only "afford" one mine in the two cells they share. That forces the 2's third cell &mdash; the one beyond the 1's reach &mdash; to be a mine, and the cell beyond that to be safe.</p>
+      <div class="board">■ ? □
+1 2 ? □</div>
+      <p>Mine goes where the ■ is. The two cells to its right (□) are safe, because the 2 is already satisfied.</p>
+    </div>
+    <p>The 1-2 pattern is the workhorse of fast minesweeper play. Once you see it, you can instantly place a mine and reveal a safe cell with zero further thought.</p>
+
+    <h2>The 1-2-1 Pattern</h2>
+    <div class="pattern">
+      <p>The famous 1-2-1 appears when three numbers sit against a wall. The middle 2 must have both its mines at the two ends, satisfying both 1s. The cell directly above the 2 is always safe.</p>
+      <div class="board">□ ■ □ ■ □
+ 1 2 1</div>
+      <p>Mines at both ■ positions; the middle □ above the 2 is safe.</p>
+    </div>
+    <p>Players who know 1-2-1 clear these situations instantly while everyone else is still counting. It shows up constantly along board edges.</p>
+
+    <h2>The 1-2-2-1 Pattern</h2>
+    <div class="pattern">
+      <p>Four numbers in a row against a wall. Only one arrangement of mines satisfies all four numbers: a mine at each end, with the two middle cells safe.</p>
+      <div class="board">□ ■ □ □ ■ □
+ 1 2 2 1</div>
+      <p>Mines under both ■ cells; everything between them is safe.</p>
+    </div>
+
+    <h2>Corner Patterns</h2>
+    <div class="pattern">
+      <h3>The 1 in a Corner</h3>
+      <p>A corner cell has only three neighbors. If you reveal a "1" directly in the corner, its single mine hides among those three neighbors. The rest of the board is unaffected &mdash; don't waste effort flagging elsewhere.</p>
+    </div>
+    <div class="pattern">
+      <h3>1-1 Diagonal in a Corner</h3>
+      <p>When a corner 1 is paired with an adjacent 1 along the edge, the same logic as the 1-1 pattern applies: one mine covers both 1s, and cells beyond the pair are safe.</p>
+    </div>
+
+    <h2>Reduction: Simplify Big Numbers</h2>
+    <p>Not every situation matches a named pattern. When you face a 3, 4, or higher, <strong>reduce</strong> it: subtract the flags already placed around the number. A "4" with two flags next to it behaves exactly like a "2". Every pattern above still applies &mdash; you just apply it to the reduced number.</p>
+    <p>Reduction works in both directions. A "1" that already touches a flag is a "0": every other covered neighbor is guaranteed safe. This one habit &mdash; re-reading numbers after each flag &mdash; unlocks most "stuck" boards.</p>
+
+    <h2>Counting in the Endgame</h2>
+    <p>In the final phase, combine patterns with the <strong>mine counter</strong>. If the counter shows one mine left and two covered regions remain, only one region can hold it. If a region <em>must</em> contain a mine to satisfy its numbers, every cell in the other region is safe. For a deeper treatment, see the <a href="/minesweeper-strategy">strategy guide</a>.</p>
+
+    <div class="cta">
+      <a href="/">Practice Patterns in Bean Boom &rarr;</a>
+    </div>
+
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq">
+      <details>
+        <summary>Do minesweeper patterns work in every game?</summary>
+        <p>Yes. Patterns are pure logic: if the number configuration matches, the conclusion is always true, regardless of the board. They work in every minesweeper game including Bean Boom.</p>
+      </details>
+      <details>
+        <summary>What is the most useful minesweeper pattern?</summary>
+        <p>The 1-2 pattern is the most frequently used. Once you internalize it, you will spot safe cells and mines along walls almost instantly.</p>
+      </details>
+      <details>
+        <summary>Can patterns solve a minesweeper board without guessing?</summary>
+        <p>On most boards, combinations of patterns plus counting solve everything. In classic minesweeper some boards end in an unavoidable 50/50 guess, but patterns greatly reduce how often you need to guess.</p>
+      </details>
+    </div>
+
+    <div class="nav-links">
+      <a href="/">Play Game</a>
+      <a href="/how-to-play">How to Play</a>
+      <a href="/minesweeper-strategy">Strategy</a>
+      <a href="/minesweeper-tips">Tips</a>
+      <a href="/minesweeper-history">History</a>
+    </div>
+
+    <div class="footer">
+      <p>&copy; 2026 Bean Boom &middot; <a href="/">Free Online Minesweeper Game</a></p>
+    </div>
+  </div>
+</body>
+</html>

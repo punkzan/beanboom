@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Minesweeper Strategy - Openings, Efficiency &amp; Endgame Logic | Bean Boom</title>
+  <meta name="description" content="Complete minesweeper strategy guide: opening moves, when to flag, chording, probability guessing, and endgame counting. Play smarter and win more games.">
+  <meta name="keywords" content="minesweeper strategy,minesweeper opening,how to win minesweeper,minesweeper guessing,minesweeper chording">
+  <link rel="canonical" href="https://bb.superzan.net/minesweeper-strategy">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#e87b3a">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Bean Boom">
+  <meta property="og:url" content="https://bb.superzan.net/minesweeper-strategy">
+  <meta property="og:title" content="Minesweeper Strategy - Openings, Efficiency &amp; Endgame Logic | Bean Boom">
+  <meta property="og:description" content="Complete minesweeper strategy guide: opening moves, when to flag, chording, probability guessing, and endgame counting.">
+  <meta property="og:image" content="https://bb.superzan.net/og-cover.png">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Minesweeper Strategy - Openings, Efficiency &amp; Endgame Logic">
+  <meta name="twitter:description" content="Play smarter: openings, chording, probability, and endgame counting.">
+  <meta name="twitter:image" content="https://bb.superzan.net/og-cover.png">
+
+  <!-- Structured Data: Article -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Minesweeper Strategy: Openings, Efficiency and Endgame Logic",
+    "description": "A complete minesweeper strategy guide covering opening moves, flag discipline, chording, probability guessing, and endgame counting.",
+    "inLanguage": "en",
+    "url": "https://bb.superzan.net/minesweeper-strategy",
+    "image": "https://bb.superzan.net/og-cover.png",
+    "author": { "@type": "Organization", "name": "Bean Boom" },
+    "publisher": { "@type": "Organization", "name": "Bean Boom" }
+  }
+  </script>
+
+  <!-- Structured Data: Breadcrumb -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bb.superzan.net/" },
+      { "@type": "ListItem", "position": 2, "name": "Minesweeper Strategy", "item": "https://bb.superzan.net/minesweeper-strategy" }
+    ]
+  }
+  </script>
+
+  <!-- Structured Data: FAQ -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Where should I make my first click in minesweeper?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Click near the center of the board, not in a corner. A central opening reveals more information from surrounding numbers and gives the auto-reveal cascade more room to spread. Your first click is always safe in Bean Boom." }
+      },
+      {
+        "@type": "Question",
+        "name": "Should I flag every mine?",
+        "acceptedAnswer": { "@type": "Answer", "text": "For logic, only flag mines you have proven. For speed, expert players often skip flags entirely and rely on chording with the correct number already known. Beginner and intermediate players should flag freely to stay organized." }
+      },
+      {
+        "@type": "Question",
+        "name": "Is guessing ever necessary in minesweeper?",
+        "acceptedAnswer": { "@type": "Answer", "text": "In classic minesweeper, yes: a small fraction of boards end in a true 50/50 that logic cannot resolve. Good strategy minimizes guessing by deferring uncertain regions until the endgame, when the mine counter provides extra information." }
+      }
+    ]
+  }
+  </script>
+
+  <!-- Preconnect -->
+  <link rel="preconnect" href="https://www.googletagmanager.com">
+  <link rel="preconnect" href="https://www.google-analytics.com">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8VV5G44NTR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-8VV5G44NTR');
+  </script>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f3ed; color: #2d2d2d; line-height: 1.7; }
+    .container { max-width: 760px; margin: 0 auto; padding: 24px 20px 60px; }
+    .header { text-align: center; padding: 40px 0 24px; }
+    .header a { display: inline-block; background: #e87b3a; color: #fff; text-decoration: none; padding: 10px 28px; border-radius: 24px; font-weight: 600; font-size: 15px; margin-bottom: 20px; }
+    .breadcrumb { font-size: 0.85em; color: #999; margin-bottom: 8px; }
+    .breadcrumb a { color: #e87b3a; text-decoration: none; }
+    h1 { font-size: 2em; margin-bottom: 8px; }
+    .subtitle { color: #666; font-size: 1.05em; margin-bottom: 32px; }
+    h2 { font-size: 1.4em; margin: 32px 0 12px; color: #e87b3a; }
+    h3 { font-size: 1.15em; margin: 20px 0 8px; }
+    p { margin-bottom: 14px; }
+    ol, ul { margin: 0 0 16px 20px; }
+    li { margin-bottom: 6px; }
+    .cta { text-align: center; margin: 40px 0; }
+    .cta a { display: inline-block; background: #e87b3a; color: #fff; text-decoration: none; padding: 14px 40px; border-radius: 28px; font-size: 1.1em; font-weight: 700; }
+    .faq details { background: #fff; border: 1px solid #e0ddd5; border-radius: 8px; padding: 12px 16px; margin: 8px 0; }
+    .faq summary { font-weight: 600; cursor: pointer; }
+    .faq p { margin-top: 8px; color: #555; }
+    .footer { text-align: center; padding: 24px 0; color: #999; font-size: 0.85em; border-top: 1px solid #e0ddd5; margin-top: 40px; }
+    .footer a { color: #e87b3a; text-decoration: none; }
+    .nav-links { display: flex; gap: 16px; justify-content: center; margin: 16px 0; flex-wrap: wrap; }
+    .nav-links a { color: #e87b3a; text-decoration: none; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <a href="/">&#8592; Play Bean Boom</a>
+      <div class="breadcrumb"><a href="/">Home</a> &rsaquo; Minesweeper Strategy</div>
+      <h1>Minesweeper Strategy</h1>
+      <p class="subtitle">Openings, efficiency, guessing, and endgame logic &mdash; how strong players actually think.</p>
+    </div>
+
+    <p>Knowing the <a href="/how-to-play">rules</a> and the classic <a href="/minesweeper-patterns">patterns</a> makes you a competent minesweeper player. Strategy is what turns competence into wins: where to open, when to flag, how to handle uncertainty, and how to close out a game without a fatal guess. This guide covers the full arc of a game, from first click to last cell.</p>
+
+    <h2>1. Open in the Center</h2>
+    <p>Your first click is always safe, so use it where it buys the most information. A click near the <strong>center</strong> of the board has eight directions to cascade into and produces numbers with the richest neighborhoods. Corner and edge openings reveal less and leave you working with thinner information.</p>
+    <p>If the opening yields only one or two numbers, click again in a nearby unrevealed region rather than grinding deductions from a single "1". Early game, expanding territory beats squeezing every drop of logic from a poor start.</p>
+
+    <h2>2. Flag with Discipline</h2>
+    <p>A flag is a commitment. Follow three rules:</p>
+    <ul>
+      <li><strong>Only flag proven mines.</strong> A flag placed on a hunch poisons every deduction you build on top of it. If a number contradicts your flags, suspect the flags first.</li>
+      <li><strong>Re-read after every flag.</strong> Each flag effectively reduces the numbers around it (see <a href="/minesweeper-patterns">reduction</a>). New safe cells appear constantly.</li>
+      <li><strong>Flag less as you improve.</strong> Speed players flag only what enables a chord &mdash; or skip flags entirely. Fewer clicks, fewer errors.</li>
+    </ul>
+
+    <h2>3. Learn Chording</h2>
+    <p>Chording means revealing all remaining neighbors of a number at once when its flag count already matches the number &mdash; on desktop, click (or press both buttons on) a satisfied number. It turns "flag twice, click six times" into a single action and is the foundation of fast times. In Bean Boom, a correctly flagged number lets you chord for instant clears.</p>
+
+    <h2>4. Work the Walls</h2>
+    <p>Walls and edges are where <a href="/minesweeper-patterns">named patterns</a> concentrate: 1-1, 1-2, 1-2-1, and 1-2-2-1 all live against walls. Mid-board clusters with high numbers are information-rich but slow to resolve. A practical rhythm: expand in the open, then clean the walls with patterns.</p>
+
+    <h2>5. Defer Uncertainty</h2>
+    <p>When you hit a region that offers no forced conclusion, do not guess immediately. Mark it mentally, move elsewhere, and continue extracting guaranteed cells. Two things happen when you defer:</p>
+    <ol>
+      <li>New reveals around the region often resolve it without a guess.</li>
+      <li>You reach the endgame holding extra information &mdash; the mine counter &mdash; that shrinks or eliminates the guess.</li>
+    </ol>
+
+    <h2>6. Guess Smart When You Must</h2>
+    <p>Classic minesweeper cannot be solved by pure logic 100% of the time. When a guess is unavoidable, improve the odds:</p>
+    <ul>
+      <li>Prefer <strong>corners of unknown regions</strong> that satisfy multiple numbers at once &mdash; a wrong guess still yields information.</li>
+      <li>Compute rough probabilities: a cell that must be a mine in 7 of 10 remaining arrangements is 70% a mine &mdash; but the cell that is safe in 7 of 10 is where you should click.</li>
+      <li>Take forced guesses <strong>early</strong> if losing costs little time, and <strong>late</strong> if you are protecting a good board. Decide based on how much you have invested.</li>
+    </ul>
+
+    <h2>7. Count the Endgame</h2>
+    <p>The final phase is won with arithmetic. If the mine counter reads one and two unresolved regions remain, only one region can hold the mine. If a region <em>requires</em> a mine to satisfy its numbers, every cell outside it is instantly safe. Strong players often save an easy region for last precisely to use the counter this way.</p>
+
+    <h2>8. Build a Routine</h2>
+    <p>Consistent play beats brilliance. A routine that works: center opening &rarr; cascade outward &rarr; clean walls with patterns &rarr; reduce numbers after every flag &rarr; defer unresolved regions &rarr; close with counter arithmetic. Run the routine on <a href="/">Bean Boom's Easy board</a> until it is automatic, then carry it to Medium and Hard.</p>
+
+    <div class="cta">
+      <a href="/">Apply This Strategy Now &rarr;</a>
+    </div>
+
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq">
+      <details>
+        <summary>Where should I make my first click in minesweeper?</summary>
+        <p>Click near the center of the board, not in a corner. A central opening reveals more information from surrounding numbers and gives the auto-reveal cascade more room to spread. Your first click is always safe in Bean Boom.</p>
+      </details>
+      <details>
+        <summary>Should I flag every mine?</summary>
+        <p>For logic, only flag mines you have proven. For speed, expert players often skip flags entirely and rely on chording. Beginners should flag freely to stay organized, then flag less as pattern recognition improves.</p>
+      </details>
+      <details>
+        <summary>Is guessing ever necessary in minesweeper?</summary>
+        <p>In classic minesweeper, yes: a small fraction of boards end in a true 50/50 that logic cannot resolve. Good strategy minimizes guessing by deferring uncertain regions until the endgame, when the mine counter provides extra information.</p>
+      </details>
+    </div>
+
+    <div class="nav-links">
+      <a href="/">Play Game</a>
+      <a href="/how-to-play">How to Play</a>
+      <a href="/minesweeper-patterns">Patterns</a>
+      <a href="/minesweeper-tips">Tips</a>
+      <a href="/minesweeper-history">History</a>
+    </div>
+
+    <div class="footer">
+      <p>&copy; 2026 Bean Boom &middot; <a href="/">Free Online Minesweeper Game</a></p>
+    </div>
+  </div>
+</body>
+</html>
