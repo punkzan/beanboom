@@ -86,10 +86,13 @@ function showBoardLabel(text, isFever) {
 
 function refreshComboUI() {
   const active = game.gameState === 'playing' && scoreSystem.displayCombo() > 0;
-  comboItemEl.style.display = active ? '' : 'none';
+  // 用 visibility 切换保留占位，避免状态栏宽度变化导致棋盘卡片「呼吸」
+  comboItemEl.style.visibility = active ? 'visible' : 'hidden';
   if (active) {
     comboDisplayEl.textContent = '×' + scoreSystem.displayMultiplier().toFixed(1);
     comboItemEl.classList.toggle('hot', scoreSystem.displayCombo() >= 5);
+  } else {
+    comboItemEl.classList.remove('hot');
   }
 }
 setInterval(refreshComboUI, 500);
@@ -108,7 +111,8 @@ function handleScoreEvent({ type, cells, pos }) {
 function resetScoreUI() {
   scoreSystem.reset();
   scoreDisplayEl.textContent = '0';
-  comboItemEl.style.display = 'none';
+  comboItemEl.style.visibility = 'hidden';
+  comboItemEl.classList.remove('hot');
   overlayScore.textContent = '';
 }
 
