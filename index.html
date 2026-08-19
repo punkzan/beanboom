@@ -78,6 +78,48 @@
   }
   </script>
 
+  <!-- Structured Data: FAQPage (rich results) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Is Bean Boom free to play?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. The core minesweeper game is completely free. Optional paid challenges are available if you want to compete for rewards."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do I need to download anything?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Bean Boom runs directly in your browser. Just open the page and start playing."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I play on my phone?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Bean Boom works on both desktop and mobile browsers, with touch controls for revealing and flagging tiles."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does the global leaderboard work?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Your best times are submitted to the server after each game. Compete with players around the world across daily, monthly, and all-time rankings."
+        }
+      }
+    ]
+  }
+  </script>
+
   <link rel="stylesheet" href="/styles/main.css">
 </head>
 <body>
@@ -244,6 +286,9 @@
         <li>Play instantly - no download or installation needed</li>
       </ul>
 
+      <h3>Improve Your Game</h3>
+      <p>New to minesweeper? Start with the complete <a href="/how-to-play">how to play guide</a>. Once you know the rules, learn the classic <a href="/minesweeper-patterns">minesweeper patterns</a> like 1-1 and 1-2, read our full <a href="/minesweeper-strategy">strategy guide</a>, pick up fifteen practical <a href="/minesweeper-tips">minesweeper tips</a>, or explore the surprising <a href="/minesweeper-history">history of minesweeper</a> from 1973 to today.</p>
+
       <h3>Frequently Asked Questions</h3>
       <details>
         <summary>Is Bean Boom free to play?</summary>
@@ -292,6 +337,10 @@
     </div>
     <div class="footer-links">
       <a href="/how-to-play">How to Play</a>
+      <a href="/minesweeper-patterns">Patterns</a>
+      <a href="/minesweeper-strategy">Strategy</a>
+      <a href="/minesweeper-tips">Tips</a>
+      <a href="/minesweeper-history">History</a>
       <a href="/about">About</a>
       <a href="/privacy-policy">Privacy Policy</a>
     </div>

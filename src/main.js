@@ -15,6 +15,9 @@ import { ScoreSystem } from './core/ScoreSystem.js';
 import { getDailyBackgroundUrl, getFallbackUrl, preloadBackgroundImage, initBackgroundImage } from './core/BackgroundImage.js';
 import { t, scanI18n, getLang, setLang, onLangChange } from './i18n.js';
 
+// 门户构建开关（CrazyGames 等平台）：VITE_PORTAL=1 时禁用广告、付费挑战、登录
+const PORTAL = import.meta.env.VITE_PORTAL === '1';
+
 let game = new Game('easy');
 const canvas = document.getElementById('game-canvas');
 let renderer = new Renderer(canvas, 'easy');
@@ -257,6 +260,11 @@ let authMode = 'register';
 
 function renderNavUser() {
   const user = getCurrentUser();
+  if (PORTAL) {
+    // 门户构建：不显示登录/注册入口（平台不允许外部登录）
+    navUser.innerHTML = '';
+    return;
+  }
   if (user) {
     navUser.innerHTML = `<span class="nav-user-info"><span class="nav-username" title="${escapeHtml(user.username)}">${escapeHtml(user.username)}</span><button class="nav-logout-btn" id="nav-logout-btn">${t('nav.logout')}</button></span>`;
     document.getElementById('nav-logout-btn').addEventListener('click', () => {
@@ -649,6 +657,11 @@ let challengesCache = [];
 let myChallengesCache = [];
 
 function renderChallengeSection() {
+  if (PORTAL) {
+    // 门户构建：隐藏付费挑战区（真实支付不被平台允许）
+    challengeSection.style.display = 'none';
+    return;
+  }
   const user = getCurrentUser();
   challengeLoginHint.style.display = user ? 'none' : '';
   challengeTabs.style.display = '';
@@ -1110,8 +1123,8 @@ function applySeoConfig() {
 function renderAdSlots() {
   const ads = getAdsConfig();
   const slots = document.querySelectorAll('.ad-slot');
-  if (!ads.enabled || !ads.adsenseClient) {
-    // 未启用广告：完全隐藏广告位
+  if (PORTAL || !ads.enabled || !ads.adsenseClient) {
+    // 未启用广告（或门户构建）：完全隐藏广告位
     slots.forEach(el => {
       el.classList.remove('has-ad');
       el.style.display = 'none';

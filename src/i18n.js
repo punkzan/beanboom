@@ -12,24 +12,21 @@ const listeners = [];
 
 let currentLang = detectLang();
 
-/** 检测当前语言: URL 参数 > localStorage > 浏览器偏好 > 默认 en */
+/** 检测当前语言: URL 参数 > localStorage（用户手动切换）> 默认 en
+ *  注意：不根据浏览器语言自动切换，保证面向全球英文用户的默认体验，
+ *  且与页面 lang="en-US" 声明一致（SEO 友好）。 */
 function detectLang() {
-  // 1. URL 参数 ?lang=en
+  // 1. URL 参数 ?lang=en / ?lang=zh（显式指定）
   const urlParam = new URLSearchParams(window.location.search).get('lang');
   if (urlParam && LOCALES[urlParam]) return urlParam;
 
-  // 2. 浏览器本地存储
+  // 2. 用户手动选择过的语言（仅由语言切换按钮写入）
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored && LOCALES[stored]) return stored;
   } catch (_) {}
 
-  // 3. 浏览器 Accept-Language
-  const navLang = navigator.language || '';
-  if (navLang.startsWith('en')) return 'en';
-  if (navLang.startsWith('zh')) return 'zh';
-
-  // 4. 默认英文
+  // 3. 默认英文
   return 'en';
 }
 
