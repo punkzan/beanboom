@@ -1,7 +1,8 @@
 /**
  * 计分系统（设计文档概念 D：连击 / 模式评分 · Phase 1）
  *
- * - 计分事件：普通揭开 10×s/格、Opening 惊喜 格数×20×s、Chord 揭格×15×s（≥4格翻倍）
+ * - 计分事件：普通揭开 10×s/格、Opening 惊喜 格数×20×s、Chord 揭格×15×s（≥4格翻倍）、
+ *   Bean Boom 揭格×25×s（概念 A · Phase 2，爆炸即 combo 引擎）
  * - 连击：每次安全揭开 +1，两次揭开间隔 > 3s 清零；倍率 s(k) = 1 + 0.1×min(k,20)
  * - 结算：FinalScore = floor(Σ事件分 × T) × 难度系数，T = clamp(par_time/实际用时, 1, 2)
  *   另加 玩家正确 flag 数 × 50（胜利时）
@@ -59,8 +60,8 @@ export class ScoreSystem {
   /**
    * 揭开事件计分
    * @param {number} cells 本次揭开的格数
-   * @param {'reveal'|'chord'} type 事件类型
-   * @returns {{ gained: number, milestone?: string, label?: 'greatOpening'|'perfectChord' }}
+   * @param {'reveal'|'chord'|'boom'} type 事件类型
+   * @returns {{ gained: number, milestone?: string, label?: 'greatOpening'|'perfectChord'|'beanBoom' }}
    */
   onReveal(cells, type = 'reveal') {
     if (cells <= 0) return { gained: 0 };
@@ -94,6 +95,10 @@ export class ScoreSystem {
     } else if (eventType === 'chord') {
       gained = Math.round(cells * 15 * s * (cells >= 4 ? 2 : 1));
       if (cells >= 4) label = 'perfectChord';
+    } else if (eventType === 'boom') {
+      // Bean Boom：全事件最高单价，揭格 ≥5 时弹出标签
+      gained = Math.round(cells * 25 * s);
+      if (cells >= 5) label = 'beanBoom';
     } else {
       gained = Math.round(cells * 10 * s);
     }

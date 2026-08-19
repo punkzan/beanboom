@@ -50,6 +50,18 @@ export class AnimationManager {
   }
 
   /**
+   * Bean Boom 脉冲 (正确旗引爆时，旗帜豆子放大弹跳)
+   */
+  addBoom(row, col) {
+    this.anims.set(`${row},${col}`, {
+      type: 'boom',
+      startTime: performance.now(),
+      duration: 450,
+    });
+    this._ensureRunning();
+  }
+
+  /**
    * 胜利庆祝动画 (所有豆子波浪弹跳)
    */
   addVictory(rows, cols) {
@@ -99,6 +111,9 @@ export class AnimationManager {
     } else if (anim.type === 'explode') {
       scale = 1 + t * 0.6;
       alpha = 1 - t * 0.7;
+    } else if (anim.type === 'boom') {
+      // 先胀大再回弹的脉冲
+      scale = 1 + Math.sin(t * Math.PI) * 0.5;
     } else if (anim.type === 'victory') {
       scale = 1 + Math.sin(t * Math.PI) * 0.18;
     }

@@ -59,7 +59,7 @@ const comboDisplayEl = document.getElementById('combo-display');
 const boardWrapper = document.querySelector('.board-wrapper');
 
 const MILESTONE_TEXT = { nice: 'Nice!', great: 'Great!', amazing: 'Amazing!', fever: 'BEAN FEVER!' };
-const LABEL_TEXT = { greatOpening: 'Great Opening!', perfectChord: 'Perfect Chord!' };
+const LABEL_TEXT = { greatOpening: 'Great Opening!', perfectChord: 'Perfect Chord!', beanBoom: 'Bean Boom!' };
 
 function showFloatText(text, pos, cls) {
   if (!pos || !boardWrapper) return;
@@ -101,7 +101,7 @@ function handleScoreEvent({ type, cells, pos }) {
   const res = scoreSystem.onReveal(cells, type);
   if (res.gained > 0) {
     scoreDisplayEl.textContent = Math.floor(scoreSystem.rawScore).toLocaleString();
-    showFloatText('+' + res.gained, pos);
+    showFloatText('+' + res.gained, pos, type === 'boom' ? 'boom' : '');
   }
   if (res.label) showBoardLabel(LABEL_TEXT[res.label], false);
   if (res.milestone) showBoardLabel(MILESTONE_TEXT[res.milestone], res.milestone === 'fever');

@@ -110,6 +110,41 @@ export class SoundManager {
     noise.start();
   }
 
+  /** Bean Boom 引爆 - 上扬轰鸣 + 短噪声（与踩雷的下沉爆炸声区分） */
+  playBoom() {
+    if (this.muted) return;
+    const ctx = this._ensureCtx();
+    if (!ctx) return;
+
+    // 低频上滑：从沉闷到明亮，营造"引爆得利"的正反馈
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(120, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(360, ctx.currentTime + 0.18);
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.3);
+
+    // 叠加短促噪声"啪"
+    const bufferSize = Math.floor(ctx.sampleRate * 0.1);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.value = 0.1;
+    noise.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+    noise.start();
+  }
+
   /** 胜利 - 上行琶音 */
   playWin() {
     if (this.muted) return;

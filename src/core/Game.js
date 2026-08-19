@@ -27,6 +27,7 @@ export class Game {
     this.gameState = 'ready';
     this.minesPlaced = false;
     this.playerCorrectFlags = 0; // 胜利时玩家自己插上的正确旗数（结算加分用）
+    this.boomCount = 0; // Bean Boom 已引爆次数（决定连锁阶梯 Tier 1-4）
 
     this.grid = [];
     for (let r = 0; r < this.rows; r++) {
@@ -176,14 +177,53 @@ export class Game {
 
   /**
    * 标记/取消标记
+   * @returns {{flagged: boolean, boom: {tier: number, revealedCells: Array, won: boolean} | null} | null}
+   *   正确标记地雷时返回 boom（Bean Boom 连锁爆破，概念 A）
    */
   toggleFlag(row, col) {
-    if (this.gameState === 'won' || this.gameState === 'lost') return;
+    if (this.gameState === 'won' || this.gameState === 'lost') return null;
     const cell = this.getCell(row, col);
-    if (!cell || cell.isRevealed) return;
+    if (!cell || cell.isRevealed) return null;
 
     cell.isFlagged = !cell.isFlagged;
     this.flagCount += cell.isFlagged ? 1 : -1;
+
+    // 正确标记地雷且未曾引爆过 → 触发 Bean Boom
+    if (cell.isFlagged && cell.isMine && !cell.hasBoomed) {
+      return { flagged: true, boom: this._beanBoom(cell) };
+    }
+    return { flagged: cell.isFlagged, boom: null };
+  }
+
+  /**
+   * Bean Boom 连锁爆破：以被正确标记的地雷为中心，
+   * 揭开切比雪夫半径内的安全格（严格限定半径内，不做 flood-fill，
+   * 避免 tier2+ 一炮清空大半个棋盘）。
+   * 阶梯：第 n 次引爆半径 = min(n, 4)，单调递增不回退。
+   * @returns {{tier: number, revealedCells: Array<{row,col,distance}>, won: boolean}}
+   */
+  _beanBoom(center) {
+    center.hasBoomed = true;
+    this.boomCount++;
+    const tier = Math.min(this.boomCount, 4);
+
+    const revealedCells = [];
+    for (let dr = -tier; dr <= tier; dr++) {
+      for (let dc = -tier; dc <= tier; dc++) {
+        const cell = this.getCell(center.row + dr, center.col + dc);
+        if (!cell || cell.isMine || cell.isRevealed || cell.isFlagged) continue;
+        cell.isRevealed = true;
+        this.revealedCount++;
+        revealedCells.push({
+          row: cell.row,
+          col: cell.col,
+          distance: Math.max(Math.abs(dr), Math.abs(dc)), // 径向距离（波纹动画延迟）
+        });
+      }
+    }
+
+    this.checkWin();
+    return { tier, revealedCells, won: this.gameState === 'won' };
   }
 
   /**

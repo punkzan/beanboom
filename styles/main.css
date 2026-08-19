@@ -1796,6 +1796,14 @@ body {
   100% { opacity: 0; transform: translate(-50%, -34px) scale(1); }
 }
 
+/* Bean Boom 得分飞字：更大更红 */
+.fly-text.boom {
+  font-size: 19px;
+  font-weight: 800;
+  color: #e05c3a;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.95);
+}
+
 /* 飞字：里程碑 / 演出标签（棋盘中央） */
 .fly-label {
   position: fixed;

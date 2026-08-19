@@ -47,15 +47,7 @@ export class InputHandler {
       if (this.game.gameState === 'won' || this.game.gameState === 'lost') return;
       const pos = this.renderer.screenToGrid(e.clientX, e.clientY);
       if (!pos) return;
-      const cell = this.game.getCell(pos.row, pos.col);
-      const wasFlagged = cell ? cell.isFlagged : false;
-      this.game.toggleFlag(pos.row, pos.col);
-      if (this.soundManager) {
-        if (wasFlagged) this.soundManager.playUnflag();
-        else this.soundManager.playFlag();
-      }
-      this.renderer.render(this.game.grid, this.animManager);
-      this.onAction();
+      this._handleFlagToggle(pos);
     });
 
     this.canvas.addEventListener('dblclick', (e) => {
@@ -87,15 +79,7 @@ export class InputHandler {
         if (this.touchData && !this.touchData.moved) {
           this.touchData.longPressTriggered = true;
           // 长按 = 标记
-          const cell = this.game.getCell(this.touchData.pos.row, this.touchData.pos.col);
-          const wasFlagged = cell ? cell.isFlagged : false;
-          this.game.toggleFlag(this.touchData.pos.row, this.touchData.pos.col);
-          if (this.soundManager) {
-            if (wasFlagged) this.soundManager.playUnflag();
-            else this.soundManager.playFlag();
-          }
-          this.renderer.render(this.game.grid, this.animManager);
-          this.onAction();
+          this._handleFlagToggle(this.touchData.pos);
           // 触觉反馈
           if (navigator.vibrate) navigator.vibrate(30);
         }
@@ -149,14 +133,7 @@ export class InputHandler {
     // 标记模式下：tap = 标记
     // 或已翻开的数字格：tap = chord
     if (this.flagMode && !cell.isRevealed) {
-      const wasFlagged = cell.isFlagged;
-      this.game.toggleFlag(pos.row, pos.col);
-      if (this.soundManager) {
-        if (wasFlagged) this.soundManager.playUnflag();
-        else this.soundManager.playFlag();
-      }
-      this.renderer.render(this.game.grid, this.animManager);
-      this.onAction();
+      this._handleFlagToggle(pos);
     } else if (cell.isRevealed && cell.neighborCount > 0) {
       // 已翻开的数字格 → chord
       this.chord(pos.row, pos.col);
@@ -192,6 +169,51 @@ export class InputHandler {
     if (!result.exploded && result.revealedCells.length > 0) {
       // 携带计分事件（揭开格数 + 位置）回调
       this.onAction({ scoreEvent: { type: eventType, cells: result.revealedCells.length, pos } });
+    } else {
+      this.onAction();
+    }
+  }
+
+  /**
+   * 统一处理插旗/拔旗（右键、长按、标记模式 tap 共用）
+   * 正确旗会触发 Bean Boom（概念 A）
+   */
+  _handleFlagToggle(pos) {
+    const result = this.game.toggleFlag(pos.row, pos.col);
+    if (!result) return;
+
+    if (this.soundManager) {
+      if (!result.flagged) this.soundManager.playUnflag();
+      else if (!result.boom) this.soundManager.playFlag();
+    }
+
+    if (result.boom) {
+      this._handleBoomResult(result.boom, pos);
+    } else {
+      this.renderer.render(this.game.grid, this.animManager);
+      this.onAction();
+    }
+  }
+
+  /**
+   * 处理 Bean Boom 结果：中心脉冲 + 径向波纹揭格 + 计分事件
+   * @param {{tier: number, revealedCells: Array, won: boolean}} boom
+   */
+  _handleBoomResult(boom, pos) {
+    this.animManager.addBoom(pos.row, pos.col);
+    if (boom.revealedCells.length > 0) {
+      this.animManager.addPops(boom.revealedCells);
+      if (this.soundManager) this.soundManager.playBoom();
+    }
+    if (boom.won) {
+      this.animManager.addVictory(this.game.rows, this.game.cols);
+      if (this.soundManager) this.soundManager.playWin();
+    }
+
+    this.renderer.render(this.game.grid, this.animManager);
+    if (boom.revealedCells.length > 0) {
+      // 携带计分事件（boom 类型）回调
+      this.onAction({ scoreEvent: { type: 'boom', cells: boom.revealedCells.length, pos, tier: boom.tier } });
     } else {
       this.onAction();
     }
