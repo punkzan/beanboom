@@ -11,6 +11,7 @@ import { getSeoConfig, getAdsConfig, getActivities, getLatestActivities, fetchFo
 import { register, login, logout, getCurrentUser } from './core/Auth.js';
 import { getChallenges, participate, getMyChallenges, updateProgress, capturePaypalPayment } from './core/ChallengeAPI.js';
 import { generateShareCard } from './core/ShareCard.js';
+import { ScoreSystem } from './core/ScoreSystem.js';
 import { getDailyBackgroundUrl, getFallbackUrl, preloadBackgroundImage, initBackgroundImage } from './core/BackgroundImage.js';
 import { t, scanI18n, getLang, setLang, onLangChange } from './i18n.js';
 
@@ -31,6 +32,7 @@ const timerEl = document.getElementById('timer');
 const overlay = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlaySubtitle = document.getElementById('overlay-subtitle');
+const overlayScore = document.getElementById('overlay-score');
 const overlayBest = document.getElementById('overlay-best');
 const overlayRestart = document.getElementById('overlay-restart');
 const overlayNameInput = document.getElementById('overlay-name-input');
@@ -45,6 +47,67 @@ const diffBtns = document.querySelectorAll('.diff-btn');
 const timer = new Timer((display) => {
   timerEl.textContent = display;
 });
+
+// === 计分系统（概念 D：连击 / 模式评分）===
+const scoreSystem = new ScoreSystem();
+const scoreDisplayEl = document.getElementById('score-display');
+const comboItemEl = document.getElementById('combo-item');
+const comboDisplayEl = document.getElementById('combo-display');
+const boardWrapper = document.querySelector('.board-wrapper');
+
+const MILESTONE_TEXT = { nice: 'Nice!', great: 'Great!', amazing: 'Amazing!', fever: 'BEAN FEVER!' };
+const LABEL_TEXT = { greatOpening: 'Great Opening!', perfectChord: 'Perfect Chord!' };
+
+function showFloatText(text, pos, cls) {
+  if (!pos || !boardWrapper) return;
+  const rect = canvas.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'fly-text' + (cls ? ' ' + cls : '');
+  el.textContent = text;
+  el.style.left = (rect.left + pos.col * renderer.cellSize + renderer.cellSize / 2) + 'px';
+  el.style.top = (rect.top + pos.row * renderer.cellSize) + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1100);
+}
+
+function showBoardLabel(text, isFever) {
+  const rect = canvas.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'fly-label' + (isFever ? ' fever' : '');
+  el.textContent = text;
+  el.style.left = (rect.left + rect.width / 2) + 'px';
+  el.style.top = (rect.top + rect.height * 0.28) + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1200);
+}
+
+function refreshComboUI() {
+  const active = game.gameState === 'playing' && scoreSystem.displayCombo() > 0;
+  comboItemEl.style.display = active ? '' : 'none';
+  if (active) {
+    comboDisplayEl.textContent = '×' + scoreSystem.displayMultiplier().toFixed(1);
+    comboItemEl.classList.toggle('hot', scoreSystem.displayCombo() >= 5);
+  }
+}
+setInterval(refreshComboUI, 500);
+
+function handleScoreEvent({ type, cells, pos }) {
+  const res = scoreSystem.onReveal(cells, type);
+  if (res.gained > 0) {
+    scoreDisplayEl.textContent = Math.floor(scoreSystem.rawScore).toLocaleString();
+    showFloatText('+' + res.gained, pos);
+  }
+  if (res.label) showBoardLabel(LABEL_TEXT[res.label], false);
+  if (res.milestone) showBoardLabel(MILESTONE_TEXT[res.milestone], res.milestone === 'fever');
+  refreshComboUI();
+}
+
+function resetScoreUI() {
+  scoreSystem.reset();
+  scoreDisplayEl.textContent = '0';
+  comboItemEl.style.display = 'none';
+  overlayScore.textContent = '';
+}
 
 // 检测移动端
 const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
@@ -141,6 +204,9 @@ function updateUI() {
     overlayTitle.textContent = t('game.won');
     overlayTitle.className = 'overlay-title win';
     overlaySubtitle.textContent = t('game.timeUsed', formatSeconds(seconds));
+    // 计分结算：最终得分 + 段位
+    const settlement = scoreSystem.settle(game.difficulty, seconds, game.playerCorrectFlags || 0);
+    overlayScore.textContent = t('game.scoreSummary', settlement.finalScore.toLocaleString(), settlement.rank);
     overlayInputs.style.display = '';
     const _user = getCurrentUser();
     overlayNameInput.value = _user ? _user.username : '';
@@ -162,6 +228,7 @@ function updateUI() {
     overlayTitle.textContent = t('game.hitMine');
     overlayTitle.className = 'overlay-title lose';
     overlaySubtitle.textContent = t('game.tryAgain');
+    overlayScore.textContent = '';
     overlayBest.textContent = '';
     overlayInputs.style.display = 'none';
     overlayRestart.textContent = t('game.playAgain');
@@ -795,6 +862,7 @@ function restart() {
   animManager.clear();
   game.init();
   timer.reset();
+  resetScoreUI();
   renderer.render(game.grid);
   mineCountEl.textContent = game.getRemainingMines();
   timerEl.textContent = '00:00';
@@ -809,6 +877,7 @@ function changeDifficulty(diff) {
   game.setDifficulty(diff);
   renderer.setDifficulty(diff);
   timer.reset();
+  resetScoreUI();
   renderer.render(game.grid);
   mineCountEl.textContent = game.getRemainingMines();
   timerEl.textContent = '00:00';
@@ -829,9 +898,12 @@ function changeDifficulty(diff) {
 // === 输入处理 ===
 const inputHandler = new InputHandler(
   canvas, renderer, game, animManager,
-  () => {
+  (action) => {
     if (game.gameState === 'playing' && !timer.intervalId) {
       timer.start();
+    }
+    if (action && action.scoreEvent) {
+      handleScoreEvent(action.scoreEvent);
     }
     updateUI();
   },

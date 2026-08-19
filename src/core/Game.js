@@ -26,6 +26,7 @@ export class Game {
     this.revealedCount = 0;
     this.gameState = 'ready';
     this.minesPlaced = false;
+    this.playerCorrectFlags = 0; // 胜利时玩家自己插上的正确旗数（结算加分用）
 
     this.grid = [];
     for (let r = 0; r < this.rows; r++) {
@@ -214,6 +215,14 @@ export class Game {
     const safeCells = totalCells - this.mineCount;
     if (this.revealedCount >= safeCells) {
       this.gameState = 'won';
+      // 先记录玩家自己插上的正确旗数（先于自动补旗，供结算加分）
+      this.playerCorrectFlags = 0;
+      for (let r = 0; r < this.rows; r++) {
+        for (let c = 0; c < this.cols; c++) {
+          const cell = this.grid[r][c];
+          if (cell.isMine && cell.isFlagged) this.playerCorrectFlags++;
+        }
+      }
       // 自动标记所有未标记的地雷
       for (let r = 0; r < this.rows; r++) {
         for (let c = 0; c < this.cols; c++) {

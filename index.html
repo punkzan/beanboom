@@ -126,6 +126,16 @@
           <span class="status-label" data-i18n="game.time">Time</span>
           <span class="status-value" id="timer">00:00</span>
         </div>
+        <div class="status-item score-counter">
+          <span class="status-icon">⭐</span>
+          <span class="status-label" data-i18n="game.score">Score</span>
+          <span class="status-value" id="score-display">0</span>
+        </div>
+        <div class="status-item combo-counter" id="combo-item" style="display:none">
+          <span class="status-icon">🔥</span>
+          <span class="status-label" data-i18n="game.combo">Combo</span>
+          <span class="status-value" id="combo-display">×1.0</span>
+        </div>
         <button class="restart-btn" id="restart-btn" data-i18n="game.restart">Restart</button>
         <button class="sound-btn" id="sound-btn" data-i18n-title="game.sound" title="Sound">🔊</button>
         <button class="lb-trigger-btn" id="lb-trigger-btn" data-i18n-title="game.leaderboard" title="Leaderboard">🏆</button>
@@ -147,6 +157,7 @@
         <div class="overlay-content">
           <p class="overlay-title" id="overlay-title"></p>
           <p class="overlay-subtitle" id="overlay-subtitle"></p>
+          <p class="overlay-score" id="overlay-score"></p>
           <p class="overlay-best" id="overlay-best"></p>
           <div class="overlay-inputs" id="overlay-inputs">
             <input class="overlay-name-input" id="overlay-name-input" type="text" maxlength="12" data-i18n-placeholder="game.namePlaceholder" placeholder="Your name">

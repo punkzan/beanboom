@@ -169,8 +169,9 @@ export class InputHandler {
 
   /**
    * 处理翻开结果，触发对应动画
+   * @param {string} eventType - 计分事件类型：reveal（普通揭开）/ chord（和弦快速展开）
    */
-  _handleRevealResult(result, pos) {
+  _handleRevealResult(result, pos, eventType = 'reveal') {
     if (result.exploded) {
       this.animManager.addExplode(pos.row, pos.col);
       if (this.soundManager) this.soundManager.playExplode();
@@ -188,7 +189,12 @@ export class InputHandler {
     }
 
     this.renderer.render(this.game.grid, this.animManager);
-    this.onAction();
+    if (!result.exploded && result.revealedCells.length > 0) {
+      // 携带计分事件（揭开格数 + 位置）回调
+      this.onAction({ scoreEvent: { type: eventType, cells: result.revealedCells.length, pos } });
+    } else {
+      this.onAction();
+    }
   }
 
   /**
@@ -228,6 +234,6 @@ export class InputHandler {
       revealedCells: allRevealed,
       won,
       mineCells,
-    }, explodedPos || { row, col });
+    }, explodedPos || { row, col }, 'chord');
   }
 }
