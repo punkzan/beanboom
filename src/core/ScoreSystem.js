@@ -1,9 +1,11 @@
 /**
- * 计分系统（设计文档概念 D：连击 / 模式评分 · Phase 1）
+ * 计分系统（概念 D：连击 / 模式评分）
  *
  * - 计分事件：普通揭开 10×s/格、Opening 惊喜 格数×20×s、Chord 揭格×15×s（≥4格翻倍）、
  *   Bean Boom 揭格×25×s（概念 A · Phase 2，爆炸即 combo 引擎）
  * - 连击：每次安全揭开 +1，两次揭开间隔 > 3s 清零；倍率 s(k) = 1 + 0.1×min(k,20)
+ * - FEVER（概念 A/D 联动 · Phase 3）：连击 k≥20 激活，倍率上限提升至 4.0（cap k=30），
+ *   同时赋予 blast 半径 +1（由 Game.js 读取 feverActive 实现）
  * - 结算：FinalScore = floor(Σ事件分 × T) × 难度系数，T = clamp(par_time/实际用时, 1, 2)
  *   另加 玩家正确 flag 数 × 50（胜利时）
  * - 段位：S/A/B/C 按难度阈值
@@ -36,11 +38,13 @@ export class ScoreSystem {
     this.lastRevealAt = 0;   // 上次揭开时间戳（ms）
     this.firstRevealDone = false;
     this.shownMilestones = new Set();
+    this.isFever = false;    // FEVER 模式（Phase 3：A/D 联动）
   }
 
-  /** 当前连击倍率 s(k) */
+  /** 当前连击倍率 s(k)。FEVER 时上限提升至 4.0（cap k=30） */
   multiplier() {
-    return 1 + 0.1 * Math.min(this.combo, 20);
+    const cap = this.isFever ? 30 : 20;
+    return 1 + 0.1 * Math.min(this.combo, cap);
   }
 
   /** 连击窗口是否已超时 */
@@ -54,22 +58,31 @@ export class ScoreSystem {
   }
 
   displayMultiplier() {
-    return 1 + 0.1 * Math.min(this.displayCombo(), 20);
+    const dc = this.displayCombo();
+    if (dc === 0) return 1.0;
+    const cap = this.isFever ? 30 : 20;
+    return 1 + 0.1 * Math.min(dc, cap);
+  }
+
+  /** FEVER 是否当前生效（连击未过期时） */
+  displayFever() {
+    return this.isFever && !this.comboExpired();
   }
 
   /**
    * 揭开事件计分
    * @param {number} cells 本次揭开的格数
    * @param {'reveal'|'chord'|'boom'} type 事件类型
-   * @returns {{ gained: number, milestone?: string, label?: 'greatOpening'|'perfectChord'|'beanBoom' }}
+   * @returns {{ gained: number, milestone?: string, label?: 'greatOpening'|'perfectChord'|'beanBoom', feverActivated?: boolean }}
    */
   onReveal(cells, type = 'reveal') {
     if (cells <= 0) return { gained: 0 };
     const now = performance.now();
 
-    // 连击窗口超时 → 清零
+    // 连击窗口超时 → 清零（含 FEVER）
     if (this.lastRevealAt && now - this.lastRevealAt > SCORE_CONFIG.COMBO_WINDOW_MS) {
       this.combo = 0;
+      this.isFever = false;
     }
     this.lastRevealAt = now;
 
@@ -87,6 +100,14 @@ export class ScoreSystem {
     // 连击计数：每次安全揭开 +1
     this.combo += cells;
     if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+
+    // FEVER 激活（A/D 联动 · Phase 3）：k≥20 时进入 FEVER，倍率上限 3.0→4.0
+    let feverActivated = false;
+    if (this.combo >= 20 && !this.isFever) {
+      this.isFever = true;
+      feverActivated = true;
+    }
+
     const s = this.multiplier();
 
     let gained = 0;
@@ -113,7 +134,7 @@ export class ScoreSystem {
       }
     }
 
-    return { gained, milestone, label };
+    return { gained, milestone, label, feverActivated };
   }
 
   /**

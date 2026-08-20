@@ -28,6 +28,7 @@ export class Game {
     this.minesPlaced = false;
     this.playerCorrectFlags = 0; // 胜利时玩家自己插上的正确旗数（结算加分用）
     this.boomCount = 0; // Bean Boom 已引爆次数（决定连锁阶梯 Tier 1-4）
+    this.feverActive = false; // FEVER 模式（Phase 3：A/D 联动，blast 半径 +1）
 
     this.grid = [];
     for (let r = 0; r < this.rows; r++) {
@@ -177,8 +178,8 @@ export class Game {
 
   /**
    * 标记/取消标记
-   * @returns {{flagged: boolean, boom: {tier: number, revealedCells: Array, won: boolean} | null} | null}
-   *   正确标记地雷时返回 boom（Bean Boom 连锁爆破，概念 A）
+   * @returns {{flagged: boolean, boom: {tier: number, revealedCells: Array, cascadeChain: Array, cascadeCount: number, won: boolean} | null} | null}
+   *   正确标记地雷时返回 boom（Bean Boom 连锁爆破 + 级联，概念 A · Phase 2-3）
    */
   toggleFlag(row, col) {
     if (this.gameState === 'won' || this.gameState === 'lost') return null;
@@ -196,34 +197,80 @@ export class Game {
   }
 
   /**
-   * Bean Boom 连锁爆破：以被正确标记的地雷为中心，
-   * 揭开切比雪夫半径内的安全格（严格限定半径内，不做 flood-fill，
-   * 避免 tier2+ 一炮清空大半个棋盘）。
-   * 阶梯：第 n 次引爆半径 = min(n, 4)，单调递增不回退。
-   * @returns {{tier: number, revealedCells: Array<{row,col,distance}>, won: boolean}}
+   * Bean Boom 连锁爆破（概念 A + Phase 3 级联 + FEVER）：
+   *
+   * - 以被正确标记的地雷为中心，揭开切比雪夫半径内的安全格（不做 flood-fill）
+   * - 阶梯：第 n 次引爆半径 = min(n, 4)；FEVER 时半径 +1（上限 5）
+   * - 级联（Phase 3）：爆破半径内的其他已旗标地雷也自动引爆，形成连锁链
+   *   每次 cascade 递增 boomCount（阶梯持续攀升），hasBoomed 守卫仅阻止手动拔旗重触
+   * @returns {{tier: number, revealedCells: Array, cascadeChain: Array, cascadeCount: number, won: boolean}}
    */
   _beanBoom(center) {
-    center.hasBoomed = true;
-    this.boomCount++;
-    const tier = Math.min(this.boomCount, 4);
+    const cascadeChain = [];
+    const processed = new Set();
+    const queue = [center];
+    let allRevealedCells = [];
 
-    const revealedCells = [];
-    for (let dr = -tier; dr <= tier; dr++) {
-      for (let dc = -tier; dc <= tier; dc++) {
-        const cell = this.getCell(center.row + dr, center.col + dc);
-        if (!cell || cell.isMine || cell.isRevealed || cell.isFlagged) continue;
-        cell.isRevealed = true;
-        this.revealedCount++;
-        revealedCells.push({
-          row: cell.row,
-          col: cell.col,
-          distance: Math.max(Math.abs(dr), Math.abs(dc)), // 径向距离（波纹动画延迟）
-        });
+    while (queue.length > 0) {
+      const mine = queue.shift();
+      const key = `${mine.row},${mine.col}`;
+      if (processed.has(key)) continue;
+      processed.add(key);
+
+      mine.hasBoomed = true;
+      this.boomCount++;
+      const tier = Math.min(this.boomCount, 4);
+      const radius = tier + (this.feverActive ? 1 : 0);
+
+      const revealedCells = [];
+      const cascadeTargets = [];
+
+      for (let dr = -radius; dr <= radius; dr++) {
+        for (let dc = -radius; dc <= radius; dc++) {
+          const cell = this.getCell(mine.row + dr, mine.col + dc);
+          if (!cell || cell === mine) continue;
+
+          // 爆破半径内的其他已旗标地雷 → 级联目标
+          if (cell.isMine && cell.isFlagged) {
+            const ck = `${cell.row},${cell.col}`;
+            if (!processed.has(ck)) cascadeTargets.push(cell);
+            continue;
+          }
+          if (cell.isMine || cell.isRevealed || cell.isFlagged) continue;
+
+          cell.isRevealed = true;
+          this.revealedCount++;
+          revealedCells.push({
+            row: cell.row,
+            col: cell.col,
+            distance: Math.max(Math.abs(dr), Math.abs(dc)),
+          });
+        }
       }
+
+      // 级联阶梯延迟：每级 cascade 的揭格动画延后，形成扩散波纹
+      const cascadeIndex = cascadeChain.length;
+      for (const c of revealedCells) {
+        c.distance += cascadeIndex * 4;
+      }
+
+      cascadeChain.push({
+        center: { row: mine.row, col: mine.col },
+        tier, radius,
+        revealedCells,
+      });
+      allRevealedCells = allRevealedCells.concat(revealedCells);
+      queue.push(...cascadeTargets);
     }
 
     this.checkWin();
-    return { tier, revealedCells, won: this.gameState === 'won' };
+    return {
+      tier: cascadeChain[0].tier,
+      revealedCells: allRevealedCells,
+      cascadeChain,
+      cascadeCount: cascadeChain.length - 1,
+      won: this.gameState === 'won',
+    };
   }
 
   /**
