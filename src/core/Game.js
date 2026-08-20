@@ -1,5 +1,15 @@
 import { DIFFICULTIES, CELL_STATE } from '../constants.js';
 
+/** mulberry32 seeded PRNG — 服务端重放用相同种子重建相同地雷布局 */
+export function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 export class Game {
   constructor(difficulty = 'easy') {
     this.difficulty = difficulty;
@@ -29,6 +39,7 @@ export class Game {
     this.playerCorrectFlags = 0; // 胜利时玩家自己插上的正确旗数（结算加分用）
     this.boomCount = 0; // Bean Boom 已引爆次数（决定连锁阶梯 Tier 1-4）
     this.feverActive = false; // FEVER 模式（Phase 3：A/D 联动，blast 半径 +1）
+    this.mineSeed = (Math.random() * 0x7fffffff) | 0; // 地雷布局种子（服务端重放验证用）
 
     this.grid = [];
     for (let r = 0; r < this.rows; r++) {
@@ -94,8 +105,9 @@ export class Game {
     }
 
     const count = Math.min(this.mineCount, available.length);
+    const rng = mulberry32(this.mineSeed);
     for (let i = 0; i < count; i++) {
-      const idx = Math.floor(Math.random() * available.length);
+      const idx = Math.floor(rng() * available.length);
       available[idx].isMine = true;
       available.splice(idx, 1);
     }

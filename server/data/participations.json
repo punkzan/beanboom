@@ -47,7 +47,7 @@
     "amount": 3,
     "currency": "usd",
     "paymentTxId": "mock_pay_1785672095198_5hn1xe",
-    "status": "active",
+    "status": "expired",
     "progress": 0,
     "joinedAt": 1785672095198,
     "expiresAt": 1786276895198,

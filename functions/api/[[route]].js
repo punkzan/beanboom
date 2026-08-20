@@ -6,6 +6,7 @@
 
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { replayGame, metricAchieved } from '../lib/replay.js';
 
 // === KV 键名常量 ===
 const KV_KEYS = {
@@ -173,6 +174,13 @@ app.post('/api/challenges', async (c) => {
   if (!body.name || !body.difficulty || !body.period || !body.targetCount) {
     return c.json({ error: 'Missing required fields' }, 400);
   }
+  // 挑战指标：wins（胜利次数，默认）/ score（单局得分达标）/ rank（单局段位达标）
+  const metric = ['wins', 'score', 'rank'].includes(body.metric) ? body.metric : 'wins';
+  const metricValue = metric === 'score'
+    ? (parseFloat(body.metricValue) || 0)
+    : metric === 'rank'
+      ? (['S', 'A', 'B'].includes(body.metricValue) ? body.metricValue : 'S')
+      : null;
   const challenges = await kvGet(c.env, KV_KEYS.challenges, []);
   const item = {
     id: genId('ch'),
@@ -181,6 +189,8 @@ app.post('/api/challenges', async (c) => {
     period: body.period,
     customDays: body.period === 'custom' ? (parseInt(body.customDays) || 30) : null,
     targetCount: parseInt(body.targetCount) || 1,
+    metric,
+    metricValue,
     amount: parseFloat(body.amount) || 0,
     currency: 'usd',
     active: body.active !== false,
@@ -346,19 +356,32 @@ app.get('/api/my-challenges', async (c) => {
   return c.json(mine);
 });
 
-// -- 更新进度（游戏胜利） --
+// -- 更新进度（游戏胜利，服务端重放验证） --
 app.post('/api/progress', async (c) => {
   const body = await c.req.json().catch(() => ({}));
-  const { username, difficulty } = body;
+  const { username, difficulty, gameLog } = body;
   if (!username || !difficulty) {
     return c.json({ error: 'Missing username or difficulty' }, 400);
   }
+  // 反作弊：重放对局日志验证，服务端重算结果为唯一真相
+  const replay = replayGame(gameLog);
+  if (!replay.ok) {
+    return c.json({ error: 'Invalid game log', reason: replay.reason }, 400);
+  }
+  if (!replay.won) {
+    return c.json({ error: 'Game verification failed: not a win' }, 403);
+  }
+
+  const challenges = await kvGet(c.env, KV_KEYS.challenges, []);
   const parts = await kvGet(c.env, KV_KEYS.participations, []);
   const pay = await getPayment(c.env);
   const updated = [];
   let completed = 0;
   for (const p of parts) {
     if (p.status === 'active' && p.username === username && p.difficulty === difficulty) {
+      // 挑战指标判定（wins / score / rank），未达标不计进度
+      const ch = challenges.find(x => x.id === p.challengeId);
+      if (!metricAchieved(ch || {}, replay)) continue;
       p.progress += 1;
       updated.push(p);
       // 达成目标 → 立即退款，允许用户再次参加
@@ -376,7 +399,7 @@ app.post('/api/progress', async (c) => {
     }
   }
   if (updated.length) await kvPut(c.env, KV_KEYS.participations, parts);
-  return c.json({ updated: updated.length, completed, challenges: updated });
+  return c.json({ updated: updated.length, completed, challenges: updated, score: replay.score, rank: replay.rank });
 });
 
 // -- 用户注册同步 --
@@ -481,15 +504,27 @@ app.get('/api/records', async (c) => {
   return c.json(records);
 });
 
-// -- 全球排行榜：提交成绩 --
+// -- 全球排行榜：提交成绩（服务端重放验证） --
 app.post('/api/records', async (c) => {
   const body = await c.req.json().catch(() => ({}));
-  const { difficulty, time, name, region } = body;
+  const { difficulty, time, name, region, gameLog } = body;
   if (!difficulty || typeof time !== 'number' || time <= 0 || !name) {
     return c.json({ error: 'Missing or invalid fields (difficulty, time, name required)' }, 400);
   }
   const diff = ['easy', 'medium', 'hard'].includes(difficulty) ? difficulty : null;
   if (!diff) return c.json({ error: 'Invalid difficulty' }, 400);
+
+  // 反作弊：重放验证胜利 + 时长一致（±3s 容差覆盖计时器与日志取整误差）
+  const replay = replayGame(gameLog);
+  if (!replay.ok) {
+    return c.json({ error: 'Invalid game log', reason: replay.reason }, 400);
+  }
+  if (!replay.won) {
+    return c.json({ error: 'Game verification failed: not a win' }, 403);
+  }
+  if (Math.abs(time - replay.durationSeconds) > 3) {
+    return c.json({ error: 'Game verification failed: time mismatch' }, 403);
+  }
 
   // 反垃圾：同一名字+同一难度+同一成绩 5 秒内重复提交忽略
   const records = await kvGet(c.env, KV_KEYS.records, { easy: [], medium: [], hard: [] });

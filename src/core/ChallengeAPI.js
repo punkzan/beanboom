@@ -66,11 +66,11 @@ export function getMyChallenges(username) {
   return request('/my-challenges?username=' + encodeURIComponent(username));
 }
 
-/** 游戏胜利时更新进度 */
-export function updateProgress(username, difficulty) {
+/** 游戏胜利时更新进度（携带对局日志，服务端重算验证） */
+export function updateProgress(username, difficulty, gameLog = null) {
   return request('/progress', {
     method: 'POST',
-    body: JSON.stringify({ username, difficulty }),
+    body: JSON.stringify({ username, difficulty, gameLog }),
   });
 }
 

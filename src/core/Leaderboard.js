@@ -92,14 +92,15 @@ export async function refreshRecords() {
  * @param {number} seconds
  * @param {string} name
  * @param {string} region
+ * @param {object|null} [gameLog] 对局日志（服务端重算验证）
  * @returns {Promise<boolean>} 是否为新的最佳成绩
  */
-export async function postRecord(difficulty, seconds, name, region) {
+export async function postRecord(difficulty, seconds, name, region, gameLog = null) {
   try {
     const res = await fetch(BASE + '/records', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ difficulty, time: seconds, name: name || t('common.anonymous'), region: region || '' }),
+      body: JSON.stringify({ difficulty, time: seconds, name: name || t('common.anonymous'), region: region || '', gameLog }),
     });
     if (!res.ok) {
       // 服务端失败时，至少保存到本地
@@ -135,11 +136,12 @@ export function addRecordLocal(difficulty, seconds, name, region) {
 
 /**
  * 添加一条胜利记录（兼容旧接口：先尝试服务端，失败时本地降级）
+ * @param {object|null} [gameLog] 对局日志（服务端重算验证）
  */
-export function addRecord(difficulty, seconds, name, region) {
+export function addRecord(difficulty, seconds, name, region, gameLog = null) {
   // 立即本地存储（不等待网络），同时异步提交到服务端
   const wasBest = addRecordLocal(difficulty, seconds, name, region);
-  postRecord(difficulty, seconds, name, region).then(serverWasBest => {
+  postRecord(difficulty, seconds, name, region, gameLog).then(serverWasBest => {
     if (serverWasBest) {
       // 服务端确认是最佳成绩，刷新本地缓存同步服务端数据
       refreshRecords();

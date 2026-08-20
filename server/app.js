@@ -6,6 +6,7 @@ import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { replayGame, metricAchieved } from '../functions/lib/replay.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3002;
@@ -250,6 +251,13 @@ const server = http.createServer(async (req, res) => {
       sendJSON(res, 400, { error: '缺少必填字段' });
       return;
     }
+    // 挑战指标：wins（胜利次数，默认）/ score（单局得分达标）/ rank（单局段位达标）
+    const metric = ['wins', 'score', 'rank'].includes(body.metric) ? body.metric : 'wins';
+    const metricValue = metric === 'score'
+      ? (parseFloat(body.metricValue) || 0)
+      : metric === 'rank'
+        ? (['S', 'A', 'B'].includes(body.metricValue) ? body.metricValue : 'S')
+        : null;
     const challenges = getChallenges();
     const item = {
       id: genId('ch'),
@@ -258,6 +266,8 @@ const server = http.createServer(async (req, res) => {
       period: body.period,
       customDays: body.period === 'custom' ? (parseInt(body.customDays) || 30) : null,
       targetCount: parseInt(body.targetCount) || 1,
+      metric,
+      metricValue,
       amount: parseFloat(body.amount) || 0,
       currency: 'usd',
       active: body.active !== false,
@@ -422,19 +432,33 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // === 更新进度（游戏胜利时） ===
+  // === 更新进度（游戏胜利时，服务端重放验证） ===
   if (pathname === '/api/progress' && method === 'POST') {
     const body = await readBody(req);
-    const { username, difficulty } = body;
+    const { username, difficulty, gameLog } = body;
     if (!username || !difficulty) {
       sendJSON(res, 400, { error: '缺少用户名或难度' });
       return;
     }
+    // 反作弊：重放对局日志验证，服务端重算结果为唯一真相
+    const replay = replayGame(gameLog);
+    if (!replay.ok) {
+      sendJSON(res, 400, { error: '对局日志无效', reason: replay.reason });
+      return;
+    }
+    if (!replay.won) {
+      sendJSON(res, 403, { error: '验证失败：对局未获胜' });
+      return;
+    }
+    const challenges = getChallenges();
     const parts = getParticipations();
     let updated = [];
     let completed = 0;
     for (const p of parts) {
       if (p.status === 'active' && p.username === username && p.difficulty === difficulty) {
+        // 挑战指标判定（wins / score / rank），未达标不计进度
+        const ch = challenges.find(x => x.id === p.challengeId);
+        if (!metricAchieved(ch || {}, replay)) continue;
         p.progress += 1;
         updated.push(p);
         // 达成目标 → 立即退款，允许用户再次参加
@@ -452,7 +476,7 @@ const server = http.createServer(async (req, res) => {
       }
     }
     if (updated.length) saveParticipations(parts);
-    sendJSON(res, 200, { updated: updated.length, completed, challenges: updated });
+    sendJSON(res, 200, { updated: updated.length, completed, challenges: updated, score: replay.score, rank: replay.rank });
     return;
   }
 
@@ -560,16 +584,31 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // === 全球排行榜：提交成绩 ===
+  // === 全球排行榜：提交成绩（服务端重放验证） ===
   if (pathname === '/api/records' && method === 'POST') {
     const body = await readBody(req);
-    const { difficulty, time, name, region } = body;
+    const { difficulty, time, name, region, gameLog } = body;
     if (!difficulty || typeof time !== 'number' || time <= 0 || !name) {
       sendJSON(res, 400, { error: '缺少必填字段（difficulty, time, name）' });
       return;
     }
     const diff = ['easy', 'medium', 'hard'].includes(difficulty) ? difficulty : null;
     if (!diff) { sendJSON(res, 400, { error: '无效的难度' }); return; }
+
+    // 反作弊：重放验证胜利 + 时长一致（±3s 容差覆盖计时器与日志取整误差）
+    const replay = replayGame(gameLog);
+    if (!replay.ok) {
+      sendJSON(res, 400, { error: '对局日志无效', reason: replay.reason });
+      return;
+    }
+    if (!replay.won) {
+      sendJSON(res, 403, { error: '验证失败：对局未获胜' });
+      return;
+    }
+    if (Math.abs(time - replay.durationSeconds) > 3) {
+      sendJSON(res, 403, { error: '验证失败：时长不一致' });
+      return;
+    }
 
     const records = getRecords();
     const list = records[diff] || [];

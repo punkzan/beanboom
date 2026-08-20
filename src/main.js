@@ -12,6 +12,7 @@ import { register, login, logout, getCurrentUser } from './core/Auth.js';
 import { getChallenges, participate, getMyChallenges, updateProgress, capturePaypalPayment } from './core/ChallengeAPI.js';
 import { generateShareCard } from './core/ShareCard.js';
 import { ScoreSystem } from './core/ScoreSystem.js';
+import { GameLog } from './core/GameLog.js';
 import { getDailyBackgroundUrl, getFallbackUrl, preloadBackgroundImage, initBackgroundImage } from './core/BackgroundImage.js';
 import { t, scanI18n, getLang, setLang, onLangChange } from './i18n.js';
 
@@ -53,6 +54,9 @@ const timer = new Timer((display) => {
 
 // === 计分系统（概念 D：连击 / 模式评分）===
 const scoreSystem = new ScoreSystem();
+// === 对局日志（服务端重算反作弊）===
+const gameLog = new GameLog();
+gameLog.start('easy', game.mineSeed);
 const scoreDisplayEl = document.getElementById('score-display');
 const comboItemEl = document.getElementById('combo-item');
 const comboDisplayEl = document.getElementById('combo-display');
@@ -701,6 +705,14 @@ async function loadChallenges() {
   renderChallengeList();
 }
 
+/** 挑战目标文案（按指标类型：wins / score / rank） */
+function challengeGoalText(c) {
+  const metric = c.metric || 'wins';
+  if (metric === 'score') return t('challenge.goalScore', c.metricValue);
+  if (metric === 'rank') return t('challenge.goalRank', c.metricValue);
+  return t('challenge.goal', c.targetCount);
+}
+
 function renderChallengeList() {
   if (!challengesCache.length) {
     challengeList.innerHTML = '<div class="ch-empty">' + t('challenge.empty') + '</div>';
@@ -716,7 +728,7 @@ function renderChallengeList() {
         <div class="ch-card-meta">
           <span class="ch-badge ch-badge-${c.difficulty}">${diffLabel}</span>
           <span class="ch-badge ch-badge-period">${periodLabel}</span>
-          <span class="ch-badge ch-badge-target">${t('challenge.goal', c.targetCount)}</span>
+          <span class="ch-badge ch-badge-target">${challengeGoalText(c)}</span>
         </div>
       </div>
       <div class="ch-card-right">
@@ -899,6 +911,7 @@ function restart() {
   game.init();
   timer.reset();
   resetScoreUI();
+  gameLog.start(game.difficulty, game.mineSeed);
   renderer.render(game.grid);
   mineCountEl.textContent = game.getRemainingMines();
   timerEl.textContent = '00:00';
@@ -914,6 +927,7 @@ function changeDifficulty(diff) {
   renderer.setDifficulty(diff);
   timer.reset();
   resetScoreUI();
+  gameLog.start(diff, game.mineSeed);
   renderer.render(game.grid);
   mineCountEl.textContent = game.getRemainingMines();
   timerEl.textContent = '00:00';
@@ -943,7 +957,10 @@ const inputHandler = new InputHandler(
     }
     updateUI();
   },
-  soundManager
+  soundManager,
+  gameLog,
+  // flag 前同步 FEVER（确定性判定，服务端重放一致）
+  () => { game.feverActive = scoreSystem.isFever && !scoreSystem.comboExpired(); }
 );
 
 // === 事件绑定 ===
@@ -1000,12 +1017,13 @@ overlayRestart.addEventListener('click', () => {
     const name = overlayNameInput.value.trim() || t('common.anonymous');
     const region = overlayRegionInput.value.trim() || '';
     const seconds = Math.floor(timer.elapsed / 1000);
-    const wasBest = addRecord(game.difficulty, seconds, name, region);
+    const logData = gameLog.export();
+    const wasBest = addRecord(game.difficulty, seconds, name, region, logData);
     renderLeaderboard();
     renderYearlyChampions();
-    // 更新付费挑战进度
+    // 更新付费挑战进度（服务端重放验证）
     const _cu = getCurrentUser();
-    if (_cu) updateProgress(_cu.username, game.difficulty).then(r => {
+    if (_cu) updateProgress(_cu.username, game.difficulty, logData).then(r => {
       if (r.ok && r.data.updated > 0) {
         loadMyChallenges();
         // 有挑战完成 → 刷新挑战列表，允许用户再次参加

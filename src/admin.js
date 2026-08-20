@@ -167,6 +167,29 @@ document.getElementById('ch-period').addEventListener('change', () => {
 document.getElementById('ch-custom-days').addEventListener('input', autoChallengeName);
 document.getElementById('ch-amount').addEventListener('input', autoChallengeName);
 
+// 指标切换：score → 目标分输入框；rank → 段位下拉；wins → 隐藏目标值
+const chMetricSel = document.getElementById('ch-metric');
+const chMetricValueField = document.getElementById('ch-metric-value-field');
+function syncMetricField() {
+  const metric = chMetricSel.value;
+  chMetricValueField.style.display = metric === 'wins' ? 'none' : '';
+  if (metric === 'rank') {
+    // 段位用 select：替换 input
+    chMetricValueField.innerHTML = `
+      <span class="admin-label" id="ch-metric-value-label" data-i18n="admin.ch.labelMetricValue">目标段位</span>
+      <select id="ch-metric-value">
+        <option value="S">S</option>
+        <option value="A">A</option>
+        <option value="B">B</option>
+      </select>`;
+  } else {
+    chMetricValueField.innerHTML = `
+      <span class="admin-label" id="ch-metric-value-label" data-i18n="admin.ch.labelMetricValue">目标值</span>
+      <input type="number" id="ch-metric-value" min="1" step="1" value="2000">`;
+  }
+}
+chMetricSel.addEventListener('change', syncMetricField);
+
 async function loadChallengeList() {
   const res = await getAllChallenges();
   const list = res.ok ? res.data : [];
@@ -175,6 +198,12 @@ async function loadChallengeList() {
     container.innerHTML = '<p class="admin-act-empty">' + t('admin.ch.none') + '</p>';
     return;
   }
+  const goalText = (c) => {
+    const metric = c.metric || 'wins';
+    if (metric === 'score') return t('admin.ch.goalScore', c.metricValue);
+    if (metric === 'rank') return t('admin.ch.goalRank', c.metricValue);
+    return t('admin.ch.goal', c.targetCount);
+  };
   container.innerHTML = list.map(c => `
     <div class="admin-act-item">
       <div class="admin-act-info">
@@ -182,7 +211,7 @@ async function loadChallengeList() {
         <span class="admin-act-date">$${c.amount}</span>
         <span class="admin-act-t">${escapeHtml(c.name)}</span>
       </div>
-      <div class="admin-act-text">${t('game.diff.' + c.difficulty) || c.difficulty} · ${getPeriodLabel(c.period, c.customDays)} · ${t('admin.ch.goal', c.targetCount)}</div>
+      <div class="admin-act-text">${t('game.diff.' + c.difficulty) || c.difficulty} · ${getPeriodLabel(c.period, c.customDays)} · ${goalText(c)}</div>
       <div class="admin-act-ops">
         <button class="admin-act-toggle" data-ch-id="${c.id}" data-ch-active="${!c.active}">
           ${c.active ? t('activity.goOffline') : t('activity.goOnline')}
@@ -201,11 +230,18 @@ document.getElementById('add-challenge').addEventListener('click', async () => {
     difficulty: document.getElementById('ch-difficulty').value,
     period: document.getElementById('ch-period').value,
     targetCount: parseInt(document.getElementById('ch-target').value) || 1,
+    metric: document.getElementById('ch-metric').value,
     amount: parseFloat(document.getElementById('ch-amount').value) || 0,
     active: document.getElementById('ch-active').checked,
   };
   if (challenge.period === 'custom') {
     challenge.customDays = parseInt(document.getElementById('ch-custom-days').value) || 30;
+  }
+  const metricValueEl = document.getElementById('ch-metric-value');
+  if (challenge.metric === 'score') {
+    challenge.metricValue = parseFloat(metricValueEl.value) || 0;
+  } else if (challenge.metric === 'rank') {
+    challenge.metricValue = metricValueEl.value || 'S';
   }
   const res = await createChallenge(challenge);
   if (res.ok) {
@@ -224,6 +260,8 @@ function resetChForm() {
   document.getElementById('ch-period').value = 'monthly';
   document.getElementById('ch-custom-days').value = '15';
   document.getElementById('ch-custom-days-field').style.display = 'none';
+  document.getElementById('ch-metric').value = 'wins';
+  syncMetricField();
   document.getElementById('ch-target').value = '10';
   document.getElementById('ch-amount').value = '5.00';
   document.getElementById('ch-active').checked = true;

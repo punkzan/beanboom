@@ -6,14 +6,18 @@ export class InputHandler {
    * @param {AnimationManager} animManager
    * @param {function} onAction - 每次操作后的回调
    * @param {SoundManager|null} soundManager - 音效管理器
+   * @param {GameLog|null} [gameLog] - 对局日志（服务端重算反作弊）
+   * @param {function|null} [syncFever] - flag 前同步 FEVER 状态到 Game（确定性判定，保证服务端重放一致）
    */
-  constructor(canvas, renderer, game, animManager, onAction, soundManager = null) {
+  constructor(canvas, renderer, game, animManager, onAction, soundManager = null, gameLog = null, syncFever = null) {
     this.canvas = canvas;
     this.renderer = renderer;
     this.game = game;
     this.animManager = animManager;
     this.onAction = onAction;
     this.soundManager = soundManager;
+    this.gameLog = gameLog;
+    this.syncFever = syncFever;
     this.flagMode = false; // 标记模式：开启后点击 = 标记
     this.touchData = null; // 触摸状态数据
     this.lastTouchTime = 0;
@@ -139,6 +143,7 @@ export class InputHandler {
       this.chord(pos.row, pos.col);
     } else {
       // 正常翻开
+      if (this.gameLog) this.gameLog.record('reveal', pos.row, pos.col);
       const result = this.game.reveal(pos.row, pos.col);
       this._handleRevealResult(result, pos);
     }
@@ -179,6 +184,9 @@ export class InputHandler {
    * 正确旗会触发 Bean Boom（概念 A）
    */
   _handleFlagToggle(pos) {
+    // FEVER 同步（确定性）：boom 半径判定必须只依赖当前时刻，服务端重放才能一致
+    if (this.syncFever) this.syncFever();
+    if (this.gameLog) this.gameLog.record('flag', pos.row, pos.col);
     const result = this.game.toggleFlag(pos.row, pos.col);
     if (!result) return;
 
@@ -252,6 +260,7 @@ export class InputHandler {
     const flagCount = neighbors.filter(n => n.isFlagged).length;
 
     if (flagCount !== cell.neighborCount) return;
+    if (this.gameLog) this.gameLog.record('chord', row, col);
 
     let allRevealed = [];
     let exploded = false;

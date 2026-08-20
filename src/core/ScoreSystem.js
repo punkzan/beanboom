@@ -27,7 +27,12 @@ const COMBO_MILESTONES = { 5: 'nice', 10: 'great', 15: 'amazing', 20: 'fever' };
 const MILESTONE_KEYS_DESC = [20, 15, 10, 5];
 
 export class ScoreSystem {
-  constructor() {
+  /**
+   * @param {function(): number} [nowFn] 时间源（默认 performance.now）。
+   *   服务端重放时注入日志时间戳，保证连击窗口判定与客户端逐位一致。
+   */
+  constructor(nowFn) {
+    this._now = nowFn || (() => performance.now());
     this.reset();
   }
 
@@ -49,7 +54,7 @@ export class ScoreSystem {
 
   /** 连击窗口是否已超时 */
   comboExpired() {
-    return this.lastRevealAt > 0 && performance.now() - this.lastRevealAt > SCORE_CONFIG.COMBO_WINDOW_MS;
+    return this.lastRevealAt > 0 && this._now() - this.lastRevealAt > SCORE_CONFIG.COMBO_WINDOW_MS;
   }
 
   /** UI 展示用的连击数（超时视为 0） */
@@ -77,7 +82,7 @@ export class ScoreSystem {
    */
   onReveal(cells, type = 'reveal') {
     if (cells <= 0) return { gained: 0 };
-    const now = performance.now();
+    const now = this._now();
 
     // 连击窗口超时 → 清零（含 FEVER）
     if (this.lastRevealAt && now - this.lastRevealAt > SCORE_CONFIG.COMBO_WINDOW_MS) {
