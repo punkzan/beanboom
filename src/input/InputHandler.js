@@ -196,14 +196,30 @@ export class InputHandler {
   }
 
   /**
-   * 处理 Bean Boom 结果：中心脉冲 + 径向波纹揭格 + 计分事件
-   * @param {{tier: number, revealedCells: Array, won: boolean}} boom
+   * 处理 Bean Boom 结果：中心脉冲 + 级联阶梯脉冲 + 径向波纹揭格 + 计分事件
+   * @param {{tier: number, revealedCells: Array, cascadeChain: Array, cascadeCount: number, won: boolean}} boom
    */
   _handleBoomResult(boom, pos) {
+    // 中心 boom 脉冲
     this.animManager.addBoom(pos.row, pos.col);
+
+    // 级联 boom 脉冲（阶梯延迟，每个 cascade 间隔 120ms）
+    if (boom.cascadeChain) {
+      for (let i = 1; i < boom.cascadeChain.length; i++) {
+        const c = boom.cascadeChain[i];
+        this.animManager.addBoom(c.center.row, c.center.col, i * 120);
+      }
+    }
+
     if (boom.revealedCells.length > 0) {
       this.animManager.addPops(boom.revealedCells);
-      if (this.soundManager) this.soundManager.playBoom();
+      if (this.soundManager) {
+        this.soundManager.playBoom();
+        // 级联升调音效（每次升半音）
+        for (let i = 0; i < (boom.cascadeCount || 0); i++) {
+          setTimeout(() => this.soundManager?.playBoom(i + 1), (i + 1) * 120);
+        }
+      }
     }
     if (boom.won) {
       this.animManager.addVictory(this.game.rows, this.game.cols);
@@ -212,8 +228,14 @@ export class InputHandler {
 
     this.renderer.render(this.game.grid, this.animManager);
     if (boom.revealedCells.length > 0) {
-      // 携带计分事件（boom 类型）回调
-      this.onAction({ scoreEvent: { type: 'boom', cells: boom.revealedCells.length, pos, tier: boom.tier } });
+      // 携带计分事件（boom 类型 + 级联数）回调
+      this.onAction({ scoreEvent: {
+        type: 'boom',
+        cells: boom.revealedCells.length,
+        pos,
+        tier: boom.tier,
+        cascadeCount: boom.cascadeCount || 0,
+      } });
     } else {
       this.onAction();
     }

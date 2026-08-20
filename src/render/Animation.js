@@ -51,11 +51,12 @@ export class AnimationManager {
 
   /**
    * Bean Boom 脉冲 (正确旗引爆时，旗帜豆子放大弹跳)
+   * @param {number} delay - 延迟（ms），用于级联阶梯效果
    */
-  addBoom(row, col) {
+  addBoom(row, col, delay = 0) {
     this.anims.set(`${row},${col}`, {
       type: 'boom',
-      startTime: performance.now(),
+      startTime: performance.now() + delay,
       duration: 450,
     });
     this._ensureRunning();

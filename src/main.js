@@ -60,7 +60,6 @@ const boardWrapper = document.querySelector('.board-wrapper');
 
 const MILESTONE_TEXT = { nice: 'Nice!', great: 'Great!', amazing: 'Amazing!', fever: 'BEAN FEVER!' };
 const LABEL_TEXT = { greatOpening: 'Great Opening!', perfectChord: 'Perfect Chord!', beanBoom: 'Bean Boom!' };
-
 function showFloatText(text, pos, cls) {
   if (!pos || !boardWrapper) return;
   const rect = canvas.getBoundingClientRect();
@@ -86,25 +85,43 @@ function showBoardLabel(text, isFever) {
 
 function refreshComboUI() {
   const active = game.gameState === 'playing' && scoreSystem.displayCombo() > 0;
+  const fever = scoreSystem.displayFever();
   // 用 visibility 切换保留占位，避免状态栏宽度变化导致棋盘卡片「呼吸」
   comboItemEl.style.visibility = active ? 'visible' : 'hidden';
   if (active) {
     comboDisplayEl.textContent = '×' + scoreSystem.displayMultiplier().toFixed(1);
     comboItemEl.classList.toggle('hot', scoreSystem.displayCombo() >= 5);
+    comboItemEl.classList.toggle('fever', fever);
   } else {
-    comboItemEl.classList.remove('hot');
+    comboItemEl.classList.remove('hot', 'fever');
   }
+  // FEVER 棋盘发光
+  if (boardWrapper) boardWrapper.classList.toggle('fever', fever);
+  // 同步 FEVER 状态到 Game（blast 半径 +1）
+  game.feverActive = fever;
 }
 setInterval(refreshComboUI, 500);
 
-function handleScoreEvent({ type, cells, pos }) {
+function handleScoreEvent({ type, cells, pos, cascadeCount = 0 }) {
   const res = scoreSystem.onReveal(cells, type);
   if (res.gained > 0) {
     scoreDisplayEl.textContent = Math.floor(scoreSystem.rawScore).toLocaleString();
-    showFloatText('+' + res.gained, pos, type === 'boom' ? 'boom' : '');
+    const cls = type === 'boom' ? (cascadeCount > 0 ? 'boom cascade' : 'boom') : '';
+    showFloatText('+' + res.gained, pos, cls);
   }
-  if (res.label) showBoardLabel(LABEL_TEXT[res.label], false);
-  if (res.milestone) showBoardLabel(MILESTONE_TEXT[res.milestone], res.milestone === 'fever');
+  // 标签优先级：里程碑 > 级联 > 事件标签
+  if (res.milestone) {
+    showBoardLabel(MILESTONE_TEXT[res.milestone], res.milestone === 'fever');
+  } else if (cascadeCount > 0) {
+    showBoardLabel('CASCADE ×' + (cascadeCount + 1) + '!', true);
+  } else if (res.label) {
+    showBoardLabel(LABEL_TEXT[res.label], false);
+  }
+  // FEVER 激活时同步状态到 Game（blast 半径 +1）
+  if (res.feverActivated) {
+    game.feverActive = true;
+    if (boardWrapper) boardWrapper.classList.add('fever');
+  }
   refreshComboUI();
 }
 
@@ -112,7 +129,9 @@ function resetScoreUI() {
   scoreSystem.reset();
   scoreDisplayEl.textContent = '0';
   comboItemEl.style.visibility = 'hidden';
-  comboItemEl.classList.remove('hot');
+  comboItemEl.classList.remove('hot', 'fever');
+  if (boardWrapper) boardWrapper.classList.remove('fever');
+  game.feverActive = false;
   overlayScore.textContent = '';
 }
 

@@ -1837,3 +1837,42 @@ body {
   font-weight: 700;
   color: #d9822b;
 }
+
+/* === Phase 3: FEVER 模式 + 级联爆炸 === */
+
+/* FEVER 连击显示：比 .hot 更强烈的脉冲 + 粉红发光 */
+.combo-counter.fever {
+  background: #ffd0de;
+  border-color: #d4537e;
+  animation: feverPulse 0.4s ease infinite alternate;
+  box-shadow: 0 0 8px rgba(212, 83, 126, 0.5);
+}
+
+.combo-counter.fever .status-value {
+  color: #c0395e;
+  text-shadow: 0 0 4px rgba(212, 83, 126, 0.4);
+}
+
+@keyframes feverPulse {
+  from { transform: scale(1); box-shadow: 0 0 6px rgba(212, 83, 126, 0.4); }
+  to { transform: scale(1.08); box-shadow: 0 0 14px rgba(212, 83, 126, 0.7); }
+}
+
+/* FEVER 棋盘发光 */
+.board-wrapper.fever {
+  box-shadow: 0 0 20px rgba(212, 83, 126, 0.4), inset 0 0 12px rgba(212, 83, 126, 0.1);
+  border: 2px solid rgba(212, 83, 126, 0.5);
+  transition: box-shadow 0.3s ease, border 0.3s ease;
+}
+
+.board-wrapper {
+  transition: box-shadow 0.3s ease, border 0.3s ease;
+}
+
+/* 级联爆炸得分飞字：金色 + 更大 */
+.fly-text.boom.cascade {
+  font-size: 23px;
+  font-weight: 900;
+  color: #e8a020;
+  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.95), 0 0 8px rgba(232, 160, 32, 0.4);
+}

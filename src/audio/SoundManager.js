@@ -110,18 +110,23 @@ export class SoundManager {
     noise.start();
   }
 
-  /** Bean Boom 引爆 - 上扬轰鸣 + 短噪声（与踩雷的下沉爆炸声区分） */
-  playBoom() {
+  /** Bean Boom 引爆 - 上扬轰鸣 + 短噪声（与踩雷的下沉爆炸声区分）
+   *  @param {number} pitchStep - 级联升调步进（0=基础音, 1/2/3...=每次级联升半音） */
+  playBoom(pitchStep = 0) {
     if (this.muted) return;
     const ctx = this._ensureCtx();
     if (!ctx) return;
+
+    const pitchMult = Math.pow(1.0595, pitchStep); // 半音步进（12-ET）
+    const baseFreq = 120 * pitchMult;
+    const peakFreq = 360 * pitchMult;
 
     // 低频上滑：从沉闷到明亮，营造"引爆得利"的正反馈
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(120, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(360, ctx.currentTime + 0.18);
+    osc.frequency.setValueAtTime(baseFreq, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(peakFreq, ctx.currentTime + 0.18);
     gain.gain.setValueAtTime(0.18, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
     osc.connect(gain);
