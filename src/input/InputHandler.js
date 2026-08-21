@@ -186,7 +186,6 @@ export class InputHandler {
           colors: ['#e24b4a', '#ff6b4a', '#ffd93d'],
           speed: 180,
         });
-        this.renderer.screenShake(2, 300);
         this._wakeFx();
       }
     } else if (result.revealedCells.length > 0) {
@@ -207,7 +206,6 @@ export class InputHandler {
         this.particles.burstConfetti(w * 0.25, h * 0.25, { count: 24 });
         this.particles.burstConfetti(w * 0.5, h * 0.12, { count: 32 });
         this.particles.burstConfetti(w * 0.75, h * 0.25, { count: 24 });
-        this.renderer.screenShake(2, 300);
         this._wakeFx();
       }
     }
@@ -261,7 +259,6 @@ export class InputHandler {
         color: '#ffd93d',
       });
       this.particles.burstSparks(c.x, c.y, { count: 16, speed: 170 });
-      this.renderer.screenShake(3, 300);
       this._wakeFx();
     }
 
@@ -280,7 +277,6 @@ export class InputHandler {
               life: 400,
             });
             this.particles.burstSparks(p.x, p.y, { count: 10, speed: 140 });
-            this.renderer.screenShake(2, 250);
             this._wakeFx();
           }, i * 120);
         }
@@ -307,7 +303,6 @@ export class InputHandler {
         this.particles.burstConfetti(w * 0.25, h * 0.25, { count: 24 });
         this.particles.burstConfetti(w * 0.5, h * 0.12, { count: 32 });
         this.particles.burstConfetti(w * 0.75, h * 0.25, { count: 24 });
-        this.renderer.screenShake(2, 300);
         this._wakeFx();
       }
     }
