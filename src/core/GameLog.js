@@ -15,10 +15,11 @@ export class GameLog {
     this.reset();
   }
 
-  /** 新开局：记录难度与地雷种子（Game.init 时已生成） */
-  start(difficulty, seed) {
+  /** 新开局：记录难度、游戏模式与地雷种子（Game.init 时已生成） */
+  start(difficulty, seed, mode = 'egg') {
     this.difficulty = difficulty;
     this.seed = seed;
+    this.mode = mode; // 'egg' | 'classic'（服务端重放按模式重建 Game）
     this.startT = performance.now();
     this.actions = [];
   }
@@ -33,6 +34,7 @@ export class GameLog {
     return {
       difficulty: this.difficulty,
       seed: this.seed,
+      mode: this.mode || 'egg',
       actions: this.actions,
     };
   }

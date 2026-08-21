@@ -11,8 +11,9 @@ export function mulberry32(a) {
 }
 
 export class Game {
-  constructor(difficulty = 'easy') {
+  constructor(difficulty = 'easy', mode = 'egg') {
     this.difficulty = difficulty;
+    this.mode = mode; // 'egg'（彩蛋模式：连锁爆破+计分+FEVER）| 'classic'（经典模式：纯净扫雷）
     this.gameState = 'ready'; // ready | playing | won | lost
     this.mineCount = 0;
     this.flagCount = 0;
@@ -201,8 +202,8 @@ export class Game {
     cell.isFlagged = !cell.isFlagged;
     this.flagCount += cell.isFlagged ? 1 : -1;
 
-    // 正确标记地雷且未曾引爆过 → 触发 Bean Boom
-    if (cell.isFlagged && cell.isMine && !cell.hasBoomed) {
+    // 正确标记地雷且未曾引爆过 → 触发 Bean Boom（仅彩蛋模式；经典模式为纯净扫雷）
+    if (this.mode !== 'classic' && cell.isFlagged && cell.isMine && !cell.hasBoomed) {
       return { flagged: true, boom: this._beanBoom(cell) };
     }
     return { flagged: cell.isFlagged, boom: null };

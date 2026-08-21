@@ -16,7 +16,8 @@ const KV_KEYS = {
   paymentConfig: 'payment_config',
   footerContent: 'footer_content',
   friendLinks: 'friend_links',
-  records: 'records',
+  records: 'records',           // 经典模式：用时排行榜
+  scoreRecords: 'score_records', // 彩蛋模式：得分排行榜
 };
 
 // 排行榜各难度存储上限
@@ -174,13 +175,10 @@ app.post('/api/challenges', async (c) => {
   if (!body.name || !body.difficulty || !body.period || !body.targetCount) {
     return c.json({ error: 'Missing required fields' }, 400);
   }
-  // 挑战指标：wins（胜利次数，默认）/ score（单局得分达标）/ rank（单局段位达标）
-  const metric = ['wins', 'score', 'rank'].includes(body.metric) ? body.metric : 'wins';
-  const metricValue = metric === 'score'
-    ? (parseFloat(body.metricValue) || 0)
-    : metric === 'rank'
-      ? (['S', 'A', 'B'].includes(body.metricValue) ? body.metricValue : 'S')
-      : null;
+  // 挑战指标：仅 wins（挑战归属经典模式，按胜利次数计；score/rank 为彩蛋指标已废弃）
+  // 存量数据若含 score/rank，metricAchieved 仍按原逻辑判定，保持兼容
+  const metric = 'wins';
+  const metricValue = null;
   const challenges = await kvGet(c.env, KV_KEYS.challenges, []);
   const item = {
     id: genId('ch'),
@@ -363,6 +361,10 @@ app.post('/api/progress', async (c) => {
   if (!username || !difficulty) {
     return c.json({ error: 'Missing username or difficulty' }, 400);
   }
+  // 付费挑战归属经典模式：仅接受经典模式对局日志
+  if (gameLog && gameLog.mode === 'egg') {
+    return c.json({ error: 'Invalid game log: classic mode required' }, 400);
+  }
   // 反作弊：重放对局日志验证，服务端重算结果为唯一真相
   const replay = replayGame(gameLog);
   if (!replay.ok) {
@@ -514,6 +516,11 @@ app.post('/api/records', async (c) => {
   const diff = ['easy', 'medium', 'hard'].includes(difficulty) ? difficulty : null;
   if (!diff) return c.json({ error: 'Invalid difficulty' }, 400);
 
+  // 用时榜归属经典模式：拒绝彩蛋模式日志（连锁爆破可加速通关，对经典榜不公平）
+  if (gameLog && gameLog.mode === 'egg') {
+    return c.json({ error: 'Invalid game log: classic mode required' }, 400);
+  }
+
   // 反作弊：重放验证胜利 + 时长一致（±3s 容差覆盖计时器与日志取整误差）
   const replay = replayGame(gameLog);
   if (!replay.ok) {
@@ -551,6 +558,66 @@ app.post('/api/records', async (c) => {
   records[diff] = list.slice(0, RECORD_LIMITS[diff] || 500);
 
   await kvPut(c.env, KV_KEYS.records, records);
+  return c.json({ wasBest, records });
+});
+
+// -- 彩蛋模式得分排行榜：获取所有难度成绩 --
+app.get('/api/score-records', async (c) => {
+  const records = await kvGet(c.env, KV_KEYS.scoreRecords, { easy: [], medium: [], hard: [] });
+  return c.json(records);
+});
+
+// -- 彩蛋模式得分排行榜：提交得分（服务端重放验证，重算分数为唯一真相） --
+app.post('/api/score-records', async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const { difficulty, name, region, gameLog } = body;
+  if (!difficulty || !name) {
+    return c.json({ error: 'Missing or invalid fields (difficulty, name required)' }, 400);
+  }
+  const diff = ['easy', 'medium', 'hard'].includes(difficulty) ? difficulty : null;
+  if (!diff) return c.json({ error: 'Invalid difficulty' }, 400);
+
+  // 彩蛋得分榜仅接受彩蛋模式日志（classic 模式无计分玩法）
+  if (!gameLog || gameLog.mode !== 'egg') {
+    return c.json({ error: 'Invalid game log: egg mode required' }, 400);
+  }
+
+  // 反作弊：重放验证胜利；分数以服务端重算为准（settle 的时间乘数对取整敏感，
+  // 客户端与服务端时长可能差 1s，故不比对客户端提交的分数）
+  const replay = replayGame(gameLog);
+  if (!replay.ok) {
+    return c.json({ error: 'Invalid game log', reason: replay.reason }, 400);
+  }
+  if (!replay.won) {
+    return c.json({ error: 'Game verification failed: not a win' }, 403);
+  }
+  const score = replay.score;
+  if (typeof score !== 'number' || score <= 0) {
+    return c.json({ error: 'Game verification failed: invalid score' }, 403);
+  }
+
+  const records = await kvGet(c.env, KV_KEYS.scoreRecords, { easy: [], medium: [], hard: [] });
+  const list = records[diff] || [];
+  const now = Date.now();
+  // 反垃圾：同一名字+同一难度+同一分数 5 秒内重复提交忽略
+  const dup = list.find(r => r.name === name && r.score === score && (now - r.timestamp) < 5000);
+  if (dup) {
+    return c.json({ wasBest: false, duplicated: true, records });
+  }
+
+  const wasBest = list.length === 0 || score > Math.max.apply(null, list.map(r => r.score));
+  const record = {
+    score: Math.round(score),
+    timestamp: now,
+    date: todayStr(),
+    name: String(name).slice(0, 12),
+    region: String(region || '').slice(0, 20),
+  };
+  list.push(record);
+  list.sort((a, b) => b.score - a.score);
+  records[diff] = list.slice(0, RECORD_LIMITS[diff] || 500);
+
+  await kvPut(c.env, KV_KEYS.scoreRecords, records);
   return c.json({ wasBest, records });
 });
 

@@ -32,6 +32,10 @@ export const zh = {
   'nav.langSwitch': '语言',
 
   // ===== 游戏 =====
+  'game.mode.egg': '彩蛋模式',
+  'game.mode.classic': '经典模式',
+  'game.mode.eggHint': '连锁爆破 · 连击 · 得分排行',
+  'game.mode.classicHint': '纯净扫雷 · 用时排行 · 付费挑战',
   'game.diff.easy': '简单',
   'game.diff.medium': '中等',
   'game.diff.hard': '困难',
@@ -40,6 +44,7 @@ export const zh = {
   'game.score': '分数',
   'game.combo': '连击',
   'game.scoreSummary': (score, rank)=> `⭐ 得分 ${score} · ${rank} 级`,
+  'game.scoreOnly': (score)=> `⭐ 得分 ${score}`,
   'game.restart': '重新开始',
   'game.sound': '音效开关',
   'game.leaderboard': '全球排行榜',

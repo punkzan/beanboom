@@ -1,8 +1,10 @@
 // 全球排行榜数据层：服务端 KV 存储（全局可见）+ localStorage 本地缓存降级
 // 支持日榜 / 月榜 / 年度榜 / 总榜 查询
+// 双模式：经典模式用时榜（records）+ 彩蛋模式得分榜（score-records）
 import { t } from '../i18n.js';
 
 const STORAGE_KEY = 'minesweeper-beads-records';
+const SCORE_STORAGE_KEY = 'minesweeper-beads-score-records';
 const LEGACY_KEY = 'minesweeper-beads-best'; // 旧的单条最佳记录
 const LIMITS = { easy: 100, medium: 2000, hard: 100000 };  // 前端每难度最多显示条数
 
@@ -189,4 +191,106 @@ export function getYearlyChampions() {
     result[diff] = list.length ? list[0] : null;
   }
   return result;
+}
+
+// ==================== 彩蛋模式得分榜 ====================
+
+function loadScoreAll() {
+  try {
+    return JSON.parse(localStorage.getItem(SCORE_STORAGE_KEY) || '{}');
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveScoreAll(data) {
+  localStorage.setItem(SCORE_STORAGE_KEY, JSON.stringify(data));
+}
+
+/**
+ * 从服务端拉取彩蛋模式得分榜并更新本地缓存
+ */
+export async function refreshScoreRecords() {
+  try {
+    const res = await fetch(BASE + '/score-records');
+    if (!res.ok) return;
+    const data = await res.json();
+    saveScoreAll(data);
+  } catch (e) {
+    // 网络异常：保留 localStorage 缓存
+  }
+}
+
+/**
+ * 提交彩蛋模式得分到服务端（服务端重放验证分数）
+ * @returns {Promise<boolean>} 是否为新的最高分
+ */
+export async function postScoreRecord(difficulty, score, name, region, gameLog = null) {
+  try {
+    const res = await fetch(BASE + '/score-records', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ difficulty, score, name: name || t('common.anonymous'), region: region || '', gameLog }),
+    });
+    if (!res.ok) {
+      addScoreRecordLocal(difficulty, score, name, region);
+      return false;
+    }
+    const data = await res.json();
+    if (data.records) {
+      saveScoreAll(data.records);
+    }
+    return data.wasBest || false;
+  } catch (e) {
+    return addScoreRecordLocal(difficulty, score, name, region);
+  }
+}
+
+/** 得分本地降级存储（仅 localStorage） */
+export function addScoreRecordLocal(difficulty, score, name, region) {
+  const data = loadScoreAll();
+  const list = data[difficulty] || [];
+  const wasBest = list.length === 0 || score > Math.max.apply(null, list.map(r => r.score));
+  list.push({ score: Math.round(score), timestamp: Date.now(), date: todayStr(), name: name || t('common.anonymous'), region: region || '' });
+  list.sort((a, b) => b.score - a.score);
+  data[difficulty] = list.slice(0, LIMITS[difficulty] || 100);
+  saveScoreAll(data);
+  return wasBest;
+}
+
+/**
+ * 添加一条彩蛋模式得分记录（先本地，再异步提交服务端重放验证）
+ * @param {object|null} [gameLog] 对局日志（服务端重算验证分数）
+ */
+export function addScoreRecord(difficulty, score, name, region, gameLog = null) {
+  const wasBest = addScoreRecordLocal(difficulty, score, name, region);
+  postScoreRecord(difficulty, score, name, region, gameLog).then(serverWasBest => {
+    if (serverWasBest) {
+      refreshScoreRecords();
+    }
+  }).catch(() => {});
+  return wasBest;
+}
+
+/**
+ * 获取某难度某时间窗口的得分列表（已按分数降序，读本地缓存）
+ * @param {string} period - daily | monthly | all
+ */
+export function getScoreRecords(difficulty, period = 'all') {
+  const data = loadScoreAll();
+  const list = (data[difficulty] || []).slice();
+  let filtered = list;
+  if (period === 'daily') {
+    filtered = list.filter(r => r.timestamp >= startOfDay());
+  } else if (period === 'monthly') {
+    filtered = list.filter(r => r.timestamp >= startOfMonth());
+  }
+  return filtered.slice(0, LIMITS[difficulty] || 100).map(r => ({ ...r, name: r.name || t('common.anonymous'), region: r.region || '' }));
+}
+
+/** 获取某难度最高分（总榜第一名），无则 null（读本地缓存） */
+export function getBestScore(difficulty) {
+  const data = loadScoreAll();
+  const list = data[difficulty] || [];
+  return list.length ? list[0].score : null;
 }

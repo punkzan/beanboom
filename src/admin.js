@@ -167,28 +167,9 @@ document.getElementById('ch-period').addEventListener('change', () => {
 document.getElementById('ch-custom-days').addEventListener('input', autoChallengeName);
 document.getElementById('ch-amount').addEventListener('input', autoChallengeName);
 
-// 指标切换：score → 目标分输入框；rank → 段位下拉；wins → 隐藏目标值
-const chMetricSel = document.getElementById('ch-metric');
-const chMetricValueField = document.getElementById('ch-metric-value-field');
-function syncMetricField() {
-  const metric = chMetricSel.value;
-  chMetricValueField.style.display = metric === 'wins' ? 'none' : '';
-  if (metric === 'rank') {
-    // 段位用 select：替换 input
-    chMetricValueField.innerHTML = `
-      <span class="admin-label" id="ch-metric-value-label" data-i18n="admin.ch.labelMetricValue">目标段位</span>
-      <select id="ch-metric-value">
-        <option value="S">S</option>
-        <option value="A">A</option>
-        <option value="B">B</option>
-      </select>`;
-  } else {
-    chMetricValueField.innerHTML = `
-      <span class="admin-label" id="ch-metric-value-label" data-i18n="admin.ch.labelMetricValue">目标值</span>
-      <input type="number" id="ch-metric-value" min="1" step="1" value="2000">`;
-  }
-}
-chMetricSel.addEventListener('change', syncMetricField);
+// 指标仅 wins（挑战归属经典模式，按胜利次数计；score/rank 彩蛋指标已废弃）
+// 存量 score/rank 挑战在列表中仍按原指标展示
+function syncMetricField() { /* 保留空实现以兼容旧引用 */ }
 
 async function loadChallengeList() {
   const res = await getAllChallenges();
@@ -230,18 +211,12 @@ document.getElementById('add-challenge').addEventListener('click', async () => {
     difficulty: document.getElementById('ch-difficulty').value,
     period: document.getElementById('ch-period').value,
     targetCount: parseInt(document.getElementById('ch-target').value) || 1,
-    metric: document.getElementById('ch-metric').value,
+    metric: 'wins',
     amount: parseFloat(document.getElementById('ch-amount').value) || 0,
     active: document.getElementById('ch-active').checked,
   };
   if (challenge.period === 'custom') {
     challenge.customDays = parseInt(document.getElementById('ch-custom-days').value) || 30;
-  }
-  const metricValueEl = document.getElementById('ch-metric-value');
-  if (challenge.metric === 'score') {
-    challenge.metricValue = parseFloat(metricValueEl.value) || 0;
-  } else if (challenge.metric === 'rank') {
-    challenge.metricValue = metricValueEl.value || 'S';
   }
   const res = await createChallenge(challenge);
   if (res.ok) {

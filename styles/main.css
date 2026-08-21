@@ -121,6 +121,45 @@ body {
   justify-content: center;
 }
 
+/* === 游戏模式切换（彩蛋 / 经典）=== */
+.game-mode-bar {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.gmode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f1efe8;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #888780;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gmode-btn .gmode-icon {
+  font-size: 15px;
+}
+
+.gmode-btn.active {
+  background: #fdf3e3;
+  border-color: #e8b04b;
+  color: #c07d1a;
+}
+
+.gmode-btn#gmode-classic.active {
+  background: #e8f0fb;
+  border-color: #6a9ee8;
+  color: #2d6cc9;
+}
+
 .diff-btn {
   background: #f1efe8;
   border: 2px solid transparent;

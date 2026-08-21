@@ -26,7 +26,9 @@ export function replayGame(log) {
   if (!Array.isArray(actions) || actions.length === 0) return { ok: false, reason: 'empty actions' };
   if (actions.length > MAX_ACTIONS) return { ok: false, reason: 'too many actions' };
 
-  const game = new Game(difficulty);
+  // 游戏模式：'classic'（经典：纯净扫雷，无连锁爆破）| 'egg'（彩蛋，默认/旧日志兼容）
+  const mode = log.mode === 'classic' ? 'classic' : 'egg';
+  const game = new Game(difficulty, mode);
   game.mineSeed = seed;
 
   // 重放时钟：ScoreSystem 的连击窗口判定用日志时间戳（与客户端同记一次 performance 时基）

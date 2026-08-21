@@ -32,6 +32,10 @@ export const en = {
   'nav.langSwitch': 'Language',
 
   // ===== Game =====
+  'game.mode.egg': 'Egg Mode',
+  'game.mode.classic': 'Classic Mode',
+  'game.mode.eggHint': 'Chain blasts · Combos · Score ranking',
+  'game.mode.classicHint': 'Pure minesweeper · Time ranking · Paid challenges',
   'game.diff.easy': 'Easy',
   'game.diff.medium': 'Medium',
   'game.diff.hard': 'Hard',
@@ -40,6 +44,7 @@ export const en = {
   'game.score': 'Score',
   'game.combo': 'Combo',
   'game.scoreSummary': (score, rank)=> `⭐ Score ${score} · Rank ${rank}`,
+  'game.scoreOnly': (score)=> `⭐ Score ${score}`,
   'game.restart': 'Restart',
   'game.sound': 'Sound',
   'game.leaderboard': 'Leaderboard',

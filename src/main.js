@@ -7,7 +7,7 @@ import { InputHandler } from './input/InputHandler.js';
 import { SoundManager } from './audio/SoundManager.js';
 import { BGMManager } from './audio/BGMManager.js';
 import { DIFFICULTIES } from './constants.js';
-import { addRecord, getBestTime, getRecords, getYearlyChampions, refreshRecords } from './core/Leaderboard.js';
+import { addRecord, getBestTime, getRecords, getYearlyChampions, refreshRecords, addScoreRecord, getScoreRecords, getBestScore, refreshScoreRecords } from './core/Leaderboard.js';
 import { getSeoConfig, getAdsConfig, getActivities, getLatestActivities, fetchFooterContent, fetchFriendLinks } from './core/SiteConfig.js';
 import { register, login, logout, getCurrentUser } from './core/Auth.js';
 import { getChallenges, participate, getMyChallenges, updateProgress, capturePaypalPayment } from './core/ChallengeAPI.js';
@@ -20,7 +20,12 @@ import { t, scanI18n, getLang, setLang, onLangChange } from './i18n.js';
 // 门户构建开关（CrazyGames 等平台）：VITE_PORTAL=1 时禁用广告、付费挑战、登录
 const PORTAL = import.meta.env.VITE_PORTAL === '1';
 
-let game = new Game('easy');
+// === 双模式（彩蛋 / 经典）===
+// 彩蛋模式：连锁爆破 + 计分 + FEVER，按得分排行（日/月/总榜），无付费挑战
+// 经典模式：纯净扫雷，按用时排行（日/月/年榜），含付费挑战
+let gameMode = localStorage.getItem('bb-game-mode') === 'classic' ? 'classic' : 'egg';
+
+let game = new Game('easy', gameMode);
 const canvas = document.getElementById('game-canvas');
 let renderer = new Renderer(canvas, 'easy');
 const animManager = new AnimationManager();
@@ -62,7 +67,7 @@ const timer = new Timer((display) => {
 const scoreSystem = new ScoreSystem();
 // === 对局日志（服务端重算反作弊）===
 const gameLog = new GameLog();
-gameLog.start('easy', game.mineSeed);
+gameLog.start('easy', game.mineSeed, gameMode);
 const scoreDisplayEl = document.getElementById('score-display');
 const comboItemEl = document.getElementById('combo-item');
 const comboDisplayEl = document.getElementById('combo-display');
@@ -135,6 +140,8 @@ function animateScoreTo(target) {
 }
 
 function handleScoreEvent({ type, cells, pos, cascadeCount = 0 }) {
+  // 计分玩法仅彩蛋模式；经典模式无计分/连击/FEVER
+  if (gameMode !== 'egg') return;
   const res = scoreSystem.onReveal(cells, type);
   if (res.gained > 0) {
     animateScoreTo(Math.floor(scoreSystem.rawScore));
@@ -281,14 +288,10 @@ function updateUI() {
     timer.stop();
     bgmManager.switchTo('won');
     const seconds = Math.floor(timer.elapsed / 1000);
-    const best = getBestTime(game.difficulty);
 
     overlayTitle.textContent = t('game.won');
     overlayTitle.className = 'overlay-title win';
     overlaySubtitle.textContent = t('game.timeUsed', formatSeconds(seconds));
-    // 计分结算：最终得分 + 段位
-    const settlement = scoreSystem.settle(game.difficulty, seconds, game.playerCorrectFlags || 0);
-    overlayScore.textContent = t('game.scoreSummary', settlement.finalScore.toLocaleString(), settlement.rank);
     overlayInputs.style.display = '';
     const _user = getCurrentUser();
     overlayNameInput.value = _user ? _user.username : '';
@@ -296,10 +299,22 @@ function updateUI() {
     overlayRestart.textContent = t('game.submit');
     overlayRestart.disabled = false;
     overlayShareBtn.style.display = '';
-    if (best !== null) {
-      overlayBest.textContent = t('game.currentBest', formatSeconds(best));
+
+    if (gameMode === 'egg') {
+      // 彩蛋模式：得分结算 + 历史最高分
+      const settlement = scoreSystem.settle(game.difficulty, seconds, game.playerCorrectFlags || 0);
+      overlayScore.textContent = t('game.scoreSummary', settlement.finalScore.toLocaleString(), settlement.rank);
+      const bestScore = getBestScore(game.difficulty);
+      overlayBest.textContent = bestScore !== null
+        ? t('game.currentBest', bestScore.toLocaleString())
+        : t('game.firstWin');
     } else {
-      overlayBest.textContent = t('game.firstWin');
+      // 经典模式：无计分，展示历史最佳用时
+      overlayScore.textContent = '';
+      const best = getBestTime(game.difficulty);
+      overlayBest.textContent = best !== null
+        ? t('game.currentBest', formatSeconds(best))
+        : t('game.firstWin');
     }
     setTimeout(() => {
       if (game.gameState === 'won') overlay.classList.add('visible');
@@ -736,11 +751,13 @@ let challengesCache = [];
 let myChallengesCache = [];
 
 function renderChallengeSection() {
-  if (PORTAL) {
+  if (PORTAL || gameMode !== 'classic') {
     // 门户构建：隐藏付费挑战区（真实支付不被平台允许）
+    // 彩蛋模式：无付费挑战模块（挑战归属经典模式）
     challengeSection.style.display = 'none';
     return;
   }
+  challengeSection.style.display = '';
   const user = getCurrentUser();
   challengeLoginHint.style.display = user ? 'none' : '';
   challengeTabs.style.display = '';
@@ -963,7 +980,7 @@ function restart() {
   game.init();
   timer.reset();
   resetScoreUI();
-  gameLog.start(game.difficulty, game.mineSeed);
+  gameLog.start(game.difficulty, game.mineSeed, gameMode);
   renderer.render(game.grid);
   mineCountEl.textContent = game.getRemainingMines();
   timerEl.textContent = '00:00';
@@ -979,7 +996,7 @@ function changeDifficulty(diff) {
   renderer.setDifficulty(diff);
   timer.reset();
   resetScoreUI();
-  gameLog.start(diff, game.mineSeed);
+  gameLog.start(diff, game.mineSeed, gameMode);
   renderer.render(game.grid);
   mineCountEl.textContent = game.getRemainingMines();
   timerEl.textContent = '00:00';
@@ -996,6 +1013,37 @@ function changeDifficulty(diff) {
   modeRevealBtn.classList.add('active');
   modeFlagBtn.classList.remove('active');
 }
+
+// === 切换游戏模式（彩蛋 / 经典） ===
+const gmodeEggBtn = document.getElementById('gmode-egg');
+const gmodeClassicBtn = document.getElementById('gmode-classic');
+const scoreCounterEl = document.querySelector('.score-counter');
+
+/** 模式相关的 UI 显隐（计分面板 / 挑战区 / 榜单 / 年度冠军） */
+function applyModeUI() {
+  const isEgg = gameMode === 'egg';
+  gmodeEggBtn.classList.toggle('active', isEgg);
+  gmodeClassicBtn.classList.toggle('active', !isEgg);
+  // 计分面板与连击指示仅彩蛋模式
+  if (scoreCounterEl) scoreCounterEl.style.display = isEgg ? '' : 'none';
+  if (comboItemEl) comboItemEl.style.display = isEgg ? '' : 'none';
+  renderChallengeSection();
+  renderLeaderboard();
+  renderYearlyChampions();
+}
+
+function setGameMode(mode) {
+  if (gameMode === mode) return;
+  gameMode = mode;
+  localStorage.setItem('bb-game-mode', mode);
+  // 模式挂在 Game 实例上（init 不重置 mode），切换后重开一局
+  game.mode = mode;
+  restart();
+  applyModeUI();
+}
+
+gmodeEggBtn.addEventListener('click', () => setGameMode('egg'));
+gmodeClassicBtn.addEventListener('click', () => setGameMode('classic'));
 
 // === 输入处理 ===
 const inputHandler = new InputHandler(
@@ -1065,6 +1113,7 @@ window.addEventListener('resize', () => {
 // 初次渲染
 renderer.render(game.grid);
 mineCountEl.textContent = game.getRemainingMines();
+applyModeUI(); // 应用初始模式 UI（localStorage 恢复的模式）
 
 // 按钮事件
 document.getElementById('restart-btn').addEventListener('click', restart);
@@ -1074,18 +1123,25 @@ overlayRestart.addEventListener('click', () => {
     const region = overlayRegionInput.value.trim() || '';
     const seconds = Math.floor(timer.elapsed / 1000);
     const logData = gameLog.export();
-    const wasBest = addRecord(game.difficulty, seconds, name, region, logData);
+    let wasBest;
+    if (gameMode === 'egg') {
+      // 彩蛋模式：提交得分榜（服务端重放验证分数）
+      const settlement = scoreSystem.settle(game.difficulty, seconds, game.playerCorrectFlags || 0);
+      wasBest = addScoreRecord(game.difficulty, settlement.finalScore, name, region, logData);
+    } else {
+      // 经典模式：提交用时榜 + 更新付费挑战进度（服务端重放验证）
+      wasBest = addRecord(game.difficulty, seconds, name, region, logData);
+      const _cu = getCurrentUser();
+      if (_cu) updateProgress(_cu.username, game.difficulty, logData).then(r => {
+        if (r.ok && r.data.updated > 0) {
+          loadMyChallenges();
+          // 有挑战完成 → 刷新挑战列表，允许用户再次参加
+          if (r.data.completed > 0) renderChallengeList();
+        }
+      });
+    }
     renderLeaderboard();
     renderYearlyChampions();
-    // 更新付费挑战进度（服务端重放验证）
-    const _cu = getCurrentUser();
-    if (_cu) updateProgress(_cu.username, game.difficulty, logData).then(r => {
-      if (r.ok && r.data.updated > 0) {
-        loadMyChallenges();
-        // 有挑战完成 → 刷新挑战列表，允许用户再次参加
-        if (r.data.completed > 0) renderChallengeList();
-      }
-    });
     if (wasBest) {
       overlayRestart.textContent = t('game.newRecord');
       overlayRestart.disabled = true;
@@ -1109,36 +1165,39 @@ const lbYearlyChampions = document.getElementById('lb-yearly-champions');
 let currentLbDiff = 'easy';
 let currentLbPeriod = 'daily';
 
-// 各难度对应的榜单时间维度
-const LB_PERIODS = {
-  easy: ['daily'],
-  medium: ['daily', 'monthly'],
-  hard: ['monthly', 'yearly', 'all'],
-};
-const LB_DEFAULT_PERIOD = {
-  easy: 'daily',
-  medium: 'daily',
-  hard: 'monthly',
-};
+// 各难度对应的榜单时间维度（按模式区分，全难度统一）
+// 经典模式：用时榜（日/月/年/总）；彩蛋模式：得分榜（日/月/总）
+const LB_PERIODS_CLASSIC = { easy: ['daily', 'monthly', 'yearly', 'all'], medium: ['daily', 'monthly', 'yearly', 'all'], hard: ['daily', 'monthly', 'yearly', 'all'] };
+const LB_PERIODS_EGG = { easy: ['daily', 'monthly', 'all'], medium: ['daily', 'monthly', 'all'], hard: ['daily', 'monthly', 'all'] };
+const LB_PERIODS = { classic: LB_PERIODS_CLASSIC, egg: LB_PERIODS_EGG };
+const LB_DEFAULT_PERIOD = { classic: { easy: 'daily', medium: 'daily', hard: 'daily' }, egg: { easy: 'daily', medium: 'daily', hard: 'daily' } };
 
 function renderLeaderboard() {
   // 难度 tab 高亮
   lbDiffTabs.querySelectorAll('.lb-tab').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lbDiff === currentLbDiff);
   });
-  // 按难度显示对应的榜单时间维度，隐藏不相关的 tab
-  const periods = LB_PERIODS[currentLbDiff] || ['all'];
+  // 按模式+难度显示对应的榜单时间维度，隐藏不相关的 tab
+  const periods = (LB_PERIODS[gameMode] || LB_PERIODS_EGG)[currentLbDiff] || ['all'];
+  if (!periods.includes(currentLbPeriod)) {
+    currentLbPeriod = (LB_DEFAULT_PERIOD[gameMode] || LB_DEFAULT_PERIOD.egg)[currentLbDiff] || 'daily';
+  }
   lbPeriodTabs.classList.remove('hidden');
   lbPeriodTabs.querySelectorAll('.lb-tab').forEach(btn => {
     const visible = periods.includes(btn.dataset.lbPeriod);
     btn.style.display = visible ? '' : 'none';
     btn.classList.toggle('active', visible && btn.dataset.lbPeriod === currentLbPeriod);
   });
-  const records = getRecords(currentLbDiff, currentLbPeriod);
+  const records = gameMode === 'egg'
+    ? getScoreRecords(currentLbDiff, currentLbPeriod)
+    : getRecords(currentLbDiff, currentLbPeriod);
   if (!records.length) {
     lbScrollTrack.innerHTML = '<div class="lb-empty">' + t('lb.empty') + '</div>';
     return;
   }
+  const metricHtml = gameMode === 'egg'
+    ? (r) => `<span class="lb-time">⭐ ${Number(r.score).toLocaleString()}</span>`
+    : (r) => `<span class="lb-time">${formatSeconds(r.time)}</span>`;
   const rowsHtml = records.map((r, i) => {
     const rank = i + 1;
     const rankText = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : String(rank);
@@ -1146,15 +1205,18 @@ function renderLeaderboard() {
       <span class="lb-rank">${rankText}</span>
       <span class="lb-name">${escapeHtml(r.name)}</span>
       <span class="lb-region">${escapeHtml(r.region || '—')}</span>
-      <span class="lb-time">${formatSeconds(r.time)}</span>
+      ${metricHtml(r)}
       <span class="lb-date">${formatDateTime(r.timestamp)}</span>
     </div>`;
   }).join('');
   lbScrollTrack.innerHTML = rowsHtml;
 }
 
-// 当年年度榜首：三难度年度第一名汇总，跟随记录随时更新
+// 当年年度榜首：三难度年度第一名汇总，跟随记录随时更新（仅经典模式用时榜）
 function renderYearlyChampions() {
+  // 彩蛋模式得分榜无年度维度
+  lbYearlyChampions.style.display = gameMode === 'classic' ? '' : 'none';
+  if (gameMode !== 'classic') return;
   const champs = getYearlyChampions();
   lbYearlyChampions.querySelectorAll('.lb-yc-card').forEach(card => {
     const diff = card.dataset.ycDiff;
@@ -1178,7 +1240,7 @@ function renderYearlyChampions() {
 // 🏆 按钮滚动到全球排行榜
 lbTriggerBtn.addEventListener('click', () => {
   currentLbDiff = game.difficulty;
-  currentLbPeriod = LB_DEFAULT_PERIOD[game.difficulty];
+  currentLbPeriod = (LB_DEFAULT_PERIOD[gameMode] || LB_DEFAULT_PERIOD.egg)[game.difficulty] || 'daily';
   renderLeaderboard();
   lbInline.scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
@@ -1186,9 +1248,9 @@ lbDiffTabs.addEventListener('click', (e) => {
   const btn = e.target.closest('.lb-tab');
   if (!btn) return;
   currentLbDiff = btn.dataset.lbDiff;
-  // 切换难度后，若当前时间维度不在新难度列表中，重置为该难度默认
-  if (!LB_PERIODS[currentLbDiff].includes(currentLbPeriod)) {
-    currentLbPeriod = LB_DEFAULT_PERIOD[currentLbDiff];
+  // 切换难度后，若当前时间维度不在新列表中，重置为默认（renderLeaderboard 内兜底）
+  if (!(LB_PERIODS[gameMode] || LB_PERIODS_EGG)[currentLbDiff].includes(currentLbPeriod)) {
+    currentLbPeriod = (LB_DEFAULT_PERIOD[gameMode] || LB_DEFAULT_PERIOD.egg)[currentLbDiff];
   }
   renderLeaderboard();
 });
@@ -1199,9 +1261,9 @@ lbPeriodTabs.addEventListener('click', (e) => {
   renderLeaderboard();
 });
 
-// 初始渲染全球排行榜（先从服务端拉取全局数据，再渲染）
+// 初始渲染全球排行榜（先从服务端拉取全局数据，再渲染；双模式两套榜单都拉）
 (async function initLeaderboard() {
-  await refreshRecords();
+  await Promise.all([refreshRecords(), refreshScoreRecords()]);
   renderLeaderboard();
   renderYearlyChampions();
 })();
