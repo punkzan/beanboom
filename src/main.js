@@ -1113,7 +1113,9 @@ window.addEventListener('resize', () => {
 // 初次渲染
 renderer.render(game.grid);
 mineCountEl.textContent = game.getRemainingMines();
-applyModeUI(); // 应用初始模式 UI（localStorage 恢复的模式）
+// 注意：初始 applyModeUI() 在 initLeaderboard 中调用——
+// 它依赖下方 lb* DOM 常量与 LB_PERIODS（const 暂时性死区，提前调用会抛
+// ReferenceError 中断脚本，导致提交按钮等后续监听器全部失效）
 
 // 按钮事件
 document.getElementById('restart-btn').addEventListener('click', restart);
@@ -1263,6 +1265,8 @@ lbPeriodTabs.addEventListener('click', (e) => {
 
 // 初始渲染全球排行榜（先从服务端拉取全局数据，再渲染；双模式两套榜单都拉）
 (async function initLeaderboard() {
+  // 应用初始模式 UI（localStorage 恢复的模式）——须在全部 lb*/LB_PERIODS 常量声明之后执行
+  applyModeUI();
   await Promise.all([refreshRecords(), refreshScoreRecords()]);
   renderLeaderboard();
   renderYearlyChampions();
