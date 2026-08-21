@@ -163,7 +163,7 @@ function handleScoreEvent({ type, cells, pos, cascadeCount = 0 }) {
         color: '#ff6b4a',
         life: 500,
       });
-      renderer.screenShake(5, 350);
+      renderer.screenShake(2.5, 300);
     } else {
       particles.burstSparks(cx, cy, { count: 12, speed: 130 });
     }
