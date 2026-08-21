@@ -103,7 +103,7 @@ export class Renderer {
 
     ctx.save();
 
-    // Phase 4：震屏偏移（随时间衰减的随机抖动）
+    // Phase 4：震屏偏移（正弦平滑摆动 + 时间衰减，避免随机抖动的眩晕感）
     if (this.shake) {
       const elapsed = performance.now() - this.shake.startTime;
       if (elapsed >= this.shake.duration) {
@@ -111,7 +111,9 @@ export class Renderer {
       } else {
         const decay = 1 - elapsed / this.shake.duration;
         const mag = this.shake.intensity * decay;
-        ctx.translate((Math.random() * 2 - 1) * mag, (Math.random() * 2 - 1) * mag);
+        const t = elapsed / 1000;
+        // X/Y 用不同频率的 sin/cos，形成平滑的椭圆摆动（~6Hz）
+        ctx.translate(Math.sin(t * 42) * mag, Math.cos(t * 37) * mag);
       }
     }
 
