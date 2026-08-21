@@ -31,10 +31,6 @@ const bgmManager = new BGMManager();
 const particles = new ParticleSystem();
 renderer.setParticles(particles);
 animManager.register(particles); // update + hasActive + clear
-animManager.register({
-  hasActive: () => renderer.hasShake(), // 震屏期间保持渲染
-  clear: () => { renderer.shake = null; },
-});
 
 animManager.onUpdate = () => {
   renderer.render(game.grid, animManager);
@@ -163,7 +159,6 @@ function handleScoreEvent({ type, cells, pos, cascadeCount = 0 }) {
         color: '#ff6b4a',
         life: 500,
       });
-      renderer.screenShake(2.5, 300);
     } else {
       particles.burstSparks(cx, cy, { count: 12, speed: 130 });
     }
