@@ -11,7 +11,35 @@ export class Renderer {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.difficulty = difficulty;
+    this.particles = null; // ParticleSystem（Phase 4，可选）
+    this.shake = null;     // 震屏状态 { intensity, startTime, duration }
     this.setupCanvas();
+  }
+
+  /** 挂载粒子系统（Phase 4 动效） */
+  setParticles(particleSystem) {
+    this.particles = particleSystem;
+  }
+
+  /**
+   * 触发摄像机震屏
+   * @param {number} intensity - 最大偏移幅度 px（boom≈6，踩雷≈10）
+   * @param {number} duration - 持续 ms
+   */
+  screenShake(intensity = 6, duration = 300) {
+    // 强度更大的震屏不被弱震屏覆盖
+    if (this.shake && this.shake.intensity > intensity) return;
+    this.shake = { intensity, duration, startTime: performance.now() };
+  }
+
+  /** 震屏是否仍在进行（供动画循环判断是否继续渲染） */
+  hasShake() {
+    if (!this.shake) return false;
+    if (performance.now() - this.shake.startTime >= this.shake.duration) {
+      this.shake = null;
+      return false;
+    }
+    return true;
   }
 
   /** 切换难度并重新设置 canvas */
@@ -73,6 +101,20 @@ export class Renderer {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.cssWidth, this.cssHeight);
 
+    ctx.save();
+
+    // Phase 4：震屏偏移（随时间衰减的随机抖动）
+    if (this.shake) {
+      const elapsed = performance.now() - this.shake.startTime;
+      if (elapsed >= this.shake.duration) {
+        this.shake = null;
+      } else {
+        const decay = 1 - elapsed / this.shake.duration;
+        const mag = this.shake.intensity * decay;
+        ctx.translate((Math.random() * 2 - 1) * mag, (Math.random() * 2 - 1) * mag);
+      }
+    }
+
     // 1. 画底板
     drawBoardBackground(ctx, this.rows, this.cols, this.cellSize, this.pegRadius);
 
@@ -102,6 +144,11 @@ export class Renderer {
         drawBead(ctx, cx, cy, cell, anim, this.cellSize, this.beadRadius);
       }
     }
+
+    // 4. 画粒子（最上层，跟随震屏坐标系）
+    if (this.particles) this.particles.render(ctx);
+
+    ctx.restore();
   }
 
   /**

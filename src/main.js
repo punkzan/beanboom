@@ -2,6 +2,7 @@ import { Game } from './core/Game.js';
 import { Timer } from './core/Timer.js';
 import { Renderer } from './render/Renderer.js';
 import { AnimationManager } from './render/Animation.js';
+import { ParticleSystem } from './render/Particles.js';
 import { InputHandler } from './input/InputHandler.js';
 import { SoundManager } from './audio/SoundManager.js';
 import { BGMManager } from './audio/BGMManager.js';
@@ -25,6 +26,15 @@ let renderer = new Renderer(canvas, 'easy');
 const animManager = new AnimationManager();
 const soundManager = new SoundManager();
 const bgmManager = new BGMManager();
+
+// === Phase 4：粒子系统（挂在 Renderer 上层，由 animManager 的 rAF 循环统一驱动）===
+const particles = new ParticleSystem();
+renderer.setParticles(particles);
+animManager.register(particles); // update + hasActive + clear
+animManager.register({
+  hasActive: () => renderer.hasShake(), // 震屏期间保持渲染
+  clear: () => { renderer.shake = null; },
+});
 
 animManager.onUpdate = () => {
   renderer.render(game.grid, animManager);
@@ -106,16 +116,58 @@ function refreshComboUI() {
 }
 setInterval(refreshComboUI, 500);
 
+// === 分数 count-up 动画（Phase 4：替代直接跳变）===
+let scoreAnimRaf = null;
+let displayedScore = 0;
+function animateScoreTo(target) {
+  if (scoreAnimRaf) cancelAnimationFrame(scoreAnimRaf);
+  const from = displayedScore;
+  if (from === target) {
+    scoreDisplayEl.textContent = target.toLocaleString();
+    return;
+  }
+  const start = performance.now();
+  const dur = Math.min(600, 220 + Math.abs(target - from) * 1.5);
+  const step = (now) => {
+    const t = Math.min(1, (now - start) / dur);
+    const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+    displayedScore = Math.round(from + (target - from) * eased);
+    scoreDisplayEl.textContent = displayedScore.toLocaleString();
+    scoreAnimRaf = t < 1 ? requestAnimationFrame(step) : null;
+  };
+  scoreAnimRaf = requestAnimationFrame(step);
+}
+
 function handleScoreEvent({ type, cells, pos, cascadeCount = 0 }) {
   const res = scoreSystem.onReveal(cells, type);
   if (res.gained > 0) {
-    scoreDisplayEl.textContent = Math.floor(scoreSystem.rawScore).toLocaleString();
+    animateScoreTo(Math.floor(scoreSystem.rawScore));
     const cls = type === 'boom' ? (cascadeCount > 0 ? 'boom cascade' : 'boom') : '';
     showFloatText('+' + res.gained, pos, cls);
   }
   // 标签优先级：里程碑 > 级联 > 事件标签
   if (res.milestone) {
     showBoardLabel(MILESTONE_TEXT[res.milestone], res.milestone === 'fever');
+    // Phase 4：里程碑火花迸发（FEVER 激活为大爆发 + 冲击波）
+    const cx = renderer.cssWidth / 2;
+    const cy = renderer.cssHeight * 0.3;
+    if (res.milestone === 'fever') {
+      particles.burstSparks(cx, cy, {
+        count: 30,
+        speed: 210,
+        colors: ['#ff6b4a', '#ffd93d', '#ff9f43', '#fff3b0'],
+        life: 700,
+      });
+      particles.spawnRing(cx, cy, {
+        radius: renderer.cssWidth * 0.35,
+        color: '#ff6b4a',
+        life: 500,
+      });
+      renderer.screenShake(5, 350);
+    } else {
+      particles.burstSparks(cx, cy, { count: 12, speed: 130 });
+    }
+    animManager.wake();
   } else if (cascadeCount > 0) {
     showBoardLabel('CASCADE ×' + (cascadeCount + 1) + '!', true);
   } else if (res.label) {
@@ -131,6 +183,11 @@ function handleScoreEvent({ type, cells, pos, cascadeCount = 0 }) {
 
 function resetScoreUI() {
   scoreSystem.reset();
+  if (scoreAnimRaf) {
+    cancelAnimationFrame(scoreAnimRaf);
+    scoreAnimRaf = null;
+  }
+  displayedScore = 0;
   scoreDisplayEl.textContent = '0';
   comboItemEl.style.visibility = 'hidden';
   comboItemEl.classList.remove('hot', 'fever');
@@ -960,7 +1017,11 @@ const inputHandler = new InputHandler(
   soundManager,
   gameLog,
   // flag 前同步 FEVER（确定性判定，服务端重放一致）
-  () => { game.feverActive = scoreSystem.isFever && !scoreSystem.comboExpired(); }
+  () => { game.feverActive = scoreSystem.isFever && !scoreSystem.comboExpired(); },
+  // Phase 4：reveal 音效升调取当前连击数
+  () => scoreSystem.displayCombo(),
+  // Phase 4：粒子系统
+  particles
 );
 
 // === 事件绑定 ===

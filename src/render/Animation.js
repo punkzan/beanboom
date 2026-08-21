@@ -1,12 +1,28 @@
 /**
  * 动画管理器
  * 管理逐帧动画，rAF 循环仅在有活跃动画时运行
+ * Phase 4：支持注册依赖系统（粒子 / 震屏），共享同一条 rAF 循环
  */
 export class AnimationManager {
   constructor() {
     this.anims = new Map(); // "r,c" -> { type, startTime, duration }
     this.rafId = null;
     this.onUpdate = null; // 每帧回调，参数 (now)
+    this.dependencies = []; // [{ update(dt), hasActive(), clear() }]
+    this.lastFrameTime = null;
+  }
+
+  /**
+   * 注册依赖系统（粒子、震屏等），统一由本管理器的 rAF 循环驱动
+   * @param {{ update: function, hasActive: function, clear?: function }} dep
+   */
+  register(dep) {
+    if (!this.dependencies.includes(dep)) this.dependencies.push(dep);
+  }
+
+  /** 外部触发动画/粒子时唤醒渲染循环 */
+  wake() {
+    this._ensureRunning();
   }
 
   /**
@@ -126,33 +142,46 @@ export class AnimationManager {
     if (this.rafId) return;
     const loop = () => {
       const now = performance.now();
+      const dt = this.lastFrameTime == null ? 16.7 : now - this.lastFrameTime;
+      this.lastFrameTime = now;
       // 清理已完成的动画
       for (const [key, anim] of this.anims) {
         if (now - anim.startTime >= anim.duration) {
           this.anims.delete(key);
         }
       }
+      // Phase 4：更新依赖系统（粒子等）
+      for (const dep of this.dependencies) {
+        dep.update?.(dt);
+      }
       this.onUpdate?.(now);
-      if (this.anims.size > 0) {
+      const depsActive = this.dependencies.some((d) => d.hasActive?.());
+      if (this.anims.size > 0 || depsActive) {
         this.rafId = requestAnimationFrame(loop);
       } else {
         this.rafId = null;
+        this.lastFrameTime = null;
         // 最后渲染一帧确保状态干净
         this.onUpdate?.(now);
       }
     };
+    this.lastFrameTime = null;
     this.rafId = requestAnimationFrame(loop);
   }
 
   clear() {
     this.anims.clear();
+    for (const dep of this.dependencies) {
+      dep.clear?.();
+    }
     if (this.rafId) {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
+      this.lastFrameTime = null;
     }
   }
 
   hasActive() {
-    return this.anims.size > 0;
+    return this.anims.size > 0 || this.dependencies.some((d) => d.hasActive?.());
   }
 }

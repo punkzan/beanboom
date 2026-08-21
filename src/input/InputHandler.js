@@ -8,8 +8,10 @@ export class InputHandler {
    * @param {SoundManager|null} soundManager - 音效管理器
    * @param {GameLog|null} [gameLog] - 对局日志（服务端重算反作弊）
    * @param {function|null} [syncFever] - flag 前同步 FEVER 状态到 Game（确定性判定，保证服务端重放一致）
+   * @param {function|null} [getCombo] - 获取当前连击数（reveal 音效升调用）
+   * @param {ParticleSystem|null} [particles] - 粒子系统（Phase 4 动效）
    */
-  constructor(canvas, renderer, game, animManager, onAction, soundManager = null, gameLog = null, syncFever = null) {
+  constructor(canvas, renderer, game, animManager, onAction, soundManager = null, gameLog = null, syncFever = null, getCombo = null, particles = null) {
     this.canvas = canvas;
     this.renderer = renderer;
     this.game = game;
@@ -18,10 +20,25 @@ export class InputHandler {
     this.soundManager = soundManager;
     this.gameLog = gameLog;
     this.syncFever = syncFever;
+    this.getCombo = getCombo;
+    this.particles = particles;
     this.flagMode = false; // 标记模式：开启后点击 = 标记
     this.touchData = null; // 触摸状态数据
     this.lastTouchTime = 0;
     this.bindEvents();
+  }
+
+  /** 某格中心的棋盘像素坐标 */
+  _cellCenter(row, col) {
+    return {
+      x: col * this.renderer.cellSize + this.renderer.cellSize / 2,
+      y: row * this.renderer.cellSize + this.renderer.cellSize / 2,
+    };
+  }
+
+  /** 粒子特效触发后唤醒渲染循环（粒子自身无 rAF，由 animManager 统一驱动） */
+  _wakeFx() {
+    this.animManager.wake();
   }
 
   /**
@@ -160,14 +177,39 @@ export class InputHandler {
       result.mineCells.forEach((m, i) => {
         this.animManager.addPop(m.row, m.col, 120 + i * 55);
       });
+      // Phase 4：踩雷 → 碎片飞溅 + 强震屏
+      if (this.particles && pos) {
+        const c = this._cellCenter(pos.row, pos.col);
+        this.particles.burstDebris(c.x, c.y);
+        this.particles.burstSparks(c.x, c.y, {
+          count: 10,
+          colors: ['#e24b4a', '#ff6b4a', '#ffd93d'],
+          speed: 180,
+        });
+        this.renderer.screenShake(10, 500);
+        this._wakeFx();
+      }
     } else if (result.revealedCells.length > 0) {
       this.animManager.addPops(result.revealedCells);
-      if (this.soundManager) this.soundManager.playReveal();
+      if (this.soundManager) {
+        // Phase 4：reveal 音效随 combo 升调
+        this.soundManager.playReveal(this.getCombo ? this.getCombo() : 0);
+      }
     }
 
     if (result.won) {
       this.animManager.addVictory(this.game.rows, this.game.cols);
       if (this.soundManager) this.soundManager.playWin();
+      // Phase 4：胜利 → 全板纸屑雨
+      if (this.particles) {
+        const w = this.renderer.cssWidth;
+        const h = this.renderer.cssHeight;
+        this.particles.burstConfetti(w * 0.25, h * 0.25, { count: 24 });
+        this.particles.burstConfetti(w * 0.5, h * 0.12, { count: 32 });
+        this.particles.burstConfetti(w * 0.75, h * 0.25, { count: 24 });
+        this.renderer.screenShake(4, 400);
+        this._wakeFx();
+      }
     }
 
     this.renderer.render(this.game.grid, this.animManager);
@@ -211,11 +253,37 @@ export class InputHandler {
     // 中心 boom 脉冲
     this.animManager.addBoom(pos.row, pos.col);
 
+    // Phase 4：爆心冲击波环 + 火花 + 中强度震屏
+    if (this.particles) {
+      const c = this._cellCenter(pos.row, pos.col);
+      this.particles.spawnRing(c.x, c.y, {
+        radius: this.renderer.cellSize * 3,
+        color: '#ffd93d',
+      });
+      this.particles.burstSparks(c.x, c.y, { count: 16, speed: 170 });
+      this.renderer.screenShake(6, 350);
+      this._wakeFx();
+    }
+
     // 级联 boom 脉冲（阶梯延迟，每个 cascade 间隔 120ms）
     if (boom.cascadeChain) {
       for (let i = 1; i < boom.cascadeChain.length; i++) {
         const c = boom.cascadeChain[i];
         this.animManager.addBoom(c.center.row, c.center.col, i * 120);
+        // Phase 4：级联冲击波（与音效同节奏的延迟阶梯）
+        if (this.particles) {
+          setTimeout(() => {
+            const p = this._cellCenter(c.center.row, c.center.col);
+            this.particles.spawnRing(p.x, p.y, {
+              radius: this.renderer.cellSize * 2.5,
+              color: '#ff9f43',
+              life: 400,
+            });
+            this.particles.burstSparks(p.x, p.y, { count: 10, speed: 140 });
+            this.renderer.screenShake(5, 300);
+            this._wakeFx();
+          }, i * 120);
+        }
       }
     }
 
@@ -232,6 +300,16 @@ export class InputHandler {
     if (boom.won) {
       this.animManager.addVictory(this.game.rows, this.game.cols);
       if (this.soundManager) this.soundManager.playWin();
+      // Phase 4：胜利 → 全板纸屑雨
+      if (this.particles) {
+        const w = this.renderer.cssWidth;
+        const h = this.renderer.cssHeight;
+        this.particles.burstConfetti(w * 0.25, h * 0.25, { count: 24 });
+        this.particles.burstConfetti(w * 0.5, h * 0.12, { count: 32 });
+        this.particles.burstConfetti(w * 0.75, h * 0.25, { count: 24 });
+        this.renderer.screenShake(4, 400);
+        this._wakeFx();
+      }
     }
 
     this.renderer.render(this.game.grid, this.animManager);

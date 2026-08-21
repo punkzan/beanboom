@@ -57,9 +57,11 @@ export class SoundManager {
     osc.stop(ctx.currentTime + duration);
   }
 
-  /** 翻开豆子 - 短促 blip */
-  playReveal() {
-    this._beep(660, 0.08, 'sine', 0.12);
+  /** 翻开豆子 - 短促 blip（Phase 4：combo 升调，每连击 +1 半音，封顶 +12） */
+  playReveal(combo = 0) {
+    const semis = Math.min(12, Math.max(0, Math.floor(combo)));
+    const freq = 660 * Math.pow(1.0595, semis); // 12-ET 半音步进
+    this._beep(freq, 0.08, 'sine', 0.12);
   }
 
   /** 标记旗帜 - 清脆 click */
