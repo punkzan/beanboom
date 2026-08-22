@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>How to Get a High Score in Minesweeper | Bean Boom</title>
+  <meta name="description" content="Bean Boom Egg Mode scoring explained: combo windows, FEVER multipliers, Bean Boom chain blasts, and the settlement math behind S-rank scores on Easy, Medium, and Hard.">
+  <meta name="keywords" content="minesweeper high score,minesweeper scoring,minesweeper combo,bean boom score,how to score high minesweeper">
+  <link rel="canonical" href="https://bb.superzan.net/blog/minesweeper-high-score-guide">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#e87b3a">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Bean Boom">
+  <meta property="og:url" content="https://bb.superzan.net/blog/minesweeper-high-score-guide">
+  <meta property="og:title" content="How to Get a High Score in Minesweeper">
+  <meta property="og:description" content="Egg Mode scoring explained: combos, FEVER, chain blasts, and the math behind S-rank.">
+  <meta property="og:image" content="https://bb.superzan.net/og-cover.png">
+  <meta property="og:locale" content="en_US">
+  <meta property="article:published_time" content="2026-08-22T00:00:00+00:00">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="How to Get a High Score in Minesweeper">
+  <meta name="twitter:description" content="Combos, FEVER, chain blasts, and the math behind S-rank.">
+  <meta name="twitter:image" content="https://bb.superzan.net/og-cover.png">
+
+  <!-- Structured Data: BlogPosting -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "How to Get a High Score in Minesweeper",
+    "description": "Bean Boom Egg Mode scoring explained: combo windows, FEVER multipliers, Bean Boom chain blasts, and the settlement math behind S-rank scores on every difficulty.",
+    "inLanguage": "en",
+    "url": "https://bb.superzan.net/blog/minesweeper-high-score-guide",
+    "datePublished": "2026-08-22",
+    "dateModified": "2026-08-22",
+    "author": { "@type": "Organization", "name": "Bean Boom", "url": "https://bb.superzan.net/" },
+    "publisher": { "@type": "Organization", "name": "Bean Boom", "url": "https://bb.superzan.net/" },
+    "mainEntityOfPage": { "@type": "WebPage", "@id": "https://bb.superzan.net/blog/minesweeper-high-score-guide" },
+    "about": { "@type": "VideoGame", "name": "Bean Boom" }
+  }
+  </script>
+
+  <!-- Structured Data: FAQPage -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How does scoring work in Bean Boom's Egg Mode?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Revealing cells earns base points multiplied by your combo multiplier. Correctly flagging a mine detonates a blast that reveals surrounding cells for bonus points, and the final score is multiplied by a speed factor and a difficulty coefficient." }
+      },
+      {
+        "@type": "Question",
+        "name": "What is FEVER in minesweeper?",
+        "acceptedAnswer": { "@type": "Answer", "text": "In Bean Boom's Egg Mode, FEVER activates when your combo reaches 20. It raises the multiplier cap to 4.0x and enlarges blast radii by one cell." }
+      },
+      {
+        "@type": "Question",
+        "name": "How long does a combo last?",
+        "acceptedAnswer": { "@type": "Answer", "text": "The combo window is 3 seconds. If more than 3 seconds pass between safe reveals, the combo &mdash; and FEVER &mdash; resets to zero." }
+      },
+      {
+        "@type": "Question",
+        "name": "What score do I need for S rank?",
+        "acceptedAnswer": { "@type": "Answer", "text": "S rank thresholds in Bean Boom's Egg Mode: 4000 on Easy, 12000 on Medium, and 30000 on Hard." }
+      }
+    ]
+  }
+  </script>
+
+  <!-- Structured Data: Breadcrumb -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bb.superzan.net/" },
+      { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://bb.superzan.net/blog" },
+      { "@type": "ListItem", "position": 3, "name": "How to Get a High Score in Minesweeper", "item": "https://bb.superzan.net/blog/minesweeper-high-score-guide" }
+    ]
+  }
+  </script>
+
+  <!-- Preconnect -->
+  <link rel="preconnect" href="https://www.googletagmanager.com">
+  <link rel="preconnect" href="https://www.google-analytics.com">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8VV5G44NTR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-8VV5G44NTR');
+  </script>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f3ed; color: #2d2d2d; line-height: 1.7; }
+    .container { max-width: 760px; margin: 0 auto; padding: 24px 20px 60px; }
+    .header { text-align: center; padding: 40px 0 24px; }
+    .header a.home-btn { display: inline-block; background: #e87b3a; color: #fff; text-decoration: none; padding: 10px 28px; border-radius: 24px; font-weight: 600; font-size: 15px; margin-bottom: 20px; }
+    .breadcrumb { font-size: 0.85em; color: #999; margin-bottom: 8px; }
+    .breadcrumb a { color: #e87b3a; text-decoration: none; }
+    h1 { font-size: 1.9em; margin-bottom: 8px; }
+    .subtitle { color: #666; font-size: 1.05em; margin-bottom: 8px; }
+    .post-meta { text-align: center; font-size: 0.82em; color: #999; margin-bottom: 32px; }
+    h2 { font-size: 1.4em; margin: 32px 0 12px; color: #e87b3a; }
+    h3 { font-size: 1.15em; margin: 20px 0 8px; }
+    p { margin-bottom: 14px; }
+    ol, ul { margin: 0 0 16px 20px; }
+    li { margin-bottom: 6px; }
+    .example { background: #fff; border: 1px solid #e0ddd5; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    .example h3 { margin-top: 0; }
+    .cta { text-align: center; margin: 40px 0; }
+    .cta a { display: inline-block; background: #e87b3a; color: #fff; text-decoration: none; padding: 14px 40px; border-radius: 28px; font-size: 1.1em; font-weight: 700; }
+    .faq details { background: #fff; border: 1px solid #e0ddd5; border-radius: 8px; padding: 12px 16px; margin: 8px 0; }
+    .faq summary { font-weight: 600; cursor: pointer; }
+    .faq p { margin-top: 8px; color: #555; }
+    .related { background: #fff; border: 1px solid #e0ddd5; border-radius: 8px; padding: 16px 20px; margin: 28px 0; }
+    .related h3 { margin-top: 0; color: #e87b3a; }
+    .related ul { margin-left: 18px; }
+    .related a { color: #c05a1e; }
+    .footer { text-align: center; padding: 24px 0; color: #999; font-size: 0.85em; border-top: 1px solid #e0ddd5; margin-top: 40px; }
+    .footer a { color: #e87b3a; text-decoration: none; }
+    .nav-links { display: flex; gap: 16px; justify-content: center; margin: 16px 0; flex-wrap: wrap; }
+    .nav-links a { color: #e87b3a; text-decoration: none; font-size: 0.9em; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: #fff; }
+    th, td { border: 1px solid #e0ddd5; padding: 8px 12px; text-align: left; font-size: 0.92em; }
+    th { background: #fdf0e8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <a class="home-btn" href="/">&#8592; Play Bean Boom</a>
+      <div class="breadcrumb"><a href="/">Home</a> &rsaquo; <a href="/blog">Blog</a> &rsaquo; High Score Guide</div>
+      <h1>How to Get a High Score in Minesweeper</h1>
+      <p class="subtitle">The complete scoring mechanics of Bean Boom's Egg Mode &mdash; and how to exploit every multiplier.</p>
+    </div>
+    <div class="post-meta">August 22, 2026 &middot; 8 min read &middot; Advanced</div>
+
+    <p>Classic minesweeper measures you with a stopwatch. Bean Boom's <a href="/egg-mode">Egg Mode</a> measures you with a score &mdash; and scoring well is a different skill from clearing fast. This guide dissects the actual scoring system: what earns points, what multiplies them, and the play patterns that maximize both. Everything here reflects the live game mechanics.</p>
+
+    <h2>The Four Ways to Earn Points</h2>
+    <p>Every point in Egg Mode comes from revealing cells &mdash; but not all reveals are priced equally:</p>
+    <table>
+      <tr><th>Event</th><th>Base points</th><th>Notes</th></tr>
+      <tr><td>Normal reveal</td><td>10 &times; multiplier per cell</td><td>Your bread and butter</td></tr>
+      <tr><td>Great Opening</td><td>20 &times; multiplier per cell</td><td>First reveal of the game flooding 8+ cells &mdash; click center for a shot at it</td></tr>
+      <tr><td>Chord (perfect)</td><td>15 &times; multiplier per cell, &times;2 if 4+ cells</td><td>Double the rate when you chord four or more cells at once</td></tr>
+      <tr><td>Bean Boom blast</td><td>25 &times; multiplier per cell</td><td>The premium event &mdash; triggered by correctly flagging a mine</td></tr>
+    </table>
+    <p>Three levers should jump out at you: blasts are worth 2.5&times; a normal reveal per cell, big chords are worth 3&times;, and every event's value scales with your <em>combo multiplier</em> &mdash; which means when and how you reveal matters as much as how much.</p>
+
+    <h2>Combo: The 3-Second Clock</h2>
+    <p>Every safe reveal adds to your combo count. The multiplier formula:</p>
+    <div class="example">
+      <h3>Multiplier = 1 + 0.1 &times; combo (capped)</h3>
+      <p>Combo 5 &rarr; 1.5&times;. Combo 10 &rarr; 2.0&times;. Combo 20 &rarr; 3.0&times;. The cap is 20 outside FEVER and 30 inside it.</p>
+    </div>
+    <p>The catch is the window: <strong>if more than 3 seconds pass between safe reveals, the combo resets to zero</strong> &mdash; and FEVER with it. Three seconds is generous for clicking but brutal for thinking. If you pause to grind out a deduction for ten seconds, you restart your multiplier from scratch.</p>
+    <p>Practical consequences:</p>
+    <ul>
+      <li><strong>Bank your deductions.</strong> Work out the next 4&ndash;5 moves mentally, then execute them in a burst instead of alternating think-click-think-click.</li>
+      <li><strong>Flood-fills are combo gold.</strong> A blank-region cascade adds dozens of cells to your combo in one instant, at zero thinking cost.</li>
+      <li><strong>Don't stall on 50/50s.</strong> Stand around agonizing and the clock quietly deletes your multiplier. Take the guess; a live guess keeps the engine running.</li>
+    </ul>
+
+    <h2>Bean Boom Blasts: Chain the Explosions</h2>
+    <p>The signature mechanic. When you flag a cell that truly contains a mine, it detonates, revealing all safe cells within a square radius around it &mdash; at the premium 25-point rate, all multiplied by your current combo.</p>
+    <p>Two mechanics make blasts scale:</p>
+    <ol>
+      <li><strong>Rising tiers.</strong> The 1st detonation of a game blasts a small radius; each subsequent detonation blasts wider, up to a cap of tier 4. Your 5th flag of the game clears dramatically more territory than your 1st.</li>
+      <li><strong>Cascades.</strong> If a blast radius reaches <em>another</em> correctly flagged mine, that mine detonates too &mdash; same instant, same combo window, chained blasts. Every cascade link increments the tier ladder, so chains grow explosively.</li>
+    </ol>
+    <div class="example">
+      <h3>The cluster play</h3>
+      <p>Suppose logic confirms mines A and B, 3 cells apart. Flagging A detonates A; if B is within the blast radius, B detonates too &mdash; two blasts, one flag action, a pile of 25-point reveals inside a single combo tick. Flagging A and B far apart gets you two separate small blasts. <strong>Same deductions, wildly different scores.</strong> When you have a choice about which region to resolve first, resolve the one where confirmed mines cluster.</p>
+    </div>
+
+    <h2>FEVER: The 4x Ceiling</h2>
+    <p>When your combo reaches 20, FEVER activates. Two effects:</p>
+    <ul>
+      <li><strong>The multiplier cap rises from 3.0&times; to 4.0&times;</strong> (combo 30 caps out).</li>
+      <li><strong>Blast radii grow by one cell</strong> &mdash; bigger blasts, more cascades, more combo. FEVER feeds itself.</li>
+    </ul>
+    <p>FEVER resets with your combo, so the whole scoring game is really: <em>reach combo 20 quickly, then never let the clock hit 3 seconds of silence.</em> A player who holds FEVER for half the board routinely outscores a player who solves faster but thinks in long pauses.</p>
+
+    <h2>Settlement: Where Your Raw Score Gets Finalized</h2>
+    <p>When you win, the game doesn't just bank your running total. Two final adjustments apply:</p>
+    <div class="example">
+      <h3>Final = (raw score + correct flags &times; 50) &times; time bonus &times; difficulty coefficient</h3>
+      <p><strong>Flag bonus:</strong> each correct flag you placed adds 50 points before multipliers.</p>
+      <p><strong>Time bonus:</strong> the ratio of par time to your actual time, capped between 1.0&times; and 2.0&times;. Par times: Easy 60s, Medium 240s, Hard 600s. Beat par by 2&times; and you bank the full 2.0&times; bonus.</p>
+      <p><strong>Difficulty coefficient:</strong> Easy 0.6&times;, Medium 1.0&times;, Hard 1.6&times;.</p>
+    </div>
+    <p>Read that again if you play Easy for score: the 0.6 coefficient claws back 40% of everything you earned. Easy is for learning; Medium and Hard are where serious scores live.</p>
+
+    <h2>Rank Thresholds</h2>
+    <table>
+      <tr><th>Difficulty</th><th>S rank</th><th>A rank</th><th>B rank</th></tr>
+      <tr><td>Easy</td><td>4,000</td><td>2,000</td><td>800</td></tr>
+      <tr><td>Medium</td><td>12,000</td><td>6,000</td><td>2,500</td></tr>
+      <tr><td>Hard</td><td>30,000</td><td>15,000</td><td>6,000</td></tr>
+    </table>
+
+    <h2>A Score-Maximizing Play Pattern</h2>
+    <ol>
+      <li><strong>Open center</strong> &mdash; the Great Opening bonus (20&times; per cell) is only available on your first reveal, and only if it floods 8+ cells.</li>
+      <li><strong>Build to 20 fast.</strong> Ride a flood-fill or an early blast into FEVER before the board gets thinky.</li>
+      <li><strong>Hold FEVER with banked deductions.</strong> Plan bursts of 4+ moves; execute without pauses.</li>
+      <li><strong>Save flag clusters for FEVER.</strong> A cascade chain inside FEVER at 4.0&times; is the single highest-earning moment the game offers. If a cluster is safely resolvable later, resolve it later.</li>
+      <li><strong>Chord big.</strong> 4+ cell chords earn double rate; they also feed the combo in bulk.</li>
+      <li><strong>Finish fast.</strong> The 1.0&ndash;2.0&times; time bonus is the last multiplier; every second under par is free score.</li>
+      <li><strong>Never leave correct flags unplaced</strong> &mdash; at settlement each one is worth 50 points before multipliers.</li>
+    </ol>
+
+    <div class="cta">
+      <a href="/?mode=egg">Chase an S Rank &mdash; Play Egg Mode &rarr;</a>
+    </div>
+
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq">
+      <details>
+        <summary>Does Classic Mode have scores?</summary>
+        <p>Classic Mode is pure time-attack &mdash; your metric is the clock, and fast wins land on the <a href="/leaderboard">time leaderboard</a>. Scoring is Egg Mode's game.</p>
+      </details>
+      <details>
+        <summary>Do wrong flags cost points?</summary>
+        <p>Not directly &mdash; but a wrong flag doesn't detonate, wastes the action, and poisons your deductions. And since only <em>correct</em> flags pay the 50-point settlement bonus, wrong flags are pure opportunity cost.</p>
+      </details>
+      <details>
+        <summary>Is it better to blast early or save flags?</summary>
+        <p>Save what's safely saveable: blast tiers rise with each detonation, and FEVER both raises the multiplier cap and widens radii. A chain detonated at combo 25 outscores the same chain detonated at combo 5 by roughly 60%.</p>
+      </details>
+      <details>
+        <summary>What's a good first target?</summary>
+        <p>A-rank on Easy (2,000) is achievable within a few games of learning the mechanics. From there, chase S on Easy, then move to Medium where the 1.0 coefficient stops taxing your score.</p>
+      </details>
+    </div>
+
+    <div class="related">
+      <h3>Keep reading</h3>
+      <ul>
+        <li><a href="/blog/minesweeper-flagging-guide">To Flag or Not to Flag</a> &mdash; why flags are weapons in Egg Mode</li>
+        <li><a href="/blog/minesweeper-strategy-guide">Minesweeper Strategy: From First Click to Endgame</a></li>
+        <li><a href="/egg-mode">Egg Mode overview</a> &mdash; mechanics and scoring at a glance</li>
+        <li><a href="/leaderboard">Live leaderboards</a> &mdash; see what the top scores look like</li>
+      </ul>
+    </div>
+
+    <div class="nav-links">
+      <a href="/">Play Game</a>
+      <a href="/blog">Blog</a>
+      <a href="/egg-mode">Egg Mode</a>
+      <a href="/classic-mode">Classic Mode</a>
+      <a href="/difficulty-guide">Difficulty Guide</a>
+      <a href="/leaderboard">Leaderboards</a>
+      <a href="/challenges">Challenges</a>
+      <a href="/minesweeper-patterns">Patterns</a>
+      <a href="/minesweeper-strategy">Strategy</a>
+      <a href="/minesweeper-tips">Tips</a>
+      <a href="/minesweeper-history">History</a>
+      <a href="/about">About</a>
+      <a href="/privacy-policy">Privacy Policy</a>
+    </div>
+
+    <div class="footer">
+      <p>&copy; 2026 Bean Boom &middot; <a href="/">Free Online Minesweeper Game</a></p>
+    </div>
+  </div>
+</body>
+</html>

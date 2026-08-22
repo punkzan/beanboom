@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>To Flag or Not to Flag: A Minesweeper Flagging Guide | Bean Boom</title>
+  <meta name="description" content="Minesweeper flagging styles compared: full flagging, spartan flagging, and no-flag (NF) play. How flags work, when they help, and how Bean Boom's Egg Mode makes flags explosive.">
+  <meta name="keywords" content="minesweeper flagging,minesweeper flagging technique,no flag minesweeper,minesweeper nf,minesweeper flag strategy">
+  <link rel="canonical" href="https://bb.superzan.net/blog/minesweeper-flagging-guide">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#e87b3a">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Bean Boom">
+  <meta property="og:url" content="https://bb.superzan.net/blog/minesweeper-flagging-guide">
+  <meta property="og:title" content="To Flag or Not to Flag: A Minesweeper Flagging Guide">
+  <meta property="og:description" content="Flagging styles compared: full flag, spartan flag, and no-flag play &mdash; and when each one wins.">
+  <meta property="og:image" content="https://bb.superzan.net/og-cover.png">
+  <meta property="og:locale" content="en_US">
+  <meta property="article:published_time" content="2026-08-22T00:00:00+00:00">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="To Flag or Not to Flag: A Minesweeper Flagging Guide">
+  <meta name="twitter:description" content="Flagging styles compared &mdash; and when each one wins.">
+  <meta name="twitter:image" content="https://bb.superzan.net/og-cover.png">
+
+  <!-- Structured Data: BlogPosting -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "To Flag or Not to Flag: A Minesweeper Flagging Guide",
+    "description": "Minesweeper flagging styles compared: full flagging, spartan flagging, and no-flag play, plus how Bean Boom's Egg Mode turns correct flags into chain explosions.",
+    "inLanguage": "en",
+    "url": "https://bb.superzan.net/blog/minesweeper-flagging-guide",
+    "datePublished": "2026-08-22",
+    "dateModified": "2026-08-22",
+    "author": { "@type": "Organization", "name": "Bean Boom", "url": "https://bb.superzan.net/" },
+    "publisher": { "@type": "Organization", "name": "Bean Boom", "url": "https://bb.superzan.net/" },
+    "mainEntityOfPage": { "@type": "WebPage", "@id": "https://bb.superzan.net/blog/minesweeper-flagging-guide" },
+    "about": { "@type": "VideoGame", "name": "Minesweeper" }
+  }
+  </script>
+
+  <!-- Structured Data: FAQPage -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Do you have to flag mines in minesweeper?",
+        "acceptedAnswer": { "@type": "Answer", "text": "No. You win by revealing all safe cells; flags are an optional memory and safety aid. Many strong players flag sparsely or not at all." }
+      },
+      {
+        "@type": "Question",
+        "name": "What is no-flag (NF) minesweeper?",
+        "acceptedAnswer": { "@type": "Answer", "text": "A play style where you never place flags, revealing cells purely by logic. It is popular among speedrunners because it eliminates flag clicks, though it forgoes chording." }
+      },
+      {
+        "@type": "Question",
+        "name": "How do you flag in minesweeper?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Right-click on desktop or long-press on mobile. In Bean Boom you can also toggle Flag mode above the board so every tap places a flag." }
+      },
+      {
+        "@type": "Question",
+        "name": "Can a flag be wrong?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. The game never verifies flags. A wrong flag poisons deductions that count it and can cause a fatal chord, so flag only on certainty." }
+      }
+    ]
+  }
+  </script>
+
+  <!-- Structured Data: Breadcrumb -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bb.superzan.net/" },
+      { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://bb.superzan.net/blog" },
+      { "@type": "ListItem", "position": 3, "name": "Minesweeper Flagging Guide", "item": "https://bb.superzan.net/blog/minesweeper-flagging-guide" }
+    ]
+  }
+  </script>
+
+  <!-- Preconnect -->
+  <link rel="preconnect" href="https://www.googletagmanager.com">
+  <link rel="preconnect" href="https://www.google-analytics.com">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8VV5G44NTR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-8VV5G44NTR');
+  </script>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f3ed; color: #2d2d2d; line-height: 1.7; }
+    .container { max-width: 760px; margin: 0 auto; padding: 24px 20px 60px; }
+    .header { text-align: center; padding: 40px 0 24px; }
+    .header a.home-btn { display: inline-block; background: #e87b3a; color: #fff; text-decoration: none; padding: 10px 28px; border-radius: 24px; font-weight: 600; font-size: 15px; margin-bottom: 20px; }
+    .breadcrumb { font-size: 0.85em; color: #999; margin-bottom: 8px; }
+    .breadcrumb a { color: #e87b3a; text-decoration: none; }
+    h1 { font-size: 1.9em; margin-bottom: 8px; }
+    .subtitle { color: #666; font-size: 1.05em; margin-bottom: 8px; }
+    .post-meta { text-align: center; font-size: 0.82em; color: #999; margin-bottom: 32px; }
+    h2 { font-size: 1.4em; margin: 32px 0 12px; color: #e87b3a; }
+    h3 { font-size: 1.15em; margin: 20px 0 8px; }
+    p { margin-bottom: 14px; }
+    ol, ul { margin: 0 0 16px 20px; }
+    li { margin-bottom: 6px; }
+    .example { background: #fff; border: 1px solid #e0ddd5; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    .example h3 { margin-top: 0; }
+    .cta { text-align: center; margin: 40px 0; }
+    .cta a { display: inline-block; background: #e87b3a; color: #fff; text-decoration: none; padding: 14px 40px; border-radius: 28px; font-size: 1.1em; font-weight: 700; }
+    .faq details { background: #fff; border: 1px solid #e0ddd5; border-radius: 8px; padding: 12px 16px; margin: 8px 0; }
+    .faq summary { font-weight: 600; cursor: pointer; }
+    .faq p { margin-top: 8px; color: #555; }
+    .related { background: #fff; border: 1px solid #e0ddd5; border-radius: 8px; padding: 16px 20px; margin: 28px 0; }
+    .related h3 { margin-top: 0; color: #e87b3a; }
+    .related ul { margin-left: 18px; }
+    .related a { color: #c05a1e; }
+    .footer { text-align: center; padding: 24px 0; color: #999; font-size: 0.85em; border-top: 1px solid #e0ddd5; margin-top: 40px; }
+    .footer a { color: #e87b3a; text-decoration: none; }
+    .nav-links { display: flex; gap: 16px; justify-content: center; margin: 16px 0; flex-wrap: wrap; }
+    .nav-links a { color: #e87b3a; text-decoration: none; font-size: 0.9em; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: #fff; }
+    th, td { border: 1px solid #e0ddd5; padding: 8px 12px; text-align: left; font-size: 0.92em; }
+    th { background: #fdf0e8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <a class="home-btn" href="/">&#8592; Play Bean Boom</a>
+      <div class="breadcrumb"><a href="/">Home</a> &rsaquo; <a href="/blog">Blog</a> &rsaquo; Flagging Guide</div>
+      <h1>To Flag or Not to Flag: A Minesweeper Flagging Guide</h1>
+      <p class="subtitle">Three flagging styles, what each is good for, and why Bean Boom's flags explode.</p>
+    </div>
+    <div class="post-meta">August 22, 2026 &middot; 6 min read &middot; Technique</div>
+
+    <p>Ask ten experienced minesweeper players whether you should flag every mine and you'll get a genuinely split vote. Flagging isn't a rule question &mdash; it's a <em>style</em> question, with real trade-offs in speed, safety, and cognitive load. This guide lays out the three major styles, when each one wins, and how flagging works differently in Bean Boom's Egg Mode, where a correct flag is a weapon.</p>
+
+    <h2>First: What Flags Actually Do</h2>
+    <p>Stripped of mythology, flags do exactly three things:</p>
+    <ol>
+      <li><strong>Lock the cell.</strong> A flagged cell can't be revealed by a careless click. It's insurance against your own hands.</li>
+      <li><strong>Track mine count.</strong> Flags drive the mine counter, letting you do endgame arithmetic.</li>
+      <li><strong>Enable chording.</strong> Double-clicking a satisfied number reveals its remaining neighbors &mdash; but only flags satisfy numbers. No flags, no chording.</li>
+    </ol>
+    <p>What flags do <em>not</em> do: win the game (the win condition is revealing all safe cells), verify themselves (wrong flags look identical to right ones), or reveal any information (flags are a record of your deductions, not a source of new ones).</p>
+    <p>Mechanics refresher: right-click to flag on desktop, long-press on mobile, or toggle Flag mode above the board in Bean Boom so every tap plants a flag.</p>
+
+    <h2>Style 1: Full Flagging</h2>
+    <p>Every mine you deduce gets a flag, every satisfied number gets chorded.</p>
+    <div class="example">
+      <h3>Strengths</h3>
+      <p><strong>Chording throughput.</strong> Chords reveal up to seven cells per click &mdash; the fastest clearing mechanism in the game, and it requires flags. <strong>Safety.</strong> Locked cells can't be misclicked. <strong>Endgame clarity.</strong> The mine counter stays meaningful, which matters for counting yourself out of 50/50 corners.</p>
+    </div>
+    <div class="example">
+      <h3>Weaknesses</h3>
+      <p><strong>Click cost.</strong> Every flag is an extra click. On a Hard board with 99 mines, full flagging adds ~99 clicks per game &mdash; 15&ndash;25% more input than needed. <strong>Wrong-flag risk.</strong> Every flag is an unverified claim; one mistake poisons every deduction that counts it, and a chord on a wrong flag is fatal.</p>
+    </div>
+    <p><strong>Best for:</strong> beginners (the structure builds good habits), players who value win rate over time, and long Hard-board sessions where the mine counter matters.</p>
+
+    <h2>Style 2: Spartan Flagging</h2>
+    <p>Flag only what's needed to chord the cells you actually want to clear &mdash; typically the mines around dense clusters &mdash; and let isolated mines sit unflagged.</p>
+    <p>The logic: a lone mine in an open area endangers nothing you're about to click. Flagging it is a wasted action. But a mine embedded in a cluster you're actively working needs a flag both as insurance and as a chord component.</p>
+    <p><strong>Best for:</strong> intermediates ready to trade some safety for speed. This is the style most strong players converge on naturally. It demands you keep honest mental notes of unflagged known mines &mdash; the cognitive cost is the price of the saved clicks.</p>
+
+    <h2>Style 3: No-Flag (NF)</h2>
+    <p>The purist style: never flag, never chord, reveal only. Popular enough among record-chasers that "NF" is standard vocabulary.</p>
+    <p>The case for NF is input efficiency in its purest form &mdash; every click either reveals a cell or is wasted. The case against: you lose chording entirely (seven-cell reveals for one click) and you lose the mine counter's value, making endgame arithmetic mostly mental.</p>
+    <p>NF players also swear it sharpens logic: without flags as external memory, you're forced to hold constraints in your head, which (they claim) speeds pattern recognition. Skeptics reply that chording is worth more than the saved clicks. Both sides produce world-class times, which tells you the gap is smaller than the debate suggests.</p>
+    <p><strong>Best for:</strong> speed obsessives on small boards and anyone who finds flag toggling physically fatiguing.</p>
+
+    <h2>Side by Side</h2>
+    <table>
+      <tr><th></th><th>Full Flag</th><th>Spartan</th><th>No-Flag</th></tr>
+      <tr><td>Clicks per game</td><td>Highest</td><td>Moderate</td><td>Lowest</td></tr>
+      <tr><td>Chording</td><td>Full use</td><td>Partial</td><td>None</td></tr>
+      <tr><td>Misclick protection</td><td>Strong</td><td>Partial</td><td>None</td></tr>
+      <tr><td>Endgame counting</td><td>Counter-driven</td><td>Mostly counter</td><td>Mental math</td></tr>
+      <tr><td>Cognitive load</td><td>Low</td><td>Medium</td><td>High</td></tr>
+      <tr><td>Best for</td><td>Win rate</td><td>Balanced speed</td><td>Pure speed</td></tr>
+    </table>
+
+    <h2>Flagging in Bean Boom: Where Flags Fight Back</h2>
+    <p>Bean Boom's <a href="/classic-mode">Classic Mode</a> follows everything above exactly. The <a href="/egg-mode">Egg Mode</a> deliberately inverts the economics: <strong>a correctly placed flag detonates.</strong></p>
+    <p>When you flag a mine that truly is a mine, a Bean Boom blast erupts from it, revealing the safe cells in a radius around it. Chain mechanics stack on top:</p>
+    <ul>
+      <li><strong>Rising tiers:</strong> each successive detonation in a game blasts a wider radius, up to a cap &mdash; later flags clear more territory than early ones.</li>
+      <li><strong>Cascades:</strong> if the blast radius reaches another correctly flagged mine, that mine detonates too, chaining outward.</li>
+      <li><strong>FEVER synergy:</strong> once your reveal combo is high enough, blasts grow even larger.</li>
+    </ul>
+    <p>The strategic consequences are fun:</p>
+    <ol>
+      <li><strong>Certainty becomes power.</strong> The no-flag debate is settled in Egg Mode &mdash; correct flags are the engine of both territory and score. See <a href="/blog/minesweeper-high-score-guide">the high score guide</a> for the math.</li>
+      <li><strong>Flag clustering pays.</strong> Two confirmed mines near each other chain into each other; the same two mines far apart don't. When deduction offers equivalent options, prefer resolving clusters.</li>
+      <li><strong>Wrong flags still cost you.</strong> A wrong flag doesn't detonate &mdash; it just sits there corrupting your deductions like in classic play. Discipline still matters.</li>
+    </ol>
+
+    <div class="cta">
+      <a href="/">Try Both Styles &mdash; Play Free &rarr;</a>
+    </div>
+
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq">
+      <details>
+        <summary>Which flagging style should a beginner learn?</summary>
+        <p>Full flagging. The external record trains you to count neighbors correctly, and the safety net keeps games alive long enough to practice mid-game logic. Switch styles once wins feel routine.</p>
+      </details>
+      <details>
+        <summary>Is no-flag actually faster?</summary>
+        <p>On small boards, often yes &mdash; fewer clicks, and chording opportunities are fewer anyway. On Hard boards, most top times still use flags plus heavy chording. Try both and let your own hands decide.</p>
+      </details>
+      <details>
+        <summary>Can I switch styles mid-game?</summary>
+        <p>Of course &mdash; spartan flagging is exactly that: flag when a cluster needs chording, don't when it doesn't. Rigid consistency matters less than matching flags to purpose.</p>
+      </details>
+      <details>
+        <summary>Does Egg Mode punish no-flag players?</summary>
+        <p>Not punish &mdash; you can play Egg Mode NF &mdash; but you leave most of the scoring engine unused. Blasts and combos only trigger from correct flags.</p>
+      </details>
+    </div>
+
+    <div class="related">
+      <h3>Keep reading</h3>
+      <ul>
+        <li><a href="/blog/minesweeper-rules">Minesweeper Rules Explained</a> &mdash; including the chording rule</li>
+        <li><a href="/blog/minesweeper-high-score-guide">How to Get a High Score in Minesweeper</a></li>
+        <li><a href="/blog/minesweeper-tips-and-tricks">15 Minesweeper Tips and Tricks</a></li>
+        <li><a href="/egg-mode">Egg Mode &mdash; the exploding-flag game mode</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-links">
+      <a href="/">Play Game</a>
+      <a href="/blog">Blog</a>
+      <a href="/egg-mode">Egg Mode</a>
+      <a href="/classic-mode">Classic Mode</a>
+      <a href="/difficulty-guide">Difficulty Guide</a>
+      <a href="/leaderboard">Leaderboards</a>
+      <a href="/challenges">Challenges</a>
+      <a href="/minesweeper-patterns">Patterns</a>
+      <a href="/minesweeper-strategy">Strategy</a>
+      <a href="/minesweeper-tips">Tips</a>
+      <a href="/minesweeper-history">History</a>
+      <a href="/about">About</a>
+      <a href="/privacy-policy">Privacy Policy</a>
+    </div>
+
+    <div class="footer">
+      <p>&copy; 2026 Bean Boom &middot; <a href="/">Free Online Minesweeper Game</a></p>
+    </div>
+  </div>
+</body>
+</html>

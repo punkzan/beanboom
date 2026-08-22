@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>What the Numbers Mean in Minesweeper | Bean Boom</title>
+  <meta name="description" content="Minesweeper numbers explained: what each digit 1&ndash;8 means, how blank cells work, and how to combine numbers into certain deductions &mdash; with worked examples.">
+  <meta name="keywords" content="minesweeper numbers meaning,minesweeper numbers explained,what do numbers mean in minesweeper,minesweeper number logic,minesweeper 1 2 1 pattern">
+  <link rel="canonical" href="https://bb.superzan.net/blog/minesweeper-numbers-meaning">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#e87b3a">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Bean Boom">
+  <meta property="og:url" content="https://bb.superzan.net/blog/minesweeper-numbers-meaning">
+  <meta property="og:title" content="What the Numbers Mean in Minesweeper">
+  <meta property="og:description" content="Minesweeper numbers explained: what each digit means and how to combine numbers into certain deductions.">
+  <meta property="og:image" content="https://bb.superzan.net/og-cover.png">
+  <meta property="og:locale" content="en_US">
+  <meta property="article:published_time" content="2026-08-22T00:00:00+00:00">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="What the Numbers Mean in Minesweeper">
+  <meta name="twitter:description" content="What each digit means, and how to turn numbers into certainty.">
+  <meta name="twitter:image" content="https://bb.superzan.net/og-cover.png">
+
+  <!-- Structured Data: BlogPosting -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "What the Numbers Mean in Minesweeper",
+    "description": "Minesweeper numbers explained: what each digit 1-8 means, how blank cells work, and how to combine numbers into certain deductions.",
+    "inLanguage": "en",
+    "url": "https://bb.superzan.net/blog/minesweeper-numbers-meaning",
+    "datePublished": "2026-08-22",
+    "dateModified": "2026-08-22",
+    "author": { "@type": "Organization", "name": "Bean Boom", "url": "https://bb.superzan.net/" },
+    "publisher": { "@type": "Organization", "name": "Bean Boom", "url": "https://bb.superzan.net/" },
+    "mainEntityOfPage": { "@type": "WebPage", "@id": "https://bb.superzan.net/blog/minesweeper-numbers-meaning" },
+    "about": { "@type": "VideoGame", "name": "Minesweeper" }
+  }
+  </script>
+
+  <!-- Structured Data: FAQPage -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What does a number mean in minesweeper?",
+        "acceptedAnswer": { "@type": "Answer", "text": "A revealed number tells you exactly how many mines are hidden in the eight cells surrounding it, counting diagonals." }
+      },
+      {
+        "@type": "Question",
+        "name": "What does an empty cell with no number mean?",
+        "acceptedAnswer": { "@type": "Answer", "text": "It means zero adjacent mines. Every neighbor of a blank cell is guaranteed safe, which is why the game auto-reveals the whole blank region." }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the highest number in minesweeper?",
+        "acceptedAnswer": { "@type": "Answer", "text": "8, meaning all eight surrounding cells are mines. It is extremely rare on standard boards." }
+      },
+      {
+        "@type": "Question",
+        "name": "How do you combine two numbers to find a mine?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Compare the sets of covered neighbors each number can see. If the neighbors of one number are a subset of the other's, subtracting the counts tells you whether mines exist outside the shared area." }
+      }
+    ]
+  }
+  </script>
+
+  <!-- Structured Data: Breadcrumb -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bb.superzan.net/" },
+      { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://bb.superzan.net/blog" },
+      { "@type": "ListItem", "position": 3, "name": "What the Numbers Mean in Minesweeper", "item": "https://bb.superzan.net/blog/minesweeper-numbers-meaning" }
+    ]
+  }
+  </script>
+
+  <!-- Preconnect -->
+  <link rel="preconnect" href="https://www.googletagmanager.com">
+  <link rel="preconnect" href="https://www.google-analytics.com">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8VV5G44NTR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-8VV5G44NTR');
+  </script>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f3ed; color: #2d2d2d; line-height: 1.7; }
+    .container { max-width: 760px; margin: 0 auto; padding: 24px 20px 60px; }
+    .header { text-align: center; padding: 40px 0 24px; }
+    .header a.home-btn { display: inline-block; background: #e87b3a; color: #fff; text-decoration: none; padding: 10px 28px; border-radius: 24px; font-weight: 600; font-size: 15px; margin-bottom: 20px; }
+    .breadcrumb { font-size: 0.85em; color: #999; margin-bottom: 8px; }
+    .breadcrumb a { color: #e87b3a; text-decoration: none; }
+    h1 { font-size: 1.9em; margin-bottom: 8px; }
+    .subtitle { color: #666; font-size: 1.05em; margin-bottom: 8px; }
+    .post-meta { text-align: center; font-size: 0.82em; color: #999; margin-bottom: 32px; }
+    h2 { font-size: 1.4em; margin: 32px 0 12px; color: #e87b3a; }
+    h3 { font-size: 1.15em; margin: 20px 0 8px; }
+    p { margin-bottom: 14px; }
+    ol, ul { margin: 0 0 16px 20px; }
+    li { margin-bottom: 6px; }
+    .example { background: #fff; border: 1px solid #e0ddd5; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    .example h3 { margin-top: 0; }
+    .cta { text-align: center; margin: 40px 0; }
+    .cta a { display: inline-block; background: #e87b3a; color: #fff; text-decoration: none; padding: 14px 40px; border-radius: 28px; font-size: 1.1em; font-weight: 700; }
+    .faq details { background: #fff; border: 1px solid #e0ddd5; border-radius: 8px; padding: 12px 16px; margin: 8px 0; }
+    .faq summary { font-weight: 600; cursor: pointer; }
+    .faq p { margin-top: 8px; color: #555; }
+    .related { background: #fff; border: 1px solid #e0ddd5; border-radius: 8px; padding: 16px 20px; margin: 28px 0; }
+    .related h3 { margin-top: 0; color: #e87b3a; }
+    .related ul { margin-left: 18px; }
+    .related a { color: #c05a1e; }
+    .footer { text-align: center; padding: 24px 0; color: #999; font-size: 0.85em; border-top: 1px solid #e0ddd5; margin-top: 40px; }
+    .footer a { color: #e87b3a; text-decoration: none; }
+    .nav-links { display: flex; gap: 16px; justify-content: center; margin: 16px 0; flex-wrap: wrap; }
+    .nav-links a { color: #e87b3a; text-decoration: none; font-size: 0.9em; }
+    .grid { display: inline-block; font-family: 'Courier New', monospace; font-size: 15px; line-height: 1.35; background: #fff; border: 1px solid #e0ddd5; border-radius: 8px; padding: 14px 18px; margin: 10px 0; letter-spacing: 2px; white-space: pre; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <a class="home-btn" href="/">&#8592; Play Bean Boom</a>
+      <div class="breadcrumb"><a href="/">Home</a> &rsaquo; <a href="/blog">Blog</a> &rsaquo; Minesweeper Numbers</div>
+      <h1>What the Numbers Mean in Minesweeper</h1>
+      <p class="subtitle">The digits are the whole game &mdash; learn to read them and the mines reveal themselves.</p>
+    </div>
+    <div class="post-meta">August 22, 2026 &middot; 7 min read &middot; Logic</div>
+
+    <p>Every piece of information in minesweeper arrives as a single digit. Master what those digits mean &mdash; individually and in combination &mdash; and you can solve boards that look impenetrable. This guide explains each number, then teaches the three deduction techniques that turn numbers into certainty.</p>
+
+    <h2>The One Rule Behind Every Number</h2>
+    <p>A revealed number <strong>N</strong> means: exactly N mines are hidden among the eight cells touching this one &mdash; the four orthogonal neighbors and four diagonal neighbors. Period. Every number from 1 to 8 obeys the same rule; only the count changes.</p>
+
+    <h2>What Each Number Tells You</h2>
+
+    <h3>Blank (no number)</h3>
+    <p>Zero adjacent mines. Blank cells are the friendliest thing on the board: every one of their eight neighbors is <em>guaranteed safe</em>. That's why revealing a blank cascades &mdash; the game flood-fills the connected blank region and automatically reveals the numbered ring around it. If you're looking for a safe place to work, the border of a blank region is it.</p>
+
+    <h3>1</h3>
+    <p>Exactly one adjacent mine. The "1" is the workhorse of minesweeper logic. A "1" touching exactly one covered cell has found its mine. A "1" with a flag already touching it has certified all its other neighbors safe. Most mid-game speed comes from chaining "1"s.</p>
+
+    <h3>2</h3>
+    <p>Exactly two adjacent mines. The "2" is the key actor in the most famous pattern in the game (1-2-1 and 1-2-x, covered below). A "2" touching exactly two covered cells flags both instantly.</p>
+
+    <h3>3</h3>
+    <p>Exactly three adjacent mines. Common in dense regions and around Hard-board clusters. The "3" in the classic 1-2-1-1 corner pattern pins mines precisely.</p>
+
+    <h3>4, 5, 6</h3>
+    <p>High-density numbers. A "4" means four of eight neighbors are mines &mdash; a coin flip on every neighbor, so you rarely deduce from a "4" alone. Instead, high numbers act as <em>constraints</em>: they usually have flags placed around them by other logic, and their remaining neighbors resolve. A useful inversion: a "4" with four flagged neighbors makes its other four neighbors safe.</p>
+
+    <h3>7 and 8</h3>
+    <p>Trophy rarities. An "8" means every single neighbor is a mine &mdash; on a standard board you may play thousands of games without seeing one. A "7" is nearly as rare. If you reveal a 7 or 8, flag everything around it: it's the one case where a lone number solves itself.</p>
+
+    <h2>Technique 1: Saturation and Satisfaction</h2>
+    <p>The two simplest deductions, and the ones you'll apply hundreds of times per game:</p>
+    <div class="example">
+      <h3>Saturation &rarr; all remaining neighbors are mines</h3>
+      <p>A number equals its count of covered neighbors? Flag them all. Example: a "3" touching exactly 3 covered cells &mdash; all three are mines, no exceptions.</p>
+    </div>
+    <div class="example">
+      <h3>Satisfaction &rarr; all remaining neighbors are safe</h3>
+      <p>A number equals its count of surrounding flags? Everything else it touches is safe. Example: a "1" with one flag touching it &mdash; reveal all other neighbors with confidence. In Bean Boom, double-tap the number to chord them all at once.</p>
+    </div>
+
+    <h2>Technique 2: Subtraction Between Two Numbers</h2>
+    <p>When two numbers sit near each other, compare what they can each "see". The classic scenario: a "1" and a "2" side by side along a wall.</p>
+    <div class="grid">? ? ?
+1 2 .</div>
+    <p>The "1" sees two covered cells (the two cells above the 1-2 pair). The "2" sees those same two cells plus the third cell above itself. Since the "1" has exactly one mine among the two shared cells, the "2" &mdash; which needs two mines &mdash; must place its second mine in the one cell the "1" can't see: the cell above the "2". <strong>That cell is a mine, guaranteed.</strong> And once it's flagged, the shared cells resolve further.</p>
+    <p>This is the 1-2 pattern, and it's the single most valuable deduction shape in the game. The general principle: <em>when one number's visible covered cells are a subset of another's, subtract the counts.</em></p>
+
+    <h2>Technique 3: The 1-1 Pattern and Set Thinking</h2>
+    <div class="grid">. 1 1 ?
+. . . ?</div>
+    <p>Two "1"s in a row, each seeing the same pair of covered cells to the right, but the rightmost "1" sees one additional covered cell. The left "1" tells you one mine is in the pair; the right "1" also sees that pair, and it also needs exactly one mine &mdash; so its extra cell is <strong>safe to reveal</strong>.</p>
+    <p>Generalized: whenever two numbers share the same set of covered neighbors, any extra neighbors of the larger constraint resolve by subtraction. This "set thinking" is what players mean when they talk about minesweeper being a constraint-satisfaction puzzle. For a full library of these shapes, see our <a href="/minesweeper-patterns">minesweeper patterns</a> page.</p>
+
+    <h2>Reading Numbers Against Walls and Corners</h2>
+    <p>Edge cells have 5 neighbors; corner cells have 3. Numbers against geometry are compressed and therefore stronger:</p>
+    <ul>
+      <li>A corner "1" has exactly 3 suspects instead of 8.</li>
+      <li>A wall "2" with two covered neighbors solves both cells instantly.</li>
+      <li>Late-game stalls frequently break at the corners &mdash; always re-scan them before guessing.</li>
+    </ul>
+
+    <h2>Putting It Together: A Mini Workflow</h2>
+    <ol>
+      <li>After any new reveal, check the fresh numbers first &mdash; they're the most likely to be saturated or satisfied.</li>
+      <li>Stalled? Sweep the frontier between revealed and covered cells, looking for adjacent number pairs (subtraction) and shared-neighbor sets.</li>
+      <li>Still stalled? Check walls and corners.</li>
+      <li>Only then consider a guess &mdash; and prefer a guess that newly revealed numbers will illuminate.</li>
+    </ol>
+
+    <div class="cta">
+      <a href="/">Practice Reading Numbers &mdash; Play Free &rarr;</a>
+    </div>
+
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq">
+      <details>
+        <summary>Can a number be wrong?</summary>
+        <p>No. Numbers are generated directly from the true mine layout, so they're always exact. If a deduction disagrees with a number, the deduction is wrong &mdash; usually because of a misplaced flag.</p>
+      </details>
+      <details>
+        <summary>Why did a blank cell reveal a huge area?</summary>
+        <p>Blank means zero adjacent mines, so all its neighbors are safe. If those neighbors are also blank, the cascade continues automatically &mdash; a free opening.</p>
+      </details>
+      <details>
+        <summary>Which number is most useful?</summary>
+        <p>The "1" &mdash; it resolves fastest and chains into satisfaction logic. The "2" powers the famous 1-2 patterns. High numbers (4+) rarely act alone; they mostly confirm flags placed by other logic.</p>
+      </details>
+      <details>
+        <summary>Does Bean Boom use the same number rules?</summary>
+        <p>Yes, identically, in both Classic and Egg Mode. Egg Mode adds scoring on top, but the underlying grid and number logic are pure minesweeper.</p>
+      </details>
+    </div>
+
+    <div class="related">
+      <h3>Keep reading</h3>
+      <ul>
+        <li><a href="/blog/minesweeper-rules">Minesweeper Rules Explained</a> &mdash; the full rule reference</li>
+        <li><a href="/blog/minesweeper-strategy-guide">Minesweeper Strategy: From First Click to Endgame</a></li>
+        <li><a href="/minesweeper-patterns">Minesweeper Patterns</a> &mdash; the visual pattern library</li>
+        <li><a href="/blog/how-to-play-minesweeper">How to Play Minesweeper: Beginner's Guide</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-links">
+      <a href="/">Play Game</a>
+      <a href="/blog">Blog</a>
+      <a href="/egg-mode">Egg Mode</a>
+      <a href="/classic-mode">Classic Mode</a>
+      <a href="/difficulty-guide">Difficulty Guide</a>
+      <a href="/leaderboard">Leaderboards</a>
+      <a href="/challenges">Challenges</a>
+      <a href="/minesweeper-patterns">Patterns</a>
+      <a href="/minesweeper-strategy">Strategy</a>
+      <a href="/minesweeper-tips">Tips</a>
+      <a href="/minesweeper-history">History</a>
+      <a href="/about">About</a>
+      <a href="/privacy-policy">Privacy Policy</a>
+    </div>
+
+    <div class="footer">
+      <p>&copy; 2026 Bean Boom &middot; <a href="/">Free Online Minesweeper Game</a></p>
+    </div>
+  </div>
+</body>
+</html>

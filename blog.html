@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Bean Boom Blog - Minesweeper Guides, Tips & Strategy</title>
+  <meta name="description" content="In-depth minesweeper guides from Bean Boom. Learn the rules, master number logic, discover patterns, and climb the leaderboards with our free tutorials.">
+  <meta name="keywords" content="minesweeper blog,minesweeper guides,minesweeper tutorial,minesweeper tips,minesweeper strategy">
+  <link rel="canonical" href="https://bb.superzan.net/blog">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#e87b3a">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Bean Boom">
+  <meta property="og:url" content="https://bb.superzan.net/blog">
+  <meta property="og:title" content="Bean Boom Blog - Minesweeper Guides, Tips & Strategy">
+  <meta property="og:description" content="In-depth minesweeper guides. Learn the rules, master number logic, and climb the leaderboards.">
+  <meta property="og:image" content="https://bb.superzan.net/og-cover.png">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Bean Boom Blog - Minesweeper Guides, Tips & Strategy">
+  <meta name="twitter:description" content="In-depth minesweeper guides. Rules, number logic, patterns, and scoring strategy.">
+  <meta name="twitter:image" content="https://bb.superzan.net/og-cover.png">
+
+  <!-- Structured Data: Blog -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "name": "Bean Boom Blog",
+    "url": "https://bb.superzan.net/blog",
+    "description": "In-depth minesweeper guides, tips, and strategy from Bean Boom, a free online minesweeper game.",
+    "inLanguage": "en",
+    "publisher": { "@type": "Organization", "name": "Bean Boom", "url": "https://bb.superzan.net/" },
+    "blogPost": [
+      { "@type": "BlogPosting", "name": "How to Play Minesweeper: Complete Beginner's Guide", "url": "https://bb.superzan.net/blog/how-to-play-minesweeper" },
+      { "@type": "BlogPosting", "name": "Minesweeper Rules Explained: Everything You Need to Know", "url": "https://bb.superzan.net/blog/minesweeper-rules" },
+      { "@type": "BlogPosting", "name": "What the Numbers Mean in Minesweeper", "url": "https://bb.superzan.net/blog/minesweeper-numbers-meaning" },
+      { "@type": "BlogPosting", "name": "15 Minesweeper Tips and Tricks That Actually Work", "url": "https://bb.superzan.net/blog/minesweeper-tips-and-tricks" },
+      { "@type": "BlogPosting", "name": "Minesweeper Strategy: From First Click to Endgame", "url": "https://bb.superzan.net/blog/minesweeper-strategy-guide" },
+      { "@type": "BlogPosting", "name": "To Flag or Not to Flag: Minesweeper Flagging Guide", "url": "https://bb.superzan.net/blog/minesweeper-flagging-guide" },
+      { "@type": "BlogPosting", "name": "How to Get a High Score in Minesweeper", "url": "https://bb.superzan.net/blog/minesweeper-high-score-guide" }
+    ]
+  }
+  </script>
+
+  <!-- Structured Data: Breadcrumb -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bb.superzan.net/" },
+      { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://bb.superzan.net/blog" }
+    ]
+  }
+  </script>
+
+  <!-- Preconnect -->
+  <link rel="preconnect" href="https://www.googletagmanager.com">
+  <link rel="preconnect" href="https://www.google-analytics.com">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8VV5G44NTR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-8VV5G44NTR');
+  </script>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f3ed; color: #2d2d2d; line-height: 1.7; }
+    .container { max-width: 760px; margin: 0 auto; padding: 24px 20px 60px; }
+    .header { text-align: center; padding: 40px 0 24px; }
+    .header a.home-btn { display: inline-block; background: #e87b3a; color: #fff; text-decoration: none; padding: 10px 28px; border-radius: 24px; font-weight: 600; font-size: 15px; margin-bottom: 20px; }
+    .breadcrumb { font-size: 0.85em; color: #999; margin-bottom: 8px; }
+    .breadcrumb a { color: #e87b3a; text-decoration: none; }
+    h1 { font-size: 2em; margin-bottom: 8px; }
+    .subtitle { color: #666; font-size: 1.05em; margin-bottom: 32px; }
+    p { margin-bottom: 14px; }
+    .post-list { display: flex; flex-direction: column; gap: 16px; }
+    .post-card { background: #fff; border: 1px solid #e0ddd5; border-radius: 10px; padding: 20px 22px; transition: box-shadow 0.15s; }
+    .post-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.07); }
+    .post-meta { font-size: 0.8em; color: #999; margin-bottom: 6px; }
+    .post-card h2 { font-size: 1.25em; margin: 0 0 8px; }
+    .post-card h2 a { color: #2d2d2d; text-decoration: none; }
+    .post-card h2 a:hover { color: #e87b3a; }
+    .post-card p { color: #555; margin-bottom: 10px; font-size: 0.95em; }
+    .tag { display: inline-block; background: #fdf0e8; color: #c05a1e; font-size: 0.75em; font-weight: 600; border-radius: 12px; padding: 2px 10px; margin-right: 6px; }
+    .cta { text-align: center; margin: 40px 0; }
+    .cta a { display: inline-block; background: #e87b3a; color: #fff; text-decoration: none; padding: 14px 40px; border-radius: 28px; font-size: 1.1em; font-weight: 700; }
+    .footer { text-align: center; padding: 24px 0; color: #999; font-size: 0.85em; border-top: 1px solid #e0ddd5; margin-top: 40px; }
+    .footer a { color: #e87b3a; text-decoration: none; }
+    .nav-links { display: flex; gap: 16px; justify-content: center; margin: 16px 0; flex-wrap: wrap; }
+    .nav-links a { color: #e87b3a; text-decoration: none; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <a class="home-btn" href="/">&#8592; Play Bean Boom</a>
+      <div class="breadcrumb"><a href="/">Home</a> &rsaquo; Blog</div>
+      <h1>Bean Boom Blog</h1>
+      <p class="subtitle">In-depth minesweeper guides &mdash; from your very first click to the top of the leaderboard.</p>
+    </div>
+
+    <p>Whether you just discovered minesweeper or you've been clearing grids since the Windows 95 days, these guides will sharpen your play. Every article is written for <strong>Bean Boom</strong>, our free online minesweeper game &mdash; but the logic and patterns apply to any version of the game.</p>
+
+    <div class="post-list">
+      <div class="post-card">
+        <div class="post-meta">August 22, 2026 &middot; 8 min read</div>
+        <h2><a href="/blog/how-to-play-minesweeper">How to Play Minesweeper: Complete Beginner's Guide</a></h2>
+        <p>Never played minesweeper before? Start here. This guide walks you through your very first game: how to reveal cells, what the numbers mean, when to flag, and how to win.</p>
+        <span class="tag">Beginner</span><span class="tag">Tutorial</span>
+      </div>
+
+      <div class="post-card">
+        <div class="post-meta">August 22, 2026 &middot; 7 min read</div>
+        <h2><a href="/blog/minesweeper-rules">Minesweeper Rules Explained: Everything You Need to Know</a></h2>
+        <p>A complete reference to the rules of minesweeper: the objective, how mines are placed, what counts as a win, and the etiquette of guessing.</p>
+        <span class="tag">Rules</span><span class="tag">Reference</span>
+      </div>
+
+      <div class="post-card">
+        <div class="post-meta">August 22, 2026 &middot; 7 min read</div>
+        <h2><a href="/blog/minesweeper-numbers-meaning">What the Numbers Mean in Minesweeper</a></h2>
+        <p>The numbers are the whole game. Learn exactly what each digit from 1 to 8 tells you, and how to combine multiple numbers to deduce hidden mines with certainty.</p>
+        <span class="tag">Logic</span><span class="tag">Beginner</span>
+      </div>
+
+      <div class="post-card">
+        <div class="post-meta">August 22, 2026 &middot; 9 min read</div>
+        <h2><a href="/blog/minesweeper-tips-and-tricks">15 Minesweeper Tips and Tricks That Actually Work</a></h2>
+        <p>Practical, immediately actionable tips &mdash; where to click first, how to scan efficiently, when to guess, and the habits that separate beginners from experts.</p>
+        <span class="tag">Tips</span><span class="tag">Intermediate</span>
+      </div>
+
+      <div class="post-card">
+        <div class="post-meta">August 22, 2026 &middot; 9 min read</div>
+        <h2><a href="/blog/minesweeper-strategy-guide">Minesweeper Strategy: From First Click to Endgame</a></h2>
+        <p>A structured strategy framework: opening theory, mid-game deduction techniques like subtraction and set logic, and how to handle the endgame safely.</p>
+        <span class="tag">Strategy</span><span class="tag">Advanced</span>
+      </div>
+
+      <div class="post-card">
+        <div class="post-meta">August 22, 2026 &middot; 6 min read</div>
+        <h2><a href="/blog/minesweeper-flagging-guide">To Flag or Not to Flag: A Minesweeper Flagging Guide</a></h2>
+        <p>Should you flag every mine? Explore flagging styles, the famous no-flag (NF) approach, and how Bean Boom's Egg Mode turns correct flags into chain explosions.</p>
+        <span class="tag">Technique</span><span class="tag">Intermediate</span>
+      </div>
+
+      <div class="post-card">
+        <div class="post-meta">August 22, 2026 &middot; 8 min read</div>
+        <h2><a href="/blog/minesweeper-high-score-guide">How to Get a High Score in Minesweeper</a></h2>
+        <p>A scoring deep-dive for Bean Boom's Egg Mode: combo windows, FEVER multipliers, Bean Boom chain blasts, and the math behind S-rank scores on every difficulty.</p>
+        <span class="tag">Scoring</span><span class="tag">Advanced</span>
+      </div>
+    </div>
+
+    <div class="cta">
+      <a href="/">Play Bean Boom Now &rarr;</a>
+    </div>
+
+    <div class="nav-links">
+      <a href="/">Play Game</a>
+      <a href="/how-to-play">How to Play</a>
+      <a href="/egg-mode">Egg Mode</a>
+      <a href="/classic-mode">Classic Mode</a>
+      <a href="/difficulty-guide">Difficulty Guide</a>
+      <a href="/leaderboard">Leaderboards</a>
+      <a href="/challenges">Challenges</a>
+      <a href="/minesweeper-patterns">Patterns</a>
+      <a href="/minesweeper-strategy">Strategy</a>
+      <a href="/minesweeper-tips">Tips</a>
+      <a href="/minesweeper-history">History</a>
+      <a href="/about">About</a>
+      <a href="/privacy-policy">Privacy Policy</a>
+    </div>
+
+    <div class="footer">
+      <p>&copy; 2026 Bean Boom &middot; <a href="/">Free Online Minesweeper Game</a></p>
+    </div>
+  </div>
+</body>
+</html>
