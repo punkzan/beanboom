@@ -23,7 +23,15 @@ const PORTAL = import.meta.env.VITE_PORTAL === '1';
 // === 双模式（彩蛋 / 经典）===
 // 彩蛋模式：连锁爆破 + 计分 + FEVER，按得分排行（日/月/总榜），无付费挑战
 // 经典模式：纯净扫雷，按用时排行（日/月/年榜），含付费挑战
-let gameMode = localStorage.getItem('bb-game-mode') === 'classic' ? 'classic' : 'egg';
+// 模式来源优先级：URL ?mode= 参数（着陆页 CTA）> localStorage > 默认 egg
+const urlMode = new URLSearchParams(window.location.search).get('mode');
+let gameMode;
+if (urlMode === 'classic' || urlMode === 'egg') {
+  gameMode = urlMode;
+  localStorage.setItem('bb-game-mode', urlMode);
+} else {
+  gameMode = localStorage.getItem('bb-game-mode') === 'classic' ? 'classic' : 'egg';
+}
 
 let game = new Game('easy', gameMode);
 const canvas = document.getElementById('game-canvas');

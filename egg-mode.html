@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Egg Mode - Minesweeper with Scoring System &amp; Chain Reaction | Bean Boom</title>
+  <meta name="description" content="Play Egg Mode, a minesweeper game with a scoring system. Chain reactions, combo multipliers up to 4x, and FEVER mode. Compete on the score leaderboard - free, no download.">
+  <meta name="keywords" content="minesweeper with scoring system,minesweeper chain reaction game,minesweeper combo bonus points,minesweeper fever mode bonus,modern minesweeper with powerups">
+  <link rel="canonical" href="https://bb.superzan.net/egg-mode">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#e87b3a">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Bean Boom">
+  <meta property="og:url" content="https://bb.superzan.net/egg-mode">
+  <meta property="og:title" content="Egg Mode - Minesweeper with Scoring System &amp; Chain Reaction | Bean Boom">
+  <meta property="og:description" content="A minesweeper game with a scoring system: chain reactions, combo multipliers up to 4x, and FEVER mode. Free in your browser.">
+  <meta property="og:image" content="https://bb.superzan.net/og-cover.png">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Egg Mode - Minesweeper with Scoring &amp; Chain Reactions">
+  <meta name="twitter:description" content="Score points with combos, chain blasts, and FEVER mode in this free modern minesweeper game.">
+  <meta name="twitter:image" content="https://bb.superzan.net/og-cover.png">
+
+  <!-- Structured Data: VideoGame -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Bean Boom Egg Mode",
+    "url": "https://bb.superzan.net/egg-mode",
+    "description": "Egg Mode is a minesweeper variant with a scoring system: chain reactions, combo multipliers up to 4x, FEVER mode, and a global high score leaderboard.",
+    "genre": ["Puzzle", "Logic Game", "Casual"],
+    "playMode": "SinglePlayer",
+    "gamePlatform": "Web Browser",
+    "applicationCategory": "Game",
+    "operatingSystem": "Any",
+    "inLanguage": "en",
+    "image": "https://bb.superzan.net/og-cover.png",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
+
+  <!-- Structured Data: Breadcrumb -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bb.superzan.net/" },
+      { "@type": "ListItem", "position": 2, "name": "Egg Mode", "item": "https://bb.superzan.net/egg-mode" }
+    ]
+  }
+  </script>
+
+  <!-- Preconnect -->
+  <link rel="preconnect" href="https://www.googletagmanager.com">
+  <link rel="preconnect" href="https://www.google-analytics.com">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8VV5G44NTR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-8VV5G44NTR');
+  </script>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f3ed; color: #2d2d2d; line-height: 1.7; }
+    .container { max-width: 760px; margin: 0 auto; padding: 24px 20px 60px; }
+    .header { text-align: center; padding: 40px 0 24px; }
+    .header a { display: inline-block; background: #e87b3a; color: #fff; text-decoration: none; padding: 10px 28px; border-radius: 24px; font-weight: 600; font-size: 15px; margin-bottom: 20px; }
+    .breadcrumb { font-size: 0.85em; color: #999; margin-bottom: 8px; }
+    .breadcrumb a { color: #e87b3a; text-decoration: none; }
+    h1 { font-size: 2em; margin-bottom: 8px; }
+    .subtitle { color: #666; font-size: 1.05em; margin-bottom: 32px; }
+    h2 { font-size: 1.4em; margin: 32px 0 12px; color: #e87b3a; }
+    h3 { font-size: 1.15em; margin: 20px 0 8px; }
+    p { margin-bottom: 14px; }
+    ol, ul { margin: 0 0 16px 20px; }
+    li { margin-bottom: 6px; }
+    .feature { background: #fff; border: 1px solid #e0ddd5; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    .feature h3 { margin-top: 0; }
+    .cta { text-align: center; margin: 40px 0; }
+    .cta a { display: inline-block; background: #e87b3a; color: #fff; text-decoration: none; padding: 14px 40px; border-radius: 28px; font-size: 1.1em; font-weight: 700; }
+    .faq details { background: #fff; border: 1px solid #e0ddd5; border-radius: 8px; padding: 12px 16px; margin: 8px 0; }
+    .faq summary { font-weight: 600; cursor: pointer; }
+    .faq p { margin-top: 8px; color: #555; }
+    .footer { text-align: center; padding: 24px 0; color: #999; font-size: 0.85em; border-top: 1px solid #e0ddd5; margin-top: 40px; }
+    .footer a { color: #e87b3a; text-decoration: none; }
+    .nav-links { display: flex; gap: 16px; justify-content: center; margin: 16px 0; flex-wrap: wrap; }
+    .nav-links a { color: #e87b3a; text-decoration: none; font-size: 0.9em; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 0.95em; }
+    th, td { border: 1px solid #e0ddd5; padding: 8px 10px; text-align: left; }
+    th { background: #fdf0e8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <a href="/?mode=egg">&#8592; Play Egg Mode</a>
+      <div class="breadcrumb"><a href="/">Home</a> &rsaquo; Egg Mode</div>
+      <h1>Egg Mode: Minesweeper with a Scoring System</h1>
+      <p class="subtitle">Chain reactions, combo multipliers, and FEVER mode &mdash; minesweeper like you've never played it.</p>
+    </div>
+
+    <p><strong>Egg Mode</strong> is Bean Boom's signature take on classic minesweeper. Instead of just racing the clock, every cell you reveal earns points &mdash; and the faster and smarter you play, the higher your score climbs. It's a <strong>minesweeper game with a scoring system</strong> built for players who love chasing high scores.</p>
+
+    <h2>How the Scoring System Works</h2>
+    <p>Points in Egg Mode come from four sources that stack together:</p>
+
+    <div class="feature">
+      <h3>1. Reveal Points</h3>
+      <p>Every safe cell you uncover earns base points. Clear a large empty region in one click and every cell counts.</p>
+    </div>
+
+    <div class="feature">
+      <h3>2. Combo Multipliers</h3>
+      <p>Reveal cells in quick succession to build a combo. Each consecutive reveal within 3 seconds increases your multiplier &mdash; up to <strong>3x</strong> in normal play. Milestone combos flash on screen: Nice (5), Great (10), Amazing (15), and FEVER (20).</p>
+    </div>
+
+    <div class="feature">
+      <h3>3. Chain Reaction Blasts</h3>
+      <p>This is where the name <strong>Bean Boom</strong> comes from. Correctly flag a mine and it doesn't just sit there &mdash; it <em>detonates</em>, blasting away the safe cells around it. Blasted mines chain into further explosions, and every cell caught in the chain-boom scores bonus points. One well-placed flag can clear half the board.</p>
+    </div>
+
+    <div class="feature">
+      <h3>4. FEVER Mode</h3>
+      <p>Reach a 20-combo and FEVER activates: your multiplier cap rises to <strong>4x</strong> and every blast gets a wider explosion radius. FEVER is the key to record-breaking scores &mdash; keep the combo alive while it lasts.</p>
+    </div>
+
+    <h2>Score Leaderboards</h2>
+    <p>Egg Mode has its own score leaderboards for every difficulty (Easy, Medium, Hard), ranked by total score rather than completion time:</p>
+    <table>
+      <tr><th>Leaderboard</th><th>What it tracks</th></tr>
+      <tr><td>Daily</td><td>Top scores achieved today &mdash; resets every day</td></tr>
+      <tr><td>Monthly</td><td>Top scores of the current month</td></tr>
+      <tr><td>All-Time</td><td>The highest scores ever recorded</td></tr>
+    </table>
+    <p>Winning is required to submit a score, and every submission is verified server-side &mdash; no hacked leaderboards.</p>
+
+    <h2>Egg Mode vs Classic Mode</h2>
+    <p>If you prefer the traditional experience &mdash; a pure minesweeper with no powerups, just you and the timer &mdash; check out <a href="/classic-mode">Classic Mode</a> with its speed-based leaderboards and paid challenges. You can switch between modes at any time from the game screen.</p>
+
+    <div class="cta">
+      <a href="/?mode=egg">Play Egg Mode Free &rarr;</a>
+    </div>
+
+    <h2>Tips for High Scores</h2>
+    <ol>
+      <li><strong>Play fast, not frantic.</strong> Combos expire after 3 idle seconds &mdash; keep a steady rhythm instead of freezing to think.</li>
+      <li><strong>Save flags for clusters.</strong> Flagging a mine surrounded by other mines triggers the biggest chain reactions.</li>
+      <li><strong>Chain into FEVER.</strong> When your combo is at 15+, prioritize quick reveals over flagging to hit the 20-combo FEVER threshold.</li>
+      <li><strong>Blast during FEVER.</strong> Blasts get +1 radius in FEVER mode &mdash; detonating then clears more cells per boom.</li>
+      <li><strong>Finish the board.</strong> Your score only counts if you win, and finishing quickly adds a time bonus multiplier.</li>
+    </ol>
+
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq">
+      <details>
+        <summary>Is Egg Mode free to play?</summary>
+        <p>Yes. Both Egg Mode and Classic Mode are completely free, played instantly in your browser with no download or registration.</p>
+      </details>
+      <details>
+        <summary>Do I need to flag mines to score points?</summary>
+        <p>Flagging is optional for winning, but correctly flagged mines trigger chain-boom blasts &mdash; one of the biggest score sources in Egg Mode.</p>
+      </details>
+      <details>
+        <summary>How do I activate FEVER mode?</summary>
+        <p>Build a combo of 20 consecutive reveals, each within 3 seconds of the last. FEVER then raises your multiplier cap to 4x until the combo breaks.</p>
+      </details>
+      <details>
+        <summary>Can I play Egg Mode on mobile?</summary>
+        <p>Yes. Tap to reveal, long-press to flag. The combo and scoring system work exactly the same on touch devices.</p>
+      </details>
+    </div>
+
+    <div class="nav-links">
+      <a href="/">Play Game</a>
+      <a href="/classic-mode">Classic Mode</a>
+      <a href="/difficulty-guide">Difficulty Guide</a>
+      <a href="/leaderboard">Leaderboards</a>
+      <a href="/how-to-play">How to Play</a>
+      <a href="/minesweeper-tips">Tips</a>
+      <a href="/about">About</a>
+    </div>
+
+    <div class="footer">
+      <p>&copy; 2026 Bean Boom &middot; <a href="/">Free Online Minesweeper Game</a></p>
+    </div>
+  </div>
+</body>
+</html>
