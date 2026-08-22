@@ -26,6 +26,7 @@ export default defineConfig({
         classicMode: resolve(__dirname, 'classic-mode.html'),
         difficultyGuide: resolve(__dirname, 'difficulty-guide.html'),
         leaderboard: resolve(__dirname, 'leaderboard.html'),
+        challenges: resolve(__dirname, 'challenges.html'),
       },
     },
   },
