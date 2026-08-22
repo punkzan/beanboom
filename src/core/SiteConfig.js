@@ -7,8 +7,8 @@ const STORAGE_KEY = 'minesweeper-beads-site-config';
 const DEFAULT_CONFIG = {
   seo: {
     title: 'Bean Boom - Free Online Minesweeper Game',
-    description: 'Play Bean Boom, a free online minesweeper game with a unique bead art style. Three difficulty levels, a global leaderboard, and daily hot topics. Play instantly in your browser - no download needed.',
-    keywords: 'bean boom,minesweeper,free minesweeper game,online minesweeper,bead art game,browser game',
+    description: 'Play Bean Boom free - an online minesweeper game with two modes: classic timing and egg-mode chain-boom scoring. Bead art style, global leaderboards. No download needed.',
+    keywords: 'bean boom,minesweeper,free minesweeper game,online minesweeper,minesweeper scoring,chain reaction game,browser game,no download',
   },
   ads: {
     enabled: false,
