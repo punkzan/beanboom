@@ -1,12 +1,18 @@
 {
+  "id": "bean-boom",
   "name": "Bean Boom - Free Online Minesweeper Game",
   "short_name": "Bean Boom",
-  "description": "A free online minesweeper game with a unique bead art style. Three difficulty levels, global leaderboard, and daily challenges.",
-  "start_url": "/",
+  "description": "A free online minesweeper game with a unique bead art style. Two game modes, three difficulty levels, global leaderboards, and paid challenges.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "any",
   "background_color": "#f5f3ed",
   "theme_color": "#e87b3a",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["games", "entertainment", "puzzle"],
   "icons": [
     {
       "src": "/icon-192.png",
@@ -19,6 +25,29 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Play Egg Mode",
+      "short_name": "Egg Mode",
+      "description": "Chain-boom scoring with combos and FEVER",
+      "url": "/?mode=egg&source=pwa",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Play Classic Mode",
+      "short_name": "Classic",
+      "description": "Pure minesweeper timing puzzles",
+      "url": "/?mode=classic&source=pwa",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Read Blog",
+      "short_name": "Blog",
+      "description": "Minesweeper tutorials and strategy guides",
+      "url": "/blog?source=pwa",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

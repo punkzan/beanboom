@@ -1,4 +1,12 @@
-# Cloudflare Pages caching headers
+# Cloudflare Pages caching + security headers
+
+# Security headers for all routes
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), browsing-topics=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://www.google-analytics.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; upgrade-insecure-requests
 
 # Vite hashed build assets (JS/CSS with content hash) — immutable, 1 year
 /assets/*
@@ -39,6 +47,10 @@
   Cache-Control: public, max-age=3600
 /sitemap.xml
   Cache-Control: public, max-age=3600
+
+# Service Worker — no cache, always fresh
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
 
 # Dynamic OG score card (Pages Function) — 1 day at CDN edge
 /og

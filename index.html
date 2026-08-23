@@ -4,6 +4,7 @@
   <!-- Preconnect to analytics -->
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://www.google-analytics.com">
+  <link rel="dns-prefetch" href="https://www.paypal.com">
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-8VV5G44NTR"></script>
@@ -33,6 +34,13 @@
   <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
   <link rel="manifest" href="/manifest.json">
 
+  <!-- Apple PWA / Mobile -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Bean Boom">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="format-detection" content="telephone=no">
+
   <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Bean Boom">
@@ -44,6 +52,13 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Bean Boom minesweeper game screenshot">
   <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="zh_CN">
+  <meta property="og:locale:alternate" content="ja_JP">
+  <meta property="og:locale:alternate" content="ko_KR">
+  <meta property="og:locale:alternate" content="fr_FR">
+  <meta property="og:locale:alternate" content="de_DE">
+  <meta property="og:locale:alternate" content="ru_RU">
+  <meta property="og:locale:alternate" content="ar_SA">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
@@ -444,5 +459,14 @@
   <div class="share-toast" id="share-toast"></div>
 
   <script type="module" src="/src/main.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js').catch(function(e) {
+          console.warn('SW registration failed:', e);
+        });
+      });
+    }
+  </script>
 </body>
 </html>
