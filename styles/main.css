@@ -1328,15 +1328,18 @@ body {
 
 .footer-links {
   display: flex;
-  gap: 20px;
+  flex-wrap: wrap;
+  gap: 8px 20px;
   justify-content: center;
-  padding: 10px 0 6px;
+  padding: 12px 16px 8px;
 }
 
 .footer-links a {
   font-size: 13px;
   color: #e87b3a;
   text-decoration: none;
+  white-space: nowrap;
+  line-height: 1.4;
 }
 
 .footer-links a:hover {
