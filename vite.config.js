@@ -27,6 +27,7 @@ export default defineConfig({
         difficultyGuide: resolve(__dirname, 'difficulty-guide.html'),
         leaderboard: resolve(__dirname, 'leaderboard.html'),
         challenges: resolve(__dirname, 'challenges.html'),
+        pressKit: resolve(__dirname, 'press-kit.html'),
         blogIndex: resolve(__dirname, 'blog.html'),
         blogHowToPlay: resolve(__dirname, 'blog/how-to-play-minesweeper.html'),
         blogRules: resolve(__dirname, 'blog/minesweeper-rules.html'),
