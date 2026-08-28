@@ -23,7 +23,7 @@ const PORTAL = import.meta.env.VITE_PORTAL === '1';
 // === 三模式（彩蛋 / 经典 / 时间挑战）===
 // 彩蛋模式：连锁爆破 + 计分 + FEVER，按得分排行（日/月/总榜），无付费挑战
 // 经典模式：纯净扫雷，按用时排行（日/月/年榜），含付费挑战
-// 时间挑战：限时闯关（简单 60s → 困难 180s），倒计时归零即失败，当天通关后锁定
+// 时间挑战：限时闯关（简单 60s → 困难 120s），倒计时归零即失败，当天通关后锁定
 // 模式来源优先级：URL ?mode= 参数（着陆页 CTA）> localStorage > 默认 egg
 const urlMode = new URLSearchParams(window.location.search).get('mode');
 const VALID_MODES = ['classic', 'egg', 'timetrial'];
@@ -74,7 +74,7 @@ const timer = new Timer((display) => {
 });
 
 // === 时间挑战模式（Time Attack）引擎 ===
-// 连续闯关：第 1 局经典·简单·60s，第 2 局经典·困难·180s。
+// 连续闯关：第 1 局经典·简单·60s，第 2 局经典·困难·120s。
 // 倒计时归零未完成 = 失败，可再次挑战（重试当前局）；
 // 当天两关全部通关 → 当天锁定，次日重置。
 const TT_DONE_KEY = 'bb-timetrial-done';
@@ -417,7 +417,7 @@ function updateUI() {
       overlayShareBtn.style.display = '';
       overlayScore.textContent = '';
       if (ttStage === 0) {
-        // 第一关通过 → 提示进入第二关（困难 · 180s）
+        // 第一关通过 → 提示进入第二关（困难 · 120s）
         const next = TIME_TRIAL_STAGES[1];
         overlayTitle.textContent = t('tt.stage1Clear');
         overlaySubtitle.textContent = t('tt.stageUsed', formatSeconds(used));

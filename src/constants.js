@@ -71,11 +71,11 @@ export const DIFFICULTIES = {
 };
 
 // 时间挑战模式（Time Attack）：连续闯关，倒计时归零未完成即失败
-// 第 1 局：经典玩法 · 简单难度 · 60 秒；第 2 局：经典玩法 · 困难难度 · 180 秒
+// 第 1 局：经典玩法 · 简单难度 · 60 秒；第 2 局：经典玩法 · 困难难度 · 120 秒
 // 当天全部通关后锁定，次日 0 点（本地时间）重置
 export const TIME_TRIAL_STAGES = [
   { difficulty: 'easy', countdown: 60 },
-  { difficulty: 'hard', countdown: 180 },
+  { difficulty: 'hard', countdown: 120 },
 ];
 
 // 单元格状态

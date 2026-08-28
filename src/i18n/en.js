@@ -37,7 +37,7 @@ export const en = {
   'game.mode.timetrial': 'Time Attack',
   'game.mode.eggHint': 'Chain blasts · Combos · Score ranking',
   'game.mode.classicHint': 'Pure minesweeper · Time ranking · Paid challenges',
-  'game.mode.timetrialHint': 'Beat the clock · Easy 60s → Hard 180s · Once per day',
+  'game.mode.timetrialHint': 'Beat the clock · Easy 60s → Hard 120s · Once per day',
   'game.countdown': 'Countdown',
   'game.diff.easy': 'Easy',
   'game.diff.medium': 'Medium',
@@ -81,7 +81,7 @@ export const en = {
   'tt.completeTitle': '🏆 Time Attack Complete!',
   'tt.completeSubtitle': 'You cleared both stages today. Come back tomorrow for a new challenge!',
   'tt.lockedTitle': '✅ Already Completed Today',
-  'tt.lockedSubtitle': "You've already cleared today's Time Attack (Easy 60s + Hard 180s). Come back tomorrow!",
+  'tt.lockedSubtitle': "You've already cleared today's Time Attack (Easy 60s + Hard 120s). Come back tomorrow!",
   'tt.switchClassic': 'Play Classic Mode',
 
   // ===== Auth =====
