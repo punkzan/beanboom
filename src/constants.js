@@ -70,6 +70,14 @@ export const DIFFICULTIES = {
   hard:   { rows: 16, cols: 30, mines: 99, label: '困难' },
 };
 
+// 时间挑战模式（Time Attack）：连续闯关，倒计时归零未完成即失败
+// 第 1 局：经典玩法 · 简单难度 · 30 秒；第 2 局：经典玩法 · 困难难度 · 120 秒
+// 当天全部通关后锁定，次日 0 点（本地时间）重置
+export const TIME_TRIAL_STAGES = [
+  { difficulty: 'easy', countdown: 30 },
+  { difficulty: 'hard', countdown: 120 },
+];
+
 // 单元格状态
 export const CELL_STATE = {
   HIDDEN: 'hidden',

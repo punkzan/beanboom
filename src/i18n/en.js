@@ -34,8 +34,11 @@ export const en = {
   // ===== Game =====
   'game.mode.egg': 'Egg Mode',
   'game.mode.classic': 'Classic Mode',
+  'game.mode.timetrial': 'Time Attack',
   'game.mode.eggHint': 'Chain blasts · Combos · Score ranking',
   'game.mode.classicHint': 'Pure minesweeper · Time ranking · Paid challenges',
+  'game.mode.timetrialHint': 'Beat the clock · Easy 30s → Hard 120s · Once per day',
+  'game.countdown': 'Countdown',
   'game.diff.easy': 'Easy',
   'game.diff.medium': 'Medium',
   'game.diff.hard': 'Hard',
@@ -66,6 +69,20 @@ export const en = {
   'game.playAgain': 'Play Again',
   'game.namePlaceholder': 'Your name',
   'game.regionPlaceholder': 'Country/Region',
+
+  // ===== Time Attack (Time Trial) =====
+  'tt.stage1Clear': '⚡ Stage 1 Clear!',
+  'tt.stageUsed': (s)=> `Time: ${s}`,
+  'tt.nextStageInfo': (d, s)=> `Next: ${d} mode · ${s}s countdown`,
+  'tt.nextStage': 'Next Stage →',
+  'tt.timesUp': "⏰ Time's Up!",
+  'tt.retryHint': (n, s)=> `Stage ${n}/2 failed (${s}s limit) — retry as many times as you like`,
+  'tt.retry': '⚡ Retry Stage',
+  'tt.completeTitle': '🏆 Time Attack Complete!',
+  'tt.completeSubtitle': 'You cleared both stages today. Come back tomorrow for a new challenge!',
+  'tt.lockedTitle': '✅ Already Completed Today',
+  'tt.lockedSubtitle': "You've already cleared today's Time Attack (Easy 30s + Hard 120s). Come back tomorrow!",
+  'tt.switchClassic': 'Play Classic Mode',
 
   // ===== Auth =====
   'auth.registerTitle': 'Create Account',

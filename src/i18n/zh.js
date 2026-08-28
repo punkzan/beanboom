@@ -34,8 +34,11 @@ export const zh = {
   // ===== 游戏 =====
   'game.mode.egg': '彩蛋模式',
   'game.mode.classic': '经典模式',
+  'game.mode.timetrial': '时间挑战',
   'game.mode.eggHint': '连锁爆破 · 连击 · 得分排行',
   'game.mode.classicHint': '纯净扫雷 · 用时排行 · 付费挑战',
+  'game.mode.timetrialHint': '限时闯关 · 简单30秒 → 困难120秒 · 每天一次',
+  'game.countdown': '倒计时',
   'game.diff.easy': '简单',
   'game.diff.medium': '中等',
   'game.diff.hard': '困难',
@@ -66,6 +69,20 @@ export const zh = {
   'game.playAgain': '再来一局',
   'game.namePlaceholder': '你的名字',
   'game.regionPlaceholder': '国家/地区',
+
+  // ===== 时间挑战模式 =====
+  'tt.stage1Clear': '⚡ 第一关通过！',
+  'tt.stageUsed': (s)=> `用时 ${s}`,
+  'tt.nextStageInfo': (d, s)=> `下一关：${d}难度 · 倒计时 ${s} 秒`,
+  'tt.nextStage': '下一关 →',
+  'tt.timesUp': '⏰ 时间到！',
+  'tt.retryHint': (n, s)=> `第 ${n}/2 关失败（限时 ${s} 秒），可以再次挑战`,
+  'tt.retry': '⚡ 再次挑战',
+  'tt.completeTitle': '🏆 时间挑战完成！',
+  'tt.completeSubtitle': '今日两关全部通过，明天再来挑战吧！',
+  'tt.lockedTitle': '✅ 今日已完成',
+  'tt.lockedSubtitle': '今天的时间挑战（简单30秒 + 困难120秒）已经完成，明天再来！',
+  'tt.switchClassic': '去玩经典模式',
 
   // ===== 认证 =====
   'auth.registerTitle': '注册账户',

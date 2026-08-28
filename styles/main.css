@@ -86,6 +86,17 @@ body {
   color: #378add;
 }
 
+/* === 时间挑战：倒计时最后 10 秒紧张提示 === */
+.timer .status-value.urgent {
+  color: #e24b4a;
+  animation: ttUrgentPulse 1s ease-in-out infinite;
+}
+
+@keyframes ttUrgentPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.18); }
+}
+
 .restart-btn {
   background: #5dcaa5;
   color: #04342c;
@@ -158,6 +169,12 @@ body {
   background: #e8f0fb;
   border-color: #6a9ee8;
   color: #2d6cc9;
+}
+
+.gmode-btn#gmode-timetrial.active {
+  background: #fdeae4;
+  border-color: #e87b5a;
+  color: #c94f2a;
 }
 
 .diff-btn {

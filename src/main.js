@@ -6,7 +6,7 @@ import { ParticleSystem } from './render/Particles.js';
 import { InputHandler } from './input/InputHandler.js';
 import { SoundManager } from './audio/SoundManager.js';
 import { BGMManager } from './audio/BGMManager.js';
-import { DIFFICULTIES } from './constants.js';
+import { DIFFICULTIES, TIME_TRIAL_STAGES } from './constants.js';
 import { addRecord, getBestTime, getRecords, getYearlyChampions, refreshRecords, addScoreRecord, getScoreRecords, getBestScore, refreshScoreRecords } from './core/Leaderboard.js';
 import { getSeoConfig, getAdsConfig, getActivities, getLatestActivities, fetchFooterContent, fetchFriendLinks } from './core/SiteConfig.js';
 import { register, login, logout, getCurrentUser } from './core/Auth.js';
@@ -20,20 +20,22 @@ import { t, scanI18n, getLang, setLang, onLangChange } from './i18n.js';
 // 门户构建开关（CrazyGames 等平台）：VITE_PORTAL=1 时禁用广告、付费挑战、登录
 const PORTAL = import.meta.env.VITE_PORTAL === '1';
 
-// === 双模式（彩蛋 / 经典）===
+// === 三模式（彩蛋 / 经典 / 时间挑战）===
 // 彩蛋模式：连锁爆破 + 计分 + FEVER，按得分排行（日/月/总榜），无付费挑战
 // 经典模式：纯净扫雷，按用时排行（日/月/年榜），含付费挑战
+// 时间挑战：限时闯关（简单 30s → 困难 120s），倒计时归零即失败，当天通关后锁定
 // 模式来源优先级：URL ?mode= 参数（着陆页 CTA）> localStorage > 默认 egg
 const urlMode = new URLSearchParams(window.location.search).get('mode');
+const VALID_MODES = ['classic', 'egg', 'timetrial'];
 let gameMode;
-if (urlMode === 'classic' || urlMode === 'egg') {
+if (VALID_MODES.includes(urlMode)) {
   gameMode = urlMode;
   localStorage.setItem('bb-game-mode', urlMode);
 } else {
-  gameMode = localStorage.getItem('bb-game-mode') === 'classic' ? 'classic' : 'egg';
+  gameMode = VALID_MODES.includes(localStorage.getItem('bb-game-mode')) ? localStorage.getItem('bb-game-mode') : 'egg';
 }
 
-let game = new Game('easy', gameMode);
+let game = new Game('easy', gameMode === 'timetrial' ? 'classic' : gameMode);
 const canvas = document.getElementById('game-canvas');
 let renderer = new Renderer(canvas, 'easy');
 const animManager = new AnimationManager();
@@ -70,6 +72,114 @@ const diffBtns = document.querySelectorAll('.diff-btn');
 const timer = new Timer((display) => {
   timerEl.textContent = display;
 });
+
+// === 时间挑战模式（Time Attack）引擎 ===
+// 连续闯关：第 1 局经典·简单·30s，第 2 局经典·困难·120s。
+// 倒计时归零未完成 = 失败，可再次挑战（重试当前局）；
+// 当天两关全部通关 → 当天锁定，次日重置。
+const TT_DONE_KEY = 'bb-timetrial-done';
+const timerLabelEl = document.getElementById('timer-label');
+
+function getTodayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function isTimetrialDoneToday() {
+  return localStorage.getItem(TT_DONE_KEY) === getTodayStr();
+}
+
+let ttStage = 0;          // 当前关卡索引（0 = 第一局）
+let ttRemaining = 0;      // 剩余秒数
+let ttIntervalId = null;  // 倒计时 interval
+let ttTimeUp = false;     // 本次失败是否因倒计时归零
+
+function ttStop() {
+  if (ttIntervalId) {
+    clearInterval(ttIntervalId);
+    ttIntervalId = null;
+  }
+}
+
+function ttRender() {
+  const m = Math.floor(ttRemaining / 60);
+  const s = ttRemaining % 60;
+  timerEl.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  timerEl.classList.toggle('urgent', ttRemaining > 0 && ttRemaining <= 10);
+}
+
+/** 首次翻开格子时启动倒计时（与经典模式 timer.start 同步时机） */
+function ttStartCountdown() {
+  if (ttIntervalId || game.gameState !== 'playing') return;
+  ttIntervalId = setInterval(() => {
+    ttRemaining--;
+    if (ttRemaining <= 0) {
+      ttRemaining = 0;
+      ttRender();
+      ttTimeUp = true;
+      ttStop();
+      // 倒计时归零未完成 → 失败（不翻开地雷，直接结算）
+      game.gameState = 'lost';
+      updateUI();
+      return;
+    }
+    ttRender();
+  }, 1000);
+}
+
+/** 开启/重试时间挑战的某一局 */
+function startTimetrialStage(stageIndex) {
+  ttStage = stageIndex;
+  const stage = TIME_TRIAL_STAGES[stageIndex];
+  animManager.clear();
+  game.mode = 'classic'; // 时间挑战为纯净扫雷玩法（无连锁爆破）
+  game.setDifficulty(stage.difficulty);
+  renderer.setDifficulty(stage.difficulty);
+  ttRemaining = stage.countdown;
+  ttTimeUp = false;
+  ttStop();
+  resetScoreUI();
+  gameLog.start(stage.difficulty, game.mineSeed, 'timetrial');
+  renderer.render(game.grid);
+  mineCountEl.textContent = game.getRemainingMines();
+  ttRender();
+  overlay.classList.remove('visible');
+  overlayShareBtn.style.display = 'none';
+  bgmManager.switchTo(stage.difficulty);
+  // 难度按钮高亮同步到当前关卡难度
+  diffBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.diff === stage.difficulty);
+  });
+  // 重置标记模式
+  inputHandler.setFlagMode(false);
+  modeRevealBtn.classList.add('active');
+  modeFlagBtn.classList.remove('active');
+}
+
+/** 进入时间挑战模式（当日已通关则显示锁定提示） */
+function enterTimetrial() {
+  if (isTimetrialDoneToday()) {
+    showTimetrialLocked();
+    return;
+  }
+  startTimetrialStage(0);
+}
+
+/** 当日已通关的锁定提示 */
+function showTimetrialLocked() {
+  ttStop();
+  timerEl.textContent = '00:00';
+  timerEl.classList.remove('urgent');
+  overlayTitle.textContent = t('tt.lockedTitle');
+  overlayTitle.className = 'overlay-title win';
+  overlaySubtitle.textContent = t('tt.lockedSubtitle');
+  overlayScore.textContent = '';
+  overlayBest.textContent = '';
+  overlayInputs.style.display = 'none';
+  overlayRestart.textContent = t('tt.switchClassic');
+  overlayRestart.disabled = false;
+  overlayShareBtn.style.display = 'none';
+  overlay.classList.add('visible');
+}
 
 // === 计分系统（概念 D：连击 / 模式评分）===
 const scoreSystem = new ScoreSystem();
@@ -294,7 +404,39 @@ function updateUI() {
 
   if (game.gameState === 'won') {
     timer.stop();
+    ttStop();
     bgmManager.switchTo('won');
+
+    if (gameMode === 'timetrial') {
+      // === 时间挑战通关结算 ===
+      const stage = TIME_TRIAL_STAGES[ttStage];
+      const used = stage.countdown - ttRemaining;
+      overlayTitle.className = 'overlay-title win';
+      overlayInputs.style.display = 'none';
+      overlayRestart.disabled = false;
+      overlayShareBtn.style.display = '';
+      overlayScore.textContent = '';
+      if (ttStage === 0) {
+        // 第一关通过 → 提示进入第二关（困难 · 120s）
+        const next = TIME_TRIAL_STAGES[1];
+        overlayTitle.textContent = t('tt.stage1Clear');
+        overlaySubtitle.textContent = t('tt.stageUsed', formatSeconds(used));
+        overlayBest.textContent = t('tt.nextStageInfo', t('game.diff.' + next.difficulty), next.countdown);
+        overlayRestart.textContent = t('tt.nextStage');
+      } else {
+        // 第二关通过 → 当天全部通关，写入每日锁定
+        localStorage.setItem(TT_DONE_KEY, getTodayStr());
+        overlayTitle.textContent = t('tt.completeTitle');
+        overlaySubtitle.textContent = t('tt.completeSubtitle');
+        overlayBest.textContent = t('tt.stageUsed', formatSeconds(used));
+        overlayRestart.textContent = t('tt.switchClassic');
+      }
+      setTimeout(() => {
+        if (game.gameState === 'won') overlay.classList.add('visible');
+      }, 1800);
+      return;
+    }
+
     const seconds = Math.floor(timer.elapsed / 1000);
 
     overlayTitle.textContent = t('game.won');
@@ -329,7 +471,26 @@ function updateUI() {
     }, 1800);
   } else if (game.gameState === 'lost') {
     timer.stop();
+    ttStop();
     bgmManager.switchTo('lost');
+
+    if (gameMode === 'timetrial') {
+      // === 时间挑战失败结算（踩雷或倒计时归零，均可再次挑战） ===
+      overlayTitle.className = 'overlay-title lose';
+      overlayTitle.textContent = ttTimeUp ? t('tt.timesUp') : t('game.hitMine');
+      overlaySubtitle.textContent = t('tt.retryHint', ttStage + 1, TIME_TRIAL_STAGES[ttStage].countdown);
+      overlayScore.textContent = '';
+      overlayBest.textContent = '';
+      overlayInputs.style.display = 'none';
+      overlayRestart.textContent = t('tt.retry');
+      overlayRestart.disabled = false;
+      overlayShareBtn.style.display = '';
+      setTimeout(() => {
+        if (game.gameState === 'lost') overlay.classList.add('visible');
+      }, 1600);
+      return;
+    }
+
     overlayTitle.textContent = t('game.hitMine');
     overlayTitle.className = 'overlay-title lose';
     overlaySubtitle.textContent = t('game.tryAgain');
@@ -478,7 +639,9 @@ function collectUserStats(username) {
 // 收集游戏结局分享数据 (场景 1-4)
 function collectGameData() {
   const user = getCurrentUser();
-  const seconds = Math.floor(timer.elapsed / 1000);
+  const seconds = gameMode === 'timetrial'
+    ? TIME_TRIAL_STAGES[ttStage].countdown - ttRemaining
+    : Math.floor(timer.elapsed / 1000);
   const diff = game.difficulty;
   const config = DIFFICULTIES[diff];
   const totalSafeCells = config.rows * config.cols - config.mines;
@@ -982,8 +1145,17 @@ setInterval(() => { if (getCurrentUser() && currentChTab === 'mine') loadMyChall
 
 renderNavUser();
 
-// === 重新开始（当前难度） ===
+// === 重新开始（当前难度 / 时间挑战当前局） ===
 function restart() {
+  if (gameMode === 'timetrial') {
+    // 时间挑战：失败后重试当前局；当日已通关则显示锁定提示
+    if (isTimetrialDoneToday()) {
+      showTimetrialLocked();
+    } else {
+      startTimetrialStage(ttStage);
+    }
+    return;
+  }
   animManager.clear();
   game.init();
   timer.reset();
@@ -999,6 +1171,7 @@ function restart() {
 
 // === 切换难度 ===
 function changeDifficulty(diff) {
+  if (gameMode === 'timetrial') return; // 时间挑战难度由关卡决定，禁止手动切换
   animManager.clear();
   game.setDifficulty(diff);
   renderer.setDifficulty(diff);
@@ -1022,22 +1195,34 @@ function changeDifficulty(diff) {
   modeFlagBtn.classList.remove('active');
 }
 
-// === 切换游戏模式（彩蛋 / 经典） ===
+// === 切换游戏模式（彩蛋 / 经典 / 时间挑战） ===
 const gmodeEggBtn = document.getElementById('gmode-egg');
 const gmodeClassicBtn = document.getElementById('gmode-classic');
+const gmodeTimetrialBtn = document.getElementById('gmode-timetrial');
 const scoreCounterEl = document.querySelector('.score-counter');
+const diffBarEl = document.querySelector('.difficulty-bar');
 
-/** 模式相关的 UI 显隐（计分面板 / 挑战区 / 榜单 / 年度冠军） */
+/** 模式相关的 UI 显隐（计分面板 / 难度条 / 挑战区 / 榜单 / 年度冠军 / 计时标签） */
 function applyModeUI() {
   const isEgg = gameMode === 'egg';
+  const isTT = gameMode === 'timetrial';
   gmodeEggBtn.classList.toggle('active', isEgg);
-  gmodeClassicBtn.classList.toggle('active', !isEgg);
+  gmodeClassicBtn.classList.toggle('active', gameMode === 'classic');
+  gmodeTimetrialBtn.classList.toggle('active', isTT);
   // 计分面板与连击指示仅彩蛋模式
   if (scoreCounterEl) scoreCounterEl.style.display = isEgg ? '' : 'none';
   if (comboItemEl) comboItemEl.style.display = isEgg ? '' : 'none';
+  // 时间挑战：难度由关卡决定，隐藏难度切换条
+  if (diffBarEl) diffBarEl.style.display = isTT ? 'none' : '';
+  // 时间挑战：不上榜，隐藏全球排行榜与年度冠军
+  if (lbInline) lbInline.style.display = isTT ? 'none' : '';
+  // 计时标签：时间挑战显示"倒计时"
+  if (timerLabelEl) timerLabelEl.textContent = isTT ? t('game.countdown') : t('game.time');
   renderChallengeSection();
-  renderLeaderboard();
-  renderYearlyChampions();
+  if (!isTT) {
+    renderLeaderboard();
+    renderYearlyChampions();
+  }
 }
 
 function setGameMode(mode) {
@@ -1045,20 +1230,36 @@ function setGameMode(mode) {
   gameMode = mode;
   localStorage.setItem('bb-game-mode', mode);
   // 模式挂在 Game 实例上（init 不重置 mode），切换后重开一局
-  game.mode = mode;
-  restart();
+  // 时间挑战为纯净扫雷玩法，Game 层面按 classic 处理（无连锁爆破）
+  game.mode = mode === 'timetrial' ? 'classic' : mode;
   applyModeUI();
+  if (mode === 'timetrial') {
+    enterTimetrial();
+  } else {
+    ttStop();
+    timerEl.classList.remove('urgent');
+    // 从时间挑战切出时，难度按钮高亮同步到当前难度
+    diffBtns.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.diff === game.difficulty);
+    });
+    restart();
+  }
 }
 
 gmodeEggBtn.addEventListener('click', () => setGameMode('egg'));
 gmodeClassicBtn.addEventListener('click', () => setGameMode('classic'));
+gmodeTimetrialBtn.addEventListener('click', () => setGameMode('timetrial'));
 
 // === 输入处理 ===
 const inputHandler = new InputHandler(
   canvas, renderer, game, animManager,
   (action) => {
-    if (game.gameState === 'playing' && !timer.intervalId) {
-      timer.start();
+    if (game.gameState === 'playing') {
+      if (gameMode === 'timetrial') {
+        ttStartCountdown();
+      } else if (!timer.intervalId) {
+        timer.start();
+      }
     }
     if (action && action.scoreEvent) {
       handleScoreEvent(action.scoreEvent);
@@ -1121,6 +1322,10 @@ window.addEventListener('resize', () => {
 // 初次渲染
 renderer.render(game.grid);
 mineCountEl.textContent = game.getRemainingMines();
+// 时间挑战模式：初始化第一关（若当日已通关则显示锁定提示）
+if (gameMode === 'timetrial') {
+  enterTimetrial();
+}
 // 注意：初始 applyModeUI() 在 initLeaderboard 中调用——
 // 它依赖下方 lb* DOM 常量与 LB_PERIODS（const 暂时性死区，提前调用会抛
 // ReferenceError 中断脚本，导致提交按钮等后续监听器全部失效）
@@ -1128,6 +1333,21 @@ mineCountEl.textContent = game.getRemainingMines();
 // 按钮事件
 document.getElementById('restart-btn').addEventListener('click', restart);
 overlayRestart.addEventListener('click', () => {
+  // === 时间挑战：不入排行榜，按关卡流程处理 ===
+  if (gameMode === 'timetrial') {
+    if (isTimetrialDoneToday()) {
+      setGameMode('classic'); // 当日已通关（或刚通关）→ 切回经典模式
+    } else if (game.gameState === 'won') {
+      if (ttStage === 0) {
+        startTimetrialStage(1); // 第一关通过 → 进入第二关
+      } else {
+        setGameMode('classic'); // 兜底（正常流程此处已写入每日锁定）
+      }
+    } else {
+      startTimetrialStage(ttStage); // 失败（超时/踩雷）→ 重试当前局
+    }
+    return;
+  }
   if (game.gameState === 'won') {
     const name = overlayNameInput.value.trim() || t('common.anonymous');
     const region = overlayRegionInput.value.trim() || '';
@@ -1249,6 +1469,7 @@ function renderYearlyChampions() {
 
 // 🏆 按钮滚动到全球排行榜
 lbTriggerBtn.addEventListener('click', () => {
+  if (gameMode === 'timetrial') return; // 时间挑战不上榜
   currentLbDiff = game.difficulty;
   currentLbPeriod = (LB_DEFAULT_PERIOD[gameMode] || LB_DEFAULT_PERIOD.egg)[game.difficulty] || 'daily';
   renderLeaderboard();
@@ -1409,6 +1630,11 @@ renderActivityNotices();
 
 // === i18n 初始化 ===（必须在 renderFooterContent 之前，否则 scanI18n 会覆盖动态内容）
 scanI18n();
+// 时间挑战模式：scanI18n 会按 data-i18n 重置计时标签与结算按钮文案，需在其后恢复
+if (gameMode === 'timetrial') {
+  if (timerLabelEl) timerLabelEl.textContent = t('game.countdown');
+  if (isTimetrialDoneToday()) showTimetrialLocked(); // 当日已通关：重新渲染锁定提示
+}
 
 // 底部内容（依赖 scanI18n 之后执行，使用管理后台保存的自定义文案）
 renderFooterContent();
@@ -1443,6 +1669,11 @@ onLangChange((lang) => {
   document.getElementById('html-root').setAttribute('lang', lang === 'zh' ? 'zh-CN' : 'en-US');
   // 重新扫描静态文本
   scanI18n();
+  // 时间挑战模式：计时标签保持"倒计时"（scanI18n 会重置为默认文案）
+  if (gameMode === 'timetrial') {
+    if (timerLabelEl) timerLabelEl.textContent = t('game.countdown');
+    if (isTimetrialDoneToday()) showTimetrialLocked(); // scanI18n 重置了按钮文案，重新渲染锁定提示
+  }
   // 重新渲染背景标语
   renderSlogan();
   // 重新渲染动态内容
