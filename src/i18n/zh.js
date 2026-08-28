@@ -37,7 +37,7 @@ export const zh = {
   'game.mode.timetrial': '时间挑战',
   'game.mode.eggHint': '连锁爆破 · 连击 · 得分排行',
   'game.mode.classicHint': '纯净扫雷 · 用时排行 · 付费挑战',
-  'game.mode.timetrialHint': '限时闯关 · 简单30秒 → 困难120秒 · 每天一次',
+  'game.mode.timetrialHint': '限时闯关 · 简单60秒 → 困难180秒 · 每天一次',
   'game.countdown': '倒计时',
   'game.diff.easy': '简单',
   'game.diff.medium': '中等',
@@ -81,7 +81,7 @@ export const zh = {
   'tt.completeTitle': '🏆 时间挑战完成！',
   'tt.completeSubtitle': '今日两关全部通过，明天再来挑战吧！',
   'tt.lockedTitle': '✅ 今日已完成',
-  'tt.lockedSubtitle': '今天的时间挑战（简单30秒 + 困难120秒）已经完成，明天再来！',
+  'tt.lockedSubtitle': '今天的时间挑战（简单60秒 + 困难180秒）已经完成，明天再来！',
   'tt.switchClassic': '去玩经典模式',
 
   // ===== 认证 =====
