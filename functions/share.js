@@ -12,7 +12,7 @@ export async function onRequestGet(context) {
   const name = u.searchParams.get('name')
     ? String(u.searchParams.get('name')).replace(/[^\p{L}\p{N} _.\-]/gu, '').trim().slice(0, 20)
     : '';
-  const MODES = ['egg', 'classic', 'timetrial'];
+  const MODES = ['egg', 'classic', 'timetrial', 'daily'];
   const mode = MODES.includes(u.searchParams.get('mode')) ? u.searchParams.get('mode') : null;
   const isWin = time !== null && u.searchParams.get('w') !== '0';
 

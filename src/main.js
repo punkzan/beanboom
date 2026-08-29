@@ -7,7 +7,8 @@ import { InputHandler } from './input/InputHandler.js';
 import { SoundManager } from './audio/SoundManager.js';
 import { BGMManager } from './audio/BGMManager.js';
 import { DIFFICULTIES, TIME_TRIAL_STAGES } from './constants.js';
-import { addRecord, getBestTime, getRecords, getYearlyChampions, refreshRecords, addScoreRecord, getScoreRecords, getBestScore, refreshScoreRecords, refreshTTRecords, postTTRecord, getTTRecords, getCountryStandings, getTTCountryStandings } from './core/Leaderboard.js';
+import { addRecord, getBestTime, getRecords, getYearlyChampions, refreshRecords, addScoreRecord, getScoreRecords, getBestScore, refreshScoreRecords, refreshTTRecords, postTTRecord, getTTRecords, getCountryStandings, getTTCountryStandings, refreshDailyRecords, postDailyRecord, getDailyRecords } from './core/Leaderboard.js';
+import { dailyConfig, DAILY_DIFFICULTY } from './core/daily.js';
 import { getSeoConfig, getAdsConfig, getActivities, getLatestActivities, fetchFooterContent, fetchFriendLinks } from './core/SiteConfig.js';
 import { register, login, logout, getCurrentUser } from './core/Auth.js';
 import { getChallenges, participate, getMyChallenges, updateProgress, capturePaypalPayment } from './core/ChallengeAPI.js';
@@ -20,13 +21,15 @@ import { t, scanI18n, getLang, setLang, onLangChange } from './i18n.js';
 // 门户构建开关（CrazyGames 等平台）：VITE_PORTAL=1 时禁用广告、付费挑战、登录
 const PORTAL = import.meta.env.VITE_PORTAL === '1';
 
-// === 三模式（彩蛋 / 经典 / 时间挑战）===
+// === 四模式（彩蛋 / 经典 / 时间挑战 / 每日挑战）===
 // 彩蛋模式：连锁爆破 + 计分 + FEVER，按得分排行（日/月/总榜），无付费挑战
 // 经典模式：纯净扫雷，按用时排行（日/月/年榜），含付费挑战
 // 时间挑战：限时闯关（简单 60s → 困难 120s），倒计时归零即失败，当天通关后锁定
+// 每日挑战：按 UTC 日期生成固定种子，全球所有玩家当天玩同一张棋盘（medium），
+//           当日全球用时榜，次日刷新；可无限重试，日榜只保留更好成绩
 // 模式来源优先级：URL ?mode= 参数（着陆页 CTA）> localStorage > 默认 egg
 const urlMode = new URLSearchParams(window.location.search).get('mode');
-const VALID_MODES = ['classic', 'egg', 'timetrial'];
+const VALID_MODES = ['classic', 'egg', 'timetrial', 'daily'];
 let gameMode;
 if (VALID_MODES.includes(urlMode)) {
   gameMode = urlMode;
@@ -35,7 +38,8 @@ if (VALID_MODES.includes(urlMode)) {
   gameMode = VALID_MODES.includes(localStorage.getItem('bb-game-mode')) ? localStorage.getItem('bb-game-mode') : 'egg';
 }
 
-let game = new Game('easy', gameMode === 'timetrial' ? 'classic' : gameMode);
+// 每日挑战与时间挑战均为纯净扫雷玩法，Game 层面按 classic 处理（无连锁爆破）
+let game = new Game('easy', (gameMode === 'timetrial' || gameMode === 'daily') ? 'classic' : gameMode);
 const canvas = document.getElementById('game-canvas');
 let renderer = new Renderer(canvas, 'easy');
 const animManager = new AnimationManager();
@@ -204,6 +208,42 @@ function submitTTResult() {
       setGameMode('classic');
     }
   });
+}
+
+// === 每日挑战（Daily Challenge）引擎 ===
+// 全球同局：种子由 UTC 日期派生（src/core/daily.js，与后端共享同一实现），
+// 所有玩家当天玩同一张 medium 棋盘；重开一局种子不变，日榜只保留更好成绩。
+let dailyInfo = dailyConfig();   // { date, difficulty, seed, number }
+let dailyRank = null;           // 本局提交后的全球排名（分享卡用）
+let dailySubmitted = false;     // 本局是否已提交日榜
+
+/** 开一局每日挑战（重试时种子相同） */
+function startDailyGame() {
+  dailyInfo = dailyConfig(); // 跨过 UTC 零点时自动刷新棋盘与期数
+  dailyRank = null;
+  dailySubmitted = false;
+  animManager.clear();
+  game.mode = 'classic'; // 每日挑战为纯净扫雷玩法（无连锁爆破）
+  game.setDifficulty(DAILY_DIFFICULTY);
+  game.mineSeed = dailyInfo.seed; // 固定种子：全球同一张棋盘（首翻保护逻辑不变）
+  renderer.setDifficulty(DAILY_DIFFICULTY);
+  timer.reset();
+  resetScoreUI();
+  gameLog.start(DAILY_DIFFICULTY, dailyInfo.seed, 'daily');
+  renderer.render(game.grid);
+  mineCountEl.textContent = game.getRemainingMines();
+  timerEl.textContent = '00:00';
+  overlay.classList.remove('visible');
+  overlayShareBtn.style.display = 'none';
+  bgmManager.switchTo(DAILY_DIFFICULTY);
+  // 难度按钮高亮同步到每日固定难度（难度条已隐藏，仅保持一致性）
+  diffBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.diff === DAILY_DIFFICULTY);
+  });
+  // 重置标记模式
+  inputHandler.setFlagMode(false);
+  modeRevealBtn.classList.add('active');
+  modeFlagBtn.classList.remove('active');
 }
 
 // === 计分系统（概念 D：连击 / 模式评分）===
@@ -470,6 +510,26 @@ function updateUI() {
 
     const seconds = Math.floor(timer.elapsed / 1000);
 
+    if (gameMode === 'daily') {
+      // === 每日挑战通关结算：展示期数与用时，提交后反馈全球排名 ===
+      overlayTitle.className = 'overlay-title win';
+      overlayTitle.textContent = t('daily.won', dailyInfo.number);
+      overlaySubtitle.textContent = t('game.timeUsed', formatSeconds(seconds));
+      overlayInputs.style.display = '';
+      const _du = getCurrentUser();
+      overlayNameInput.value = _du ? _du.username : '';
+      overlayRegionInput.value = _du ? (_du.region || '') : '';
+      overlayScore.textContent = '';
+      overlayBest.textContent = '';
+      overlayRestart.textContent = t('daily.submit');
+      overlayRestart.disabled = false;
+      overlayShareBtn.style.display = '';
+      setTimeout(() => {
+        if (game.gameState === 'won') overlay.classList.add('visible');
+      }, 1800);
+      return;
+    }
+
     overlayTitle.textContent = t('game.won');
     overlayTitle.className = 'overlay-title win';
     overlaySubtitle.textContent = t('game.timeUsed', formatSeconds(seconds));
@@ -677,9 +737,12 @@ function collectGameData() {
   const config = DIFFICULTIES[diff];
   const totalSafeCells = config.rows * config.cols - config.mines;
   const isWin = game.gameState === 'won';
-  const scenario = user
-    ? (isWin ? 3 : 4)
-    : (isWin ? 1 : 2);
+  // 场景 7：每日挑战胜利（Wordle 式标准化分享：期数 + 用时 + 全球排名）
+  const scenario = gameMode === 'daily' && isWin
+    ? 7
+    : user
+      ? (isWin ? 3 : 4)
+      : (isWin ? 1 : 2);
 
   const data = {
     scenario,
@@ -694,6 +757,8 @@ function collectGameData() {
     wasBest: false,
     boardCanvas: canvas,
     username: user ? user.username : null,
+    dailyNumber: dailyInfo ? dailyInfo.number : null,
+    dailyRank,
   };
 
   if (user) {
@@ -743,7 +808,7 @@ function showShareCard(data) {
     lastShareDataUrl = result.dataUrl;
     lastShareText = result.shareText;
     // 缓存战绩参数：win 场景才带时间；失败局也带难度/模式，供 /share 深链进入同模式挑战
-    const win = data.scenario === 1 || data.scenario === 3 || data.scenario === 6;
+    const win = data.scenario === 1 || data.scenario === 3 || data.scenario === 6 || data.scenario === 7;
     lastShareScore = data.timeSeconds > 0 && win
       ? { diff: data.difficulty, time: data.timeSeconds, name: data.username || '', win: true, mode: data.mode || null }
       : { diff: data.difficulty, time: data.timeSeconds > 0 ? data.timeSeconds : null, name: data.username || '', win, mode: data.mode || null };
@@ -1192,6 +1257,11 @@ function restart() {
     }
     return;
   }
+  if (gameMode === 'daily') {
+    // 每日挑战：重开同一张棋盘（种子不变，可反复优化用时，日榜取更好成绩）
+    startDailyGame();
+    return;
+  }
   animManager.clear();
   game.init();
   timer.reset();
@@ -1208,6 +1278,7 @@ function restart() {
 // === 切换难度 ===
 function changeDifficulty(diff) {
   if (gameMode === 'timetrial') return; // 时间挑战难度由关卡决定，禁止手动切换
+  if (gameMode === 'daily') return;     // 每日挑战棋盘全球固定，禁止手动切换难度
   animManager.clear();
   game.setDifficulty(diff);
   renderer.setDifficulty(diff);
@@ -1231,28 +1302,32 @@ function changeDifficulty(diff) {
   modeFlagBtn.classList.remove('active');
 }
 
-// === 切换游戏模式（彩蛋 / 经典 / 时间挑战） ===
+// === 切换游戏模式（彩蛋 / 经典 / 时间挑战 / 每日挑战） ===
 const gmodeEggBtn = document.getElementById('gmode-egg');
 const gmodeClassicBtn = document.getElementById('gmode-classic');
 const gmodeTimetrialBtn = document.getElementById('gmode-timetrial');
+const gmodeDailyBtn = document.getElementById('gmode-daily');
 const scoreCounterEl = document.querySelector('.score-counter');
 const diffBarEl = document.querySelector('.difficulty-bar');
+const lbInlineTitleEl = document.querySelector('.lb-inline-title');
 
 /** 模式相关的 UI 显隐（计分面板 / 难度条 / 挑战区 / 榜单 / 年度冠军 / 计时标签） */
 function applyModeUI() {
   const isEgg = gameMode === 'egg';
   const isTT = gameMode === 'timetrial';
+  const isDaily = gameMode === 'daily';
   gmodeEggBtn.classList.toggle('active', isEgg);
   gmodeClassicBtn.classList.toggle('active', gameMode === 'classic');
   gmodeTimetrialBtn.classList.toggle('active', isTT);
+  gmodeDailyBtn.classList.toggle('active', isDaily);
   // 计分面板与连击指示仅彩蛋模式
   if (scoreCounterEl) scoreCounterEl.style.display = isEgg ? '' : 'none';
   if (comboItemEl) comboItemEl.style.display = isEgg ? '' : 'none';
-  // 时间挑战：难度由关卡决定，隐藏难度切换条
-  if (diffBarEl) diffBarEl.style.display = isTT ? 'none' : '';
-  // 全球排行榜三模式都显示（时间挑战为今日挑战榜，含国家榜视图）
+  // 时间挑战难度由关卡决定、每日挑战棋盘全球固定，均隐藏难度切换条
+  if (diffBarEl) diffBarEl.style.display = (isTT || isDaily) ? 'none' : '';
+  // 全球排行榜四模式都显示（时间挑战/每日挑战为当日全球榜）
   if (lbInline) lbInline.style.display = '';
-  // 计时标签：时间挑战显示"倒计时"
+  // 计时标签：时间挑战显示"倒计时"，其余显示"时间"
   if (timerLabelEl) timerLabelEl.textContent = isTT ? t('game.countdown') : t('game.time');
   renderChallengeSection();
   renderLeaderboard();
@@ -1264,11 +1339,15 @@ function setGameMode(mode) {
   gameMode = mode;
   localStorage.setItem('bb-game-mode', mode);
   // 模式挂在 Game 实例上（init 不重置 mode），切换后重开一局
-  // 时间挑战为纯净扫雷玩法，Game 层面按 classic 处理（无连锁爆破）
-  game.mode = mode === 'timetrial' ? 'classic' : mode;
+  // 时间挑战/每日挑战为纯净扫雷玩法，Game 层面按 classic 处理（无连锁爆破）
+  game.mode = (mode === 'timetrial' || mode === 'daily') ? 'classic' : mode;
   applyModeUI();
   if (mode === 'timetrial') {
     enterTimetrial();
+  } else if (mode === 'daily') {
+    ttStop();
+    timerEl.classList.remove('urgent');
+    startDailyGame();
   } else {
     ttStop();
     timerEl.classList.remove('urgent');
@@ -1283,6 +1362,7 @@ function setGameMode(mode) {
 gmodeEggBtn.addEventListener('click', () => setGameMode('egg'));
 gmodeClassicBtn.addEventListener('click', () => setGameMode('classic'));
 gmodeTimetrialBtn.addEventListener('click', () => setGameMode('timetrial'));
+gmodeDailyBtn.addEventListener('click', () => setGameMode('daily'));
 
 // === 输入处理 ===
 const inputHandler = new InputHandler(
@@ -1360,6 +1440,10 @@ mineCountEl.textContent = game.getRemainingMines();
 if (gameMode === 'timetrial') {
   enterTimetrial();
 }
+// 每日挑战模式：初始化今日棋盘（固定种子，全球同局）
+if (gameMode === 'daily') {
+  startDailyGame();
+}
 // 注意：初始 applyModeUI() 在 initLeaderboard 中调用——
 // 它依赖下方 lb* DOM 常量与 LB_PERIODS（const 暂时性死区，提前调用会抛
 // ReferenceError 中断脚本，导致提交按钮等后续监听器全部失效）
@@ -1384,6 +1468,31 @@ overlayRestart.addEventListener('click', () => {
     } else {
       startTimetrialStage(ttStage); // 失败（超时/踩雷）→ 重试当前局
     }
+    return;
+  }
+  if (gameMode === 'daily' && game.gameState === 'won') {
+    // === 每日挑战：提交成绩到今日全球榜，反馈排名后可再来一局 ===
+    if (dailySubmitted) {
+      restart();
+      return;
+    }
+    const name = overlayNameInput.value.trim() || t('common.anonymous');
+    const region = overlayRegionInput.value.trim() || '';
+    const seconds = Math.floor(timer.elapsed / 1000);
+    const logData = gameLog.export();
+    overlayRestart.disabled = true;
+    postDailyRecord(seconds, name, region, logData).then((res) => {
+      dailySubmitted = true;
+      renderLeaderboard();
+      if (res) {
+        dailyRank = res.rank;
+        overlayBest.textContent = t('daily.globalRank', res.rank, res.number);
+      } else {
+        overlayBest.textContent = t('daily.submitFail');
+      }
+      overlayRestart.textContent = t('daily.playAgain');
+      overlayRestart.disabled = false;
+    });
     return;
   }
   if (game.gameState === 'won') {
@@ -1449,13 +1558,15 @@ const LB_DEFAULT_PERIOD = { classic: { easy: 'daily', medium: 'daily', hard: 'da
 
 function renderLeaderboard() {
   const ttMode = gameMode === 'timetrial';
-  const isCountry = currentLbView === 'country' && gameMode !== 'egg'; // 国家榜仅经典/时间挑战模式
-  // 难度 tab：时间挑战难度由关卡决定，隐藏难度维度
+  const dailyMode = gameMode === 'daily';
+  const fixedDiff = ttMode || dailyMode; // 时间挑战由关卡决定、每日挑战全球固定
+  const isCountry = currentLbView === 'country' && (gameMode === 'classic' || gameMode === 'timetrial'); // 国家榜仅经典/时间挑战
+  // 难度 tab：固定难度模式隐藏难度维度
   lbDiffTabs.querySelectorAll('.lb-tab').forEach(btn => {
-    btn.style.display = ttMode ? 'none' : '';
-    btn.classList.toggle('active', !ttMode && btn.dataset.lbDiff === currentLbDiff);
+    btn.style.display = fixedDiff ? 'none' : '';
+    btn.classList.toggle('active', !fixedDiff && btn.dataset.lbDiff === currentLbDiff);
   });
-  // 时间维度 tab + 国家榜切换（经典/时间挑战显示，彩蛋隐藏）
+  // 时间维度 tab + 国家榜切换（经典/时间挑战显示，彩蛋/每日挑战隐藏）
   const periods = (LB_PERIODS[gameMode] || LB_PERIODS_EGG)[currentLbDiff] || ['all'];
   if (!periods.includes(currentLbPeriod)) {
     currentLbPeriod = (LB_DEFAULT_PERIOD[gameMode] || LB_DEFAULT_PERIOD.egg)[currentLbDiff] || 'daily';
@@ -1463,23 +1574,31 @@ function renderLeaderboard() {
   lbPeriodTabs.classList.remove('hidden');
   lbPeriodTabs.querySelectorAll('.lb-tab').forEach(btn => {
     if (btn.dataset.lbView === 'country') {
-      const visible = gameMode !== 'egg';
+      const visible = gameMode === 'classic' || gameMode === 'timetrial';
       btn.style.display = visible ? '' : 'none';
       btn.classList.toggle('active', visible && currentLbView === 'country');
       return;
     }
-    const visible = !ttMode && periods.includes(btn.dataset.lbPeriod);
+    const visible = !fixedDiff && periods.includes(btn.dataset.lbPeriod);
     btn.style.display = visible ? '' : 'none';
     btn.classList.toggle('active', visible && currentLbView === 'players' && btn.dataset.lbPeriod === currentLbPeriod);
   });
-  // 数据：时间挑战显示今日挑战榜；国家榜按地区聚合
-  const records = ttMode
-    ? (isCountry ? getTTCountryStandings() : getTTRecords())
-    : isCountry
-      ? getCountryStandings(currentLbDiff, currentLbPeriod)
-      : gameMode === 'egg'
-        ? getScoreRecords(currentLbDiff, currentLbPeriod)
-        : getRecords(currentLbDiff, currentLbPeriod);
+  // 榜单标题：每日挑战显示期数（scanI18n 会按 data-i18n 重置，语言切换后重渲染恢复）
+  if (lbInlineTitleEl) {
+    lbInlineTitleEl.textContent = dailyMode
+      ? t('lb.dailyTitle', dailyInfo.number)
+      : t('lb.title');
+  }
+  // 数据：时间挑战/每日挑战显示当日全球榜；国家榜按地区聚合
+  const records = dailyMode
+    ? getDailyRecords()
+    : ttMode
+      ? (isCountry ? getTTCountryStandings() : getTTRecords())
+      : isCountry
+        ? getCountryStandings(currentLbDiff, currentLbPeriod)
+        : gameMode === 'egg'
+          ? getScoreRecords(currentLbDiff, currentLbPeriod)
+          : getRecords(currentLbDiff, currentLbPeriod);
   if (!records.length) {
     lbScrollTrack.innerHTML = '<div class="lb-empty">' + t('lb.empty') + '</div>';
     return;
@@ -1537,10 +1656,10 @@ function renderYearlyChampions() {
   });
 }
 
-// 🏆 按钮滚动到全球排行榜（时间挑战显示今日挑战榜）
+// 🏆 按钮滚动到全球排行榜（时间挑战/每日挑战显示当日全球榜）
 lbTriggerBtn.addEventListener('click', () => {
   currentLbView = 'players';
-  if (gameMode !== 'timetrial') currentLbDiff = game.difficulty;
+  if (gameMode !== 'timetrial' && gameMode !== 'daily') currentLbDiff = game.difficulty;
   currentLbPeriod = (LB_DEFAULT_PERIOD[gameMode] || LB_DEFAULT_PERIOD.egg)[game.difficulty] || 'daily';
   renderLeaderboard();
   lbInline.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1569,11 +1688,11 @@ lbPeriodTabs.addEventListener('click', (e) => {
   renderLeaderboard();
 });
 
-// 初始渲染全球排行榜（先从服务端拉取全局数据，再渲染；三套榜单都拉）
+// 初始渲染全球排行榜（先从服务端拉取全局数据，再渲染；四套榜单都拉）
 (async function initLeaderboard() {
   // 应用初始模式 UI（localStorage 恢复的模式）——须在全部 lb*/LB_PERIODS 常量声明之后执行
   applyModeUI();
-  await Promise.all([refreshRecords(), refreshScoreRecords(), refreshTTRecords()]);
+  await Promise.all([refreshRecords(), refreshScoreRecords(), refreshTTRecords(), refreshDailyRecords()]);
   renderLeaderboard();
   renderYearlyChampions();
 })();

@@ -7,6 +7,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { replayGame, metricAchieved } from '../lib/replay.js';
+import { dailyConfig, utcDateStr } from '../../src/core/daily.js';
 
 // === KV 键名常量 ===
 const KV_KEYS = {
@@ -19,6 +20,7 @@ const KV_KEYS = {
   records: 'records',           // 经典模式：用时排行榜
   scoreRecords: 'score_records', // 彩蛋模式：得分排行榜
   ttRecords: 'tt_records',      // 时间挑战：每日总用时榜（仅存当日数据）
+  dailyRecords: 'daily_records', // 每日挑战：固定种子棋盘当日全球榜（仅存当日数据）
 };
 
 // 排行榜各难度存储上限
@@ -31,6 +33,8 @@ function todayStr() {
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 }
+
+// 每日挑战种子/期数计算见 src/core/daily.js（前后端共享，保证全球同局）
 
 // === 工具函数 ===
 function genId(prefix) {
@@ -362,8 +366,8 @@ app.post('/api/progress', async (c) => {
   if (!username || !difficulty) {
     return c.json({ error: 'Missing username or difficulty' }, 400);
   }
-  // 付费挑战归属经典模式：仅接受经典模式对局日志
-  if (gameLog && gameLog.mode === 'egg') {
+  // 付费挑战归属经典模式：仅接受经典模式对局日志（每日挑战固定棋盘可反复刷，不计入）
+  if (gameLog && (gameLog.mode === 'egg' || gameLog.mode === 'daily')) {
     return c.json({ error: 'Invalid game log: classic mode required' }, 400);
   }
   // 反作弊：重放对局日志验证，服务端重算结果为唯一真相
@@ -517,8 +521,9 @@ app.post('/api/records', async (c) => {
   const diff = ['easy', 'medium', 'hard'].includes(difficulty) ? difficulty : null;
   if (!diff) return c.json({ error: 'Invalid difficulty' }, 400);
 
-  // 用时榜归属经典模式：拒绝彩蛋模式日志（连锁爆破可加速通关，对经典榜不公平）
-  if (gameLog && gameLog.mode === 'egg') {
+  // 用时榜归属经典模式：拒绝彩蛋/每日挑战日志
+  // （连锁爆破可加速通关；每日挑战为固定棋盘可反复练习刷成绩，对随机棋盘榜不公平）
+  if (gameLog && (gameLog.mode === 'egg' || gameLog.mode === 'daily')) {
     return c.json({ error: 'Invalid game log: classic mode required' }, 400);
   }
 
@@ -657,6 +662,75 @@ app.post('/api/tt-records', async (c) => {
   const trimmed = list.slice(0, 200);
   await kvPut(c.env, KV_KEYS.ttRecords, trimmed);
   return c.json({ records: trimmed.slice(0, 100) });
+});
+
+// -- 每日挑战：获取今日配置（全球同局：固定种子 + 期数） --
+app.get('/api/daily', (c) => c.json(dailyConfig()));
+
+// -- 每日挑战日榜：获取今日全球排行（用时升序） --
+app.get('/api/daily-records', async (c) => {
+  const all = await kvGet(c.env, KV_KEYS.dailyRecords, []);
+  const today = utcDateStr();
+  return c.json(all.filter(r => r.date === today).sort((a, b) => a.time - b.time).slice(0, 100));
+});
+
+// -- 每日挑战日榜：提交成绩（服务端重放验证 + 种子校验，每名玩家每日取更好成绩） --
+app.post('/api/daily-records', async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const { time, name, region, gameLog } = body;
+  if (typeof time !== 'number' || time <= 0 || time > 3600 || !name) {
+    return c.json({ error: 'Missing or invalid fields (time, name required)' }, 400);
+  }
+  if (!gameLog || gameLog.mode !== 'daily') {
+    return c.json({ error: 'Invalid game log: daily mode required' }, 400);
+  }
+
+  // 反作弊核心：日志种子/难度必须等于今日配置（防止拿自选种子棋盘冒充每日挑战）
+  const cfg = dailyConfig();
+  if (gameLog.difficulty !== cfg.difficulty) {
+    return c.json({ error: 'Invalid game log: difficulty mismatch' }, 400);
+  }
+  if (gameLog.seed !== cfg.seed) {
+    return c.json({ error: 'Invalid game log: seed mismatch (not today\'s board)' }, 403);
+  }
+
+  // 重放验证胜利 + 时长一致（±3s 容差与经典榜一致）
+  const replay = replayGame(gameLog);
+  if (!replay.ok) {
+    return c.json({ error: 'Invalid game log', reason: replay.reason }, 400);
+  }
+  if (!replay.won) {
+    return c.json({ error: 'Game verification failed: not a win' }, 403);
+  }
+  if (Math.abs(time - replay.durationSeconds) > 3) {
+    return c.json({ error: 'Game verification failed: time mismatch' }, 403);
+  }
+
+  const cleanName = String(name).slice(0, 12);
+  const all = await kvGet(c.env, KV_KEYS.dailyRecords, []);
+  const today = utcDateStr();
+  // 同名同日只保留更好成绩；顺带丢弃非当日数据（KV 自清理）
+  const list = all.filter(r => r.date === today);
+  const mine = list.find(r => r.name === cleanName);
+  if (mine) {
+    if (time >= mine.time) {
+      const records = list.sort((a, b) => a.time - b.time).slice(0, 100);
+      return c.json({ rank: list.findIndex(r => r.name === cleanName) + 1, number: cfg.number, records });
+    }
+    mine.time = time;
+    mine.timestamp = Date.now();
+    mine.region = String(region || '').slice(0, 20);
+  } else {
+    list.push({ time, timestamp: Date.now(), date: today, name: cleanName, region: String(region || '').slice(0, 20) });
+  }
+  list.sort((a, b) => a.time - b.time);
+  const trimmed = list.slice(0, 200);
+  await kvPut(c.env, KV_KEYS.dailyRecords, trimmed);
+  return c.json({
+    rank: trimmed.findIndex(r => r.name === cleanName) + 1,
+    number: cfg.number,
+    records: trimmed.slice(0, 100),
+  });
 });
 
 // -- 友情链接 --

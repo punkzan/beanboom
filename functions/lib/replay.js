@@ -27,7 +27,8 @@ export function replayGame(log) {
   if (actions.length > MAX_ACTIONS) return { ok: false, reason: 'too many actions' };
 
   // 游戏模式：'classic'（经典：纯净扫雷，无连锁爆破）| 'egg'（彩蛋，默认/旧日志兼容）
-  const mode = log.mode === 'classic' ? 'classic' : 'egg';
+  // 'daily'（每日挑战）与 'timetrial' 同样按纯扫雷机制重放（固定棋盘公平性要求）
+  const mode = (log.mode === 'classic' || log.mode === 'daily' || log.mode === 'timetrial') ? 'classic' : 'egg';
   const game = new Game(difficulty, mode);
   game.mineSeed = seed;
 

@@ -1,10 +1,11 @@
 // ShareCard.js - Bean Boom 分享图生成引擎
-// 使用 Canvas 2D 绘制 6 种场景的分享图，输出 PNG data URL
+// 使用 Canvas 2D 绘制 7 种场景的分享图，输出 PNG data URL
 // 文案通过 i18n (t) 跟随当前语言
 //
 // 场景 1: 游客胜利  场景 2: 游客失败
 // 场景 3: 注册用户胜利  场景 4: 注册用户失败
 // 场景 5: 注册用户参加挑战  场景 6: 注册用户完成挑战
+// 场景 7: 每日挑战胜利（Wordle 式标准化：期数 + 用时 + 全球排名）
 
 import { t } from '../i18n.js';
 import { getCachedBackgroundImage } from './BackgroundImage.js';
@@ -21,6 +22,7 @@ const C = {
   FOREST_DK:  '#3b6d11',
   PINK:       '#d4537e',
   GOLD:       '#fac775',
+  GOLD_DK:    '#d9a13b',
   WHITE:      '#ffffff',
   BLACK:      '#1a1a1a',
   GRAY_TXT:   '#888780',
@@ -140,6 +142,7 @@ function drawHeader(ctx, W, y, data) {
   if (s === 1 || s === 3) { bg = C.MINT_DARK; label = t('share.header.win'); }
   else if (s === 2 || s === 4) { bg = C.WARM_GRAY; label = t('share.header.soClose'); }
   else if (s === 5) { bg = C.PURPLE_DK; label = t('share.header.challenge'); }
+  else if (s === 7) { bg = C.GOLD_DK; label = resolveText('share.header.daily', data.dailyNumber || 0); }
   else { bg = C.FOREST_DK; label = t('share.header.completed'); }
 
   ctx.fillStyle = bg;
@@ -157,7 +160,7 @@ function drawHeader(ctx, W, y, data) {
 
 function drawBoardArea(ctx, W, y, h, data) {
   const s = data.scenario;
-  const isWin = (s === 1 || s === 3);
+  const isWin = (s === 1 || s === 3 || s === 7);
   const bgColor = isWin ? C.MINT : C.LIGHT_BG;
 
   ctx.fillStyle = bgColor;
@@ -207,12 +210,19 @@ function drawSolidBg(ctx, W, y, h, color, data) {
 
 function drawDataCards(ctx, W, y, data, isReg) {
   const s = data.scenario;
-  const isWin = (s === 1 || s === 3);
+  const isWin = (s === 1 || s === 3 || s === 7);
   const cardW = (W - 60 - 20) / 3;
   const cardH = 80;
 
   let cards;
-  if (s <= 4) {
+  if (s === 7) {
+    // 每日挑战：期数 + 用时 + 全球排名（Wordle 式标准化三要素）
+    cards = [
+      { label: t('share.card.dailyNumber'), value: '#' + (data.dailyNumber || 0) },
+      { label: t('share.card.time'), value: fmtSec(data.timeSeconds || 0) },
+      { label: t('share.card.dailyRank'), value: data.dailyRank ? '#' + data.dailyRank : '—' },
+    ];
+  } else if (s <= 4) {
     const isWin = (s === 1 || s === 3);
     if (isWin) {
       cards = [
@@ -412,6 +422,7 @@ function drawShareText(ctx, W, y, h, data, isReg) {
   else if (s === 3) text = t('share.text.scenario3');
   else if (s === 4) text = resolveText('share.text.scenario4', data.remainingCells || 0, diffLabel(data.difficulty));
   else if (s === 5) text = t('share.text.scenario5');
+  else if (s === 7) text = resolveText('share.text.scenario7', data.dailyNumber || 0, fmtSec(data.timeSeconds || 0), data.dailyRank || 0);
   else text = t('share.text.scenario6');
 
   ctx.fillStyle = isReg ? C.WHITE : (s === 1 ? C.WHITE : C.WARM_GRAY);
@@ -633,6 +644,7 @@ export function generateShareCard(data) {
   if (s === 1 || s === 3) fullBg = C.MINT;
   else if (s === 2 || s === 4) fullBg = C.LIGHT_BG;
   else if (s === 5) fullBg = C.PURPLE;
+  else if (s === 7) fullBg = C.GOLD;
   else fullBg = C.FOREST;
 
   ctx.fillStyle = fullBg;
@@ -651,7 +663,7 @@ export function generateShareCard(data) {
   if (isReg) {
     cursorY = drawUserBar(ctx, W, cursorY, data) + 8;
   } else {
-    ctx.fillStyle = s === 1 ? 'rgba(255,255,255,0.7)' : C.GRAY_TXT;
+    ctx.fillStyle = (s === 1 || s === 7) ? 'rgba(255,255,255,0.7)' : C.GRAY_TXT;
     ctx.font = '14px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -660,7 +672,7 @@ export function generateShareCard(data) {
     cursorY += 36;
   }
 
-  if (s <= 4) {
+  if (s <= 4 || s === 7) {
     const boardH = isReg ? 380 : 420;
     drawBoardArea(ctx, W, cursorY, boardH, data);
     cursorY += boardH + 12;
@@ -705,6 +717,7 @@ function getShareText(data) {
   if (s === 2) return resolveText('share.txt.scenario2', diff, data.remainingCells || 0);
   if (s === 3) return t('share.txt.scenario3', user, diff, time, data.mineCount||0);
   if (s === 4) return resolveText('share.txt.scenario4', user, diff, data.remainingCells || 0);
+  if (s === 7) return resolveText('share.txt.scenario7', data.dailyNumber || 0, time, data.dailyRank || 0, user);
   if (s === 5) {
     const pKey = ch.period === 'yearly' ? t('challenge.period.yearly') : ch.period === 'custom' ? t('challenge.period.custom', ch.customDays||30) : t('challenge.period.monthly');
     return t('share.txt.scenario5', user, ch.amount||0, diff, pKey);

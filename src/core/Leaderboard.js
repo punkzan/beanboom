@@ -337,6 +337,55 @@ export function getTTRecords() {
   }
 }
 
+// ==================== 每日挑战日榜 ====================
+
+const DAILY_STORAGE_KEY = 'minesweeper-beads-daily-records';
+
+/** 从服务端拉取今日每日挑战榜并更新本地缓存 */
+export async function refreshDailyRecords() {
+  try {
+    const res = await fetch(BASE + '/daily-records');
+    if (!res.ok) return;
+    localStorage.setItem(DAILY_STORAGE_KEY, JSON.stringify(await res.json()));
+  } catch (e) {
+    // 网络异常：保留 localStorage 缓存
+  }
+}
+
+/**
+ * 提交每日挑战成绩（服务端重放验证 + 今日种子校验）
+ * @param {number} seconds 用时（秒）
+ * @param {string} name
+ * @param {string} region
+ * @param {object|null} gameLog 对局日志（mode 必须为 'daily'，seed 为今日种子）
+ * @returns {Promise<{rank: number, number: number}|null>} 全球排名与期数；提交失败返回 null
+ */
+export async function postDailyRecord(seconds, name, region, gameLog = null) {
+  try {
+    const res = await fetch(BASE + '/daily-records', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ time: seconds, name: name || t('common.anonymous'), region: region || '', gameLog }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.records) localStorage.setItem(DAILY_STORAGE_KEY, JSON.stringify(data.records));
+    return { rank: data.rank, number: data.number };
+  } catch (e) {
+    return null;
+  }
+}
+
+/** 今日每日挑战榜（已按用时升序，读本地缓存） */
+export function getDailyRecords() {
+  try {
+    return JSON.parse(localStorage.getItem(DAILY_STORAGE_KEY) || '[]')
+      .map(r => ({ ...r, name: r.name || t('common.anonymous'), region: r.region || '' }));
+  } catch (e) {
+    return [];
+  }
+}
+
 // ==================== 国家榜（按地区聚合） ====================
 
 /** 按地区聚合：每个地区一行（最优用时 / 完成人次 / 最快玩家），按最优用时升序 */

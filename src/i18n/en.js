@@ -35,9 +35,11 @@ export const en = {
   'game.mode.egg': 'Egg Mode',
   'game.mode.classic': 'Classic Mode',
   'game.mode.timetrial': 'Time Attack',
+  'game.mode.daily': 'Daily Challenge',
   'game.mode.eggHint': 'Chain blasts · Combos · Score ranking',
   'game.mode.classicHint': 'Pure minesweeper · Time ranking · Paid challenges',
   'game.mode.timetrialHint': 'Beat the clock · Easy 60s → Hard 120s · Once per day',
+  'game.mode.dailyHint': 'One board a day · Same board worldwide · Global ranking',
   'game.countdown': 'Countdown',
   'game.diff.easy': 'Easy',
   'game.diff.medium': 'Medium',
@@ -85,6 +87,13 @@ export const en = {
   'tt.lockedTitle': '✅ Already Completed Today',
   'tt.lockedSubtitle': "You've already cleared today's Time Attack (Easy 60s + Hard 120s). Come back tomorrow!",
   'tt.switchClassic': 'Play Classic Mode',
+
+  // ===== Daily Challenge =====
+  'daily.won': (n)=> `🏆 Daily Challenge #${n} Cleared!`,
+  'daily.submit': 'Submit to Global Ranking',
+  'daily.globalRank': (r, n)=> `Global Rank #${r} in Daily #${n}`,
+  'daily.submitFail': 'Submit failed — please try again',
+  'daily.playAgain': 'Play Again (Same Board)',
 
   // ===== Auth =====
   'auth.registerTitle': 'Create Account',
@@ -162,6 +171,7 @@ export const en = {
 
   // ===== Leaderboard =====
   'lb.title': '🏆 Global Leaderboard',
+  'lb.dailyTitle': (n)=> `📅 Daily Challenge #${n} · Today's Global Ranking`,
   'lb.tab.daily': 'Daily',
   'lb.tab.monthly': 'Monthly',
   'lb.tab.yearly': 'Yearly',
@@ -189,6 +199,7 @@ export const en = {
   'share.header.soClose': 'Bean Boom · So Close',
   'share.header.challenge': 'Bean Boom · Challenge',
   'share.header.completed': 'Bean Boom · Completed',
+  'share.header.daily': (n)=> `Bean Boom · Daily #${n}`,
 
   'share.card.time': 'Time',
   'share.card.mines': 'Mines',
@@ -197,6 +208,8 @@ export const en = {
   'share.card.remaining': 'Cells Left',
   'share.card.survival': 'Survived',
   'share.card.maxCombo': 'Max Chain',
+  'share.card.dailyNumber': 'Daily',
+  'share.card.dailyRank': 'Global Rank',
   'share.card.goal': 'Goal',
   'share.card.times': (n)=> `${n}`,
   'share.card.period': 'Period',
@@ -234,6 +247,7 @@ export const en = {
   'share.text.scenario4': (r,d)=> `So close — just ${r} cells left on ${d}!`,
   'share.text.scenario5': 'Full refund on completion! Join the challenge',
   'share.text.scenario6': 'I did it — full refund received! Take the challenge',
+  'share.text.scenario7': (n, t, r)=> r ? `Daily #${n} · ${t} · Global Rank #${r}` : `Daily #${n} · ${t} · Can you beat me?`,
 
   'share.txt.scenario1': (d,t)=> `I won on Bean Boom ${d} mode! Time: ${t}. Sign up to record your score and challenge me!`,
   'share.txt.scenario2': (d,r)=> `I was just ${r} cells away from clearing ${d} mode on Bean Boom! Think you can do better?`,
@@ -241,6 +255,9 @@ export const en = {
   'share.txt.scenario4': (u,d,r)=> `${u} was just ${r} cells away from clearing ${d} mode on Bean Boom. Dare to beat it?`,
   'share.txt.scenario5': (u,a,d,p)=> `${u} joined the $${a} ${d} ${p} Challenge on Bean Boom! Full refund on completion. Can you do it?`,
   'share.txt.scenario6': (u,a,d,p,t)=> `${u} completed the $${a} ${d} Challenge! ${p}/${t} wins — $${a} fully refunded. Zero-cost challenge, join now!`,
+  'share.txt.scenario7': (n,t,r,u)=> r
+    ? `${u ? u + ' cleared' : 'Cleared'} Bean Boom Daily Challenge #${n} in ${t} — Global Rank #${r}. A new board drops every day. Can you beat me?`
+    : `${u ? u + ' cleared' : 'Cleared'} Bean Boom Daily Challenge #${n} in ${t}! A new board drops every day. Can you beat me?`,
   'share.txt.default': 'Bean Boom - Classic Minesweeper Online',
 
   // ===== Footer =====

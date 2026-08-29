@@ -35,9 +35,11 @@ export const zh = {
   'game.mode.egg': '彩蛋模式',
   'game.mode.classic': '经典模式',
   'game.mode.timetrial': '时间挑战',
+  'game.mode.daily': '每日挑战',
   'game.mode.eggHint': '连锁爆破 · 连击 · 得分排行',
   'game.mode.classicHint': '纯净扫雷 · 用时排行 · 付费挑战',
   'game.mode.timetrialHint': '限时闯关 · 简单60秒 → 困难120秒 · 每天一次',
+  'game.mode.dailyHint': '全球同局 · 每天一张棋盘 · 当日全球排名',
   'game.countdown': '倒计时',
   'game.diff.easy': '简单',
   'game.diff.medium': '中等',
@@ -85,6 +87,13 @@ export const zh = {
   'tt.lockedTitle': '✅ 今日已完成',
   'tt.lockedSubtitle': '今天的时间挑战（简单60秒 + 困难120秒）已经完成，明天再来！',
   'tt.switchClassic': '去玩经典模式',
+
+  // ===== 每日挑战 =====
+  'daily.won': (n)=> `🏆 每日挑战 #${n} 通关！`,
+  'daily.submit': '提交到全球榜',
+  'daily.globalRank': (r, n)=> `每日挑战 #${n} · 全球排名 #${r}`,
+  'daily.submitFail': '提交失败，请重试',
+  'daily.playAgain': '再来一局（同一棋盘）',
 
   // ===== 认证 =====
   'auth.registerTitle': '注册账户',
@@ -162,6 +171,7 @@ export const zh = {
 
   // ===== 排行榜 =====
   'lb.title': '🏆 全球排行榜',
+  'lb.dailyTitle': (n)=> `📅 每日挑战 #${n} · 今日全球榜`,
   'lb.tab.daily': '日榜',
   'lb.tab.monthly': '月榜',
   'lb.tab.yearly': '年度榜',
@@ -189,6 +199,7 @@ export const zh = {
   'share.header.soClose': 'Bean Boom · 差一点',
   'share.header.challenge': 'Bean Boom · 付费挑战',
   'share.header.completed': 'Bean Boom · 挑战完成',
+  'share.header.daily': (n)=> `Bean Boom · 每日挑战 #${n}`,
 
   'share.card.time': '用时',
   'share.card.mines': '雷数',
@@ -197,6 +208,8 @@ export const zh = {
   'share.card.remaining': '剩余格子',
   'share.card.survival': '存活时间',
   'share.card.maxCombo': '最大连锁',
+  'share.card.dailyNumber': '期数',
+  'share.card.dailyRank': '全球排名',
   'share.card.goal': '目标',
   'share.card.times': (n)=> `${n}次`,
   'share.card.period': '周期',
@@ -234,6 +247,7 @@ export const zh = {
   'share.text.scenario4': (r,d)=> `就差一点——${d}还剩 ${r} 格！`,
   'share.text.scenario5': '达成目标全额退款！一起来挑战吧',
   'share.text.scenario6': '我做到了，全额退款已到账！你也来挑战吧',
+  'share.text.scenario7': (n, t, r)=> r ? `每日挑战 #${n} · 用时 ${t} · 全球排名 #${r}` : `每日挑战 #${n} · 用时 ${t} · 你能超过我吗？`,
 
   'share.txt.scenario1': (d,t)=> `我在 Bean Boom 赢了${d}难度！用时${t}。注册就能记录成绩，快来挑战我吧！`,
   'share.txt.scenario2': (d,r)=> `我在 Bean Boom ${d}难度踩雷了……离通关只差 ${r} 格！你能比我强吗？`,
@@ -241,6 +255,9 @@ export const zh = {
   'share.txt.scenario4': (u,d,r)=> `${u} 在 Bean Boom ${d}难度踩雷了，离通关只差 ${r} 格。你敢来挑战吗？`,
   'share.txt.scenario5': (u,a,d,p)=> `${u} 加入了$${a}${d}${p}挑战！达成目标全额退款。你敢来吗？`,
   'share.txt.scenario6': (u,a,d,p,t)=> `${u} 完成了$${a}${d}挑战！${p}/${t}次达标，$${a}已全额退还。零成本挑战，快来参加！`,
+  'share.txt.scenario7': (n,t,r,u)=> r
+    ? `${u ? u + '通关' : '通关'} Bean Boom 每日挑战 #${n}，用时 ${t}，全球排名 #${r}！每天一张新棋盘，你能超过我吗？`
+    : `${u ? u + '通关' : '通关'} Bean Boom 每日挑战 #${n}，用时 ${t}！每天一张新棋盘，你能超过我吗？`,
   'share.txt.default': 'Bean Boom - 经典扫雷网页游戏',
 
   // ===== 底部 =====
