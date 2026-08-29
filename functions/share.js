@@ -12,6 +12,8 @@ export async function onRequestGet(context) {
   const name = u.searchParams.get('name')
     ? String(u.searchParams.get('name')).replace(/[^\p{L}\p{N} _.\-]/gu, '').trim().slice(0, 20)
     : '';
+  const MODES = ['egg', 'classic', 'timetrial'];
+  const mode = MODES.includes(u.searchParams.get('mode')) ? u.searchParams.get('mode') : null;
   const isWin = time !== null && u.searchParams.get('w') !== '0';
 
   // 保留 UTM 参数透传到首页
@@ -32,10 +34,14 @@ export async function onRequestGet(context) {
   const ogQ = new URLSearchParams({ diff, w: isWin ? '1' : '0' });
   if (time !== null) ogQ.set('time', String(time));
   if (name) ogQ.set('name', name);
+  if (mode) ogQ.set('mode', mode);
   const origin = `https://${u.host}`;
   const ogImage = `${origin}/og?${ogQ.toString()}`;
   const shareUrl = `${origin}/share?${ogQ.toString()}`;
-  const target = `${origin}/${utm ? '?' + utm : ''}`;
+  const targetParams = [];
+  if (mode) targetParams.push(`mode=${mode}`);
+  if (utm) targetParams.push(utm);
+  const target = `${origin}/${targetParams.length ? '?' + targetParams.join('&') : ''}`;
 
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 

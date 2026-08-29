@@ -186,6 +186,7 @@ export const en = {
 
   'share.header.win': 'Bean Boom · Victory',
   'share.header.lose': 'Bean Boom · Scorecard',
+  'share.header.soClose': 'Bean Boom · So Close',
   'share.header.challenge': 'Bean Boom · Challenge',
   'share.header.completed': 'Bean Boom · Completed',
 
@@ -193,6 +194,9 @@ export const en = {
   'share.card.mines': 'Mines',
   'share.card.revealed': 'Revealed',
   'share.card.progress': 'Progress',
+  'share.card.remaining': 'Cells Left',
+  'share.card.survival': 'Survived',
+  'share.card.maxCombo': 'Max Chain',
   'share.card.goal': 'Goal',
   'share.card.times': (n)=> `${n}`,
   'share.card.period': 'Period',
@@ -225,16 +229,16 @@ export const en = {
   'share.userBar.anon': (d)=> `Anonymous · ${d}`,
 
   'share.text.scenario1': 'Sign up to save scores and challenge the global leaderboard!',
-  'share.text.scenario2': 'So close! Sign up to track your match history',
+  'share.text.scenario2': (r,d)=> `Only ${r} cells away from ${d} clear!`,
   'share.text.scenario3': 'Come beat my score on Bean Boom!',
-  'share.text.scenario4': 'Stepped on a mine halfway... anyone else?',
+  'share.text.scenario4': (r,d)=> `So close — just ${r} cells left on ${d}!`,
   'share.text.scenario5': 'Full refund on completion! Join the challenge',
   'share.text.scenario6': 'I did it — full refund received! Take the challenge',
 
   'share.txt.scenario1': (d,t)=> `I won on Bean Boom ${d} mode! Time: ${t}. Sign up to record your score and challenge me!`,
-  'share.txt.scenario2': "Stepped on a mine in Bean Boom... so close! Sign up and let's see if you can do better.",
+  'share.txt.scenario2': (d,r)=> `I was just ${r} cells away from clearing ${d} mode on Bean Boom! Think you can do better?`,
   'share.txt.scenario3': (u,d,t,m)=> `${u} set a new record on Bean Boom ${d} mode! ${t}, ${m} mines cleared. Can you beat that?`,
-  'share.txt.scenario4': (u,d,r)=> `${u} hit a mine on Bean Boom ${d} mode after ${r} reveals... who dares to challenge?`,
+  'share.txt.scenario4': (u,d,r)=> `${u} was just ${r} cells away from clearing ${d} mode on Bean Boom. Dare to beat it?`,
   'share.txt.scenario5': (u,a,d,p)=> `${u} joined the $${a} ${d} ${p} Challenge on Bean Boom! Full refund on completion. Can you do it?`,
   'share.txt.scenario6': (u,a,d,p,t)=> `${u} completed the $${a} ${d} Challenge! ${p}/${t} wins — $${a} fully refunded. Zero-cost challenge, join now!`,
   'share.txt.default': 'Bean Boom - Classic Minesweeper Online',

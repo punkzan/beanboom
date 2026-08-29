@@ -684,10 +684,13 @@ function collectGameData() {
   const data = {
     scenario,
     difficulty: diff,
+    mode: gameMode,
     timeSeconds: seconds,
     mineCount: config.mines,
     revealedCount: game.revealedCount,
     totalSafeCells,
+    remainingCells: Math.max(0, totalSafeCells - (game.revealedCount || 0)),
+    maxCombo: scoreSystem.maxCombo || 0,
     wasBest: false,
     boardCanvas: canvas,
     username: user ? user.username : null,
@@ -739,11 +742,11 @@ function showShareCard(data) {
     const result = generateShareCard(data);
     lastShareDataUrl = result.dataUrl;
     lastShareText = result.shareText;
-    // 缓存战绩参数：win 场景才带时间（失败局分享纯品牌链接）
+    // 缓存战绩参数：win 场景才带时间；失败局也带难度/模式，供 /share 深链进入同模式挑战
     const win = data.scenario === 1 || data.scenario === 3 || data.scenario === 6;
     lastShareScore = data.timeSeconds > 0 && win
-      ? { diff: data.difficulty, time: data.timeSeconds, name: data.username || '', win: true }
-      : { diff: data.difficulty, time: data.timeSeconds > 0 ? data.timeSeconds : null, name: data.username || '', win };
+      ? { diff: data.difficulty, time: data.timeSeconds, name: data.username || '', win: true, mode: data.mode || null }
+      : { diff: data.difficulty, time: data.timeSeconds > 0 ? data.timeSeconds : null, name: data.username || '', win, mode: data.mode || null };
     sharePreviewImg.src = result.dataUrl;
     shareTextBox.textContent = result.shareText;
     shareModal.classList.add('visible');
@@ -804,6 +807,7 @@ function buildShareUrl(platform) {
     if (lastShareScore.time) p.set('time', String(lastShareScore.time));
     if (lastShareScore.name) p.set('name', lastShareScore.name);
     if (lastShareScore.diff) p.set('diff', lastShareScore.diff);
+    if (lastShareScore.mode) p.set('mode', lastShareScore.mode);
     p.set('w', lastShareScore.win ? '1' : '0');
     return `${SITE_URL}share?${p.toString()}`;
   }
@@ -817,6 +821,7 @@ function buildOgImageUrl() {
   if (lastShareScore.time) p.set('time', String(lastShareScore.time));
   if (lastShareScore.name) p.set('name', lastShareScore.name);
   if (lastShareScore.diff) p.set('diff', lastShareScore.diff);
+  if (lastShareScore.mode) p.set('mode', lastShareScore.mode);
   p.set('w', lastShareScore.win ? '1' : '0');
   return `${SITE_URL}og?${p.toString()}`;
 }

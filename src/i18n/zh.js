@@ -186,6 +186,7 @@ export const zh = {
 
   'share.header.win': 'Bean Boom · 胜利时刻',
   'share.header.lose': 'Bean Boom · 战绩记录',
+  'share.header.soClose': 'Bean Boom · 差一点',
   'share.header.challenge': 'Bean Boom · 付费挑战',
   'share.header.completed': 'Bean Boom · 挑战完成',
 
@@ -193,6 +194,9 @@ export const zh = {
   'share.card.mines': '雷数',
   'share.card.revealed': '翻格',
   'share.card.progress': '进度',
+  'share.card.remaining': '剩余格子',
+  'share.card.survival': '存活时间',
+  'share.card.maxCombo': '最大连锁',
   'share.card.goal': '目标',
   'share.card.times': (n)=> `${n}次`,
   'share.card.period': '周期',
@@ -225,16 +229,16 @@ export const zh = {
   'share.userBar.anon': (d)=> `${zh['common.anonymousPlayer']()} · ${d}难度`,
 
   'share.text.scenario1': '注册后可记录成绩，挑战全球排行榜！',
-  'share.text.scenario2': '差一点就成功了！注册后可查看历史战绩',
+  'share.text.scenario2': (r,d)=> `离${d}通关只差 ${r} 格！`,
   'share.text.scenario3': '来 Bean Boom 挑战我的成绩！',
-  'share.text.scenario4': '翻了一半就踩雷了...谁来教教我',
+  'share.text.scenario4': (r,d)=> `就差一点——${d}还剩 ${r} 格！`,
   'share.text.scenario5': '达成目标全额退款！一起来挑战吧',
   'share.text.scenario6': '我做到了，全额退款已到账！你也来挑战吧',
 
   'share.txt.scenario1': (d,t)=> `我在 Bean Boom 赢了${d}难度！用时${t}。注册就能记录成绩，快来挑战我吧！`,
-  'share.txt.scenario2': '在 Bean Boom 踩雷了...就差一点！注册后就能记录战绩，不服来战！',
+  'share.txt.scenario2': (d,r)=> `我在 Bean Boom ${d}难度踩雷了……离通关只差 ${r} 格！你能比我强吗？`,
   'share.txt.scenario3': (u,d,t,m)=> `${u} 在 Bean Boom ${d}难度创了新纪录！${t}清除${m}颗雷。你能更快吗？`,
-  'share.txt.scenario4': (u,d,r)=> `${u} 在 Bean Boom ${d}难度踩雷了...翻了${r}格就阵亡。谁敢来挑战？`,
+  'share.txt.scenario4': (u,d,r)=> `${u} 在 Bean Boom ${d}难度踩雷了，离通关只差 ${r} 格。你敢来挑战吗？`,
   'share.txt.scenario5': (u,a,d,p)=> `${u} 加入了$${a}${d}${p}挑战！达成目标全额退款。你敢来吗？`,
   'share.txt.scenario6': (u,a,d,p,t)=> `${u} 完成了$${a}${d}挑战！${p}/${t}次达标，$${a}已全额退还。零成本挑战，快来参加！`,
   'share.txt.default': 'Bean Boom - 经典扫雷网页游戏',

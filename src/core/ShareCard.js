@@ -61,6 +61,11 @@ function fmtSec(s) {
   return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
 }
 
+function resolveText(key, ...args) {
+  const v = t(key);
+  return typeof v === 'function' ? v(...args) : v;
+}
+
 // hex 转 rgba 字符串
 function hexToRgba(hex, alpha) {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -133,7 +138,7 @@ function drawHeader(ctx, W, y, data) {
   const s = data.scenario;
   let bg, label;
   if (s === 1 || s === 3) { bg = C.MINT_DARK; label = t('share.header.win'); }
-  else if (s === 2 || s === 4) { bg = C.WARM_GRAY; label = t('share.header.lose'); }
+  else if (s === 2 || s === 4) { bg = C.WARM_GRAY; label = t('share.header.soClose'); }
   else if (s === 5) { bg = C.PURPLE_DK; label = t('share.header.challenge'); }
   else { bg = C.FOREST_DK; label = t('share.header.completed'); }
 
@@ -208,11 +213,21 @@ function drawDataCards(ctx, W, y, data, isReg) {
 
   let cards;
   if (s <= 4) {
-    cards = [
-      { label: t('share.card.time'), value: fmtSec(data.timeSeconds || 0) },
-      { label: t('share.card.mines'), value: String(data.mineCount || 0) },
-      { label: s === 1 || s === 3 ? t('share.card.revealed') : t('share.card.progress'), value: `${data.revealedCount||0}/${data.totalSafeCells||0}` },
-    ];
+    const isWin = (s === 1 || s === 3);
+    if (isWin) {
+      cards = [
+        { label: t('share.card.time'), value: fmtSec(data.timeSeconds || 0) },
+        { label: t('share.card.mines'), value: String(data.mineCount || 0) },
+        { label: t('share.card.revealed'), value: `${data.revealedCount||0}/${data.totalSafeCells||0}` },
+      ];
+    } else {
+      // P1：失败分享卡突出「差一点」的刺激指标
+      cards = [
+        { label: t('share.card.remaining'), value: String(data.remainingCells != null ? data.remainingCells : '—') },
+        { label: t('share.card.survival'), value: fmtSec(data.timeSeconds || 0) },
+        { label: t('share.card.maxCombo'), value: `×${data.maxCombo || 0}` },
+      ];
+    }
   } else if (s === 5) {
     cards = [
       { label: t('share.card.goal'), value: t('share.card.times', data.challenge?.targetCount || 0) },
@@ -393,9 +408,9 @@ function drawShareText(ctx, W, y, h, data, isReg) {
   const s = data.scenario;
   let text;
   if (s === 1) text = t('share.text.scenario1');
-  else if (s === 2) text = t('share.text.scenario2');
+  else if (s === 2) text = resolveText('share.text.scenario2', data.remainingCells || 0, diffLabel(data.difficulty));
   else if (s === 3) text = t('share.text.scenario3');
-  else if (s === 4) text = t('share.text.scenario4');
+  else if (s === 4) text = resolveText('share.text.scenario4', data.remainingCells || 0, diffLabel(data.difficulty));
   else if (s === 5) text = t('share.text.scenario5');
   else text = t('share.text.scenario6');
 
@@ -687,9 +702,9 @@ function getShareText(data) {
   const p = data.participation || {};
 
   if (s === 1) return t('share.txt.scenario1', diff, time);
-  if (s === 2) return t('share.txt.scenario2');
+  if (s === 2) return resolveText('share.txt.scenario2', diff, data.remainingCells || 0);
   if (s === 3) return t('share.txt.scenario3', user, diff, time, data.mineCount||0);
-  if (s === 4) return t('share.txt.scenario4', user, diff, data.revealedCount||0);
+  if (s === 4) return resolveText('share.txt.scenario4', user, diff, data.remainingCells || 0);
   if (s === 5) {
     const pKey = ch.period === 'yearly' ? t('challenge.period.yearly') : ch.period === 'custom' ? t('challenge.period.custom', ch.customDays||30) : t('challenge.period.monthly');
     return t('share.txt.scenario5', user, ch.amount||0, diff, pKey);
