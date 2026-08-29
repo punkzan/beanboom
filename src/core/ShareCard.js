@@ -40,6 +40,14 @@ function diffLabel(difficulty) {
   return t('game.diff.' + (difficulty || 'easy')) || '';
 }
 
+// 「模式 · 难度」组合标签（分享卡展示当前游戏模式与难度）
+function modeDiffLabel(data) {
+  const d = diffLabel(data.difficulty);
+  const m = data.mode ? t('game.mode.' + data.mode) : '';
+  if (typeof m !== 'string' || !m) return d;
+  return d ? m + ' · ' + d : m;
+}
+
 function periodLabel(period, customDays) {
   if (period === 'yearly') return t('challenge.period.365days');
   if (period === 'custom') return t('challenge.period.custom', customDays || 30);
@@ -507,7 +515,7 @@ function drawUserBar(ctx, W, y, data) {
   ctx.font = 'bold 16px sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  const dLabel = diffLabel(data.difficulty);
+  const dLabel = modeDiffLabel(data);
   ctx.fillText(t('share.userBar.diff', data.username, dLabel), avX + avR + 10, avY);
 
   if (data.wasBest && (s === 3)) {
@@ -667,7 +675,7 @@ export function generateShareCard(data) {
     ctx.font = '14px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const dLabel = diffLabel(data.difficulty);
+    const dLabel = modeDiffLabel(data);
     ctx.fillText(t('share.userBar.anon', dLabel), W / 2, cursorY + 10);
     cursorY += 36;
   }

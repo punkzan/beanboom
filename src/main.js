@@ -864,7 +864,7 @@ if (overlayReplayBtn) {
     try {
       if (typeof gtag === 'function') gtag('event', 'share', { method: 'replay' });
     } catch (e) { /* GA 未加载时忽略 */ }
-    const file = new File([info.blob], 'bean-boom-highlight.' + info.ext, { type: info.mime });
+    const file = new File([info.blob], 'bean-boom-highlight.' + info.ext, { type: info.mime.split(';')[0] });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({ files: [file], title: 'Bean Boom' });

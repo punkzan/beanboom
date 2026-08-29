@@ -5,15 +5,18 @@
  * 触发 FEVER 或大连锁时自动定格最近 ~10 秒，生成可导出的 MP4/WebM。
  *
  * 设计要点：
- * - MediaRecorder 必须在事件发生前就开始录制，因此用 timeslice 分片 +
- *   滚动窗口（保留最近 12s，目标成片 ~10s）
+ * - MediaRecorder 必须在事件发生前就开始录制，因此用 timeslice 分片 + 滚动缓冲。
+ *   缓冲采用「周期重启」策略：每 KEEP_MS 重启录制器并丢弃旧分片，保证缓冲
+ *   始终是同一段连续录制（头部分片天然保留）。跨段裁剪/拼接会丢 WebM EBML
+ *   头或 MP4 init segment，导致导出文件无法播放
  * - 水印不能画在游戏 canvas 上（会破坏正常渲染），用合成画布每帧
  *   drawImage 复制游戏画面后叠加水印文字，录制合成画布的流
- * - 触发后延迟 4s 定格（TAIL_MS），让级联爆破动画与胜利纸屑播完
+ * - 触发后延迟 4s 定格（TAIL_MS），让级联爆破动画与胜利纸屑播完，
+ *   成片时长 = 触发时缓冲余量(0~KEEP_MS) + 4s
  * - 定格后自动重启滚动录制，后续更高光可覆盖成片
  */
 
-const KEEP_MS = 12000;   // 滚动窗口：目标 10s + 余量
+const KEEP_MS = 12000;   // 录制器重启周期 = 成片最大缓冲（触发时机不定，成片 4~16s，平均约 10s）
 const TAIL_MS = 4000;    // 触发后补录尾巴，让连锁动画播完
 const TIMESLICE_MS = 500; // MediaRecorder 分片间隔
 const VIDEO_BITS_PER_SECOND = 6000000;
@@ -49,12 +52,15 @@ export class HighlightRecorder {
     this.ctx = this.compositor.getContext('2d');
     this.recorder = null;
     this.stream = null;
-    this.chunks = [];        // [{ data: Blob, t: number }]
+    this.chunks = [];        // Blob[] 当前录制会话的分片
+    this.cycleTimer = null;  // 周期重启定时器（限制缓冲长度）
     this.rafId = null;
     this.finalizeTimer = null;
     this.highlight = null;  // { blob, mime, ext } 定格后的成片
     this.onFinalized = null; // 成片就绪回调（结算面板显示导出按钮用）
     this.mime = pickMime();
+    // 容器级 MIME（去掉 codecs 参数），用于 Blob/File type，播放器兼容性更好
+    this.containerType = this.mime ? this.mime.split(';')[0] : null;
   }
 
   static supported() {
@@ -90,25 +96,35 @@ export class HighlightRecorder {
       return;
     }
     this.recorder.ondataavailable = (e) => {
-      if (e.data && e.data.size > 0) {
-        this.chunks.push({ data: e.data, t: performance.now() });
-        const cutoff = performance.now() - KEEP_MS;
-        while (this.chunks.length && this.chunks[0].t < cutoff) this.chunks.shift();
-      }
+      if (e.data && e.data.size > 0) this.chunks.push(e.data);
     };
     this.recorder.start(TIMESLICE_MS);
+    // 周期重启：缓冲超过 KEEP_MS 就丢弃重来，保证分片连续（含头部）且时长有界
+    this.cycleTimer = setTimeout(() => {
+      this.cycleTimer = null;
+      if (this.finalizeTimer || !this.recorder) return; // 定格中不重启
+      this.stop();
+      this.start();
+    }, KEEP_MS);
   }
 
   /** 停止录制并丢弃缓冲（离开彩蛋模式 / 重开新局时调用） */
   stop() {
+    if (this.cycleTimer) {
+      clearTimeout(this.cycleTimer);
+      this.cycleTimer = null;
+    }
     if (this.finalizeTimer) {
       clearTimeout(this.finalizeTimer);
       this.finalizeTimer = null;
     }
     this._stopLoop();
     if (this.recorder) {
-      try { if (this.recorder.state !== 'inactive') this.recorder.stop(); } catch (e) { /* 忽略 */ }
+      const rec = this.recorder;
       this.recorder = null;
+      rec.ondataavailable = null;
+      rec.onstop = null;
+      try { if (rec.state !== 'inactive') rec.stop(); } catch (e) { /* 忽略 */ }
     }
     this._stopStream();
     this.chunks = [];
@@ -148,11 +164,22 @@ export class HighlightRecorder {
     const mime = this.mime;
     this.recorder = null;
     this.chunks = [];
+    if (this.cycleTimer) {
+      clearTimeout(this.cycleTimer);
+      this.cycleTimer = null;
+    }
     this._stopLoop();
+    // stop() 冲刷的最后一片分片也要进入本次成片
+    rec.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) chunks.push(e.data);
+    };
+    let finished = false;
     const done = () => {
+      if (finished) return;
+      finished = true;
       if (chunks.length) {
         this.highlight = {
-          blob: new Blob(chunks, { type: mime }),
+          blob: new Blob(chunks, { type: this.containerType }),
           mime,
           ext: mime.includes('mp4') ? 'mp4' : 'webm',
         };
