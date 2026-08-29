@@ -865,11 +865,18 @@ if (overlayReplayBtn) {
       if (typeof gtag === 'function') gtag('event', 'share', { method: 'replay' });
     } catch (e) { /* GA 未加载时忽略 */ }
     const file = new File([info.blob], 'bean-boom-highlight.' + info.ext, { type: info.mime.split(';')[0] });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    // 桌面端（精确指针设备）直接下载文件。注意：桌面 Chrome 的 canShare({files})
+    // 也返回 true，走 navigator.share 会弹 Windows 分享面板（或静默失败），
+    // 用户预期"点按钮=下载"，桌面必须绕过分享面板
+    const isDesktop = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (!isDesktop && navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({ files: [file], title: 'Bean Boom' });
         return;
-      } catch (e) { /* 用户取消分享，继续走下载 */ }
+      } catch (e) {
+        if (e && e.name === 'AbortError') return; // 用户取消分享，静默返回
+        /* 其他失败（如面板打不开）继续走下载兜底 */
+      }
     }
     const url = URL.createObjectURL(info.blob);
     const a = document.createElement('a');
@@ -877,7 +884,7 @@ if (overlayReplayBtn) {
     a.download = file.name;
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
+    a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 10000);
   });
 }
