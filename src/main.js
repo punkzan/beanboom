@@ -14,6 +14,7 @@ import { register, login, logout, getCurrentUser } from './core/Auth.js';
 import { getChallenges, participate, getMyChallenges, updateProgress, capturePaypalPayment } from './core/ChallengeAPI.js';
 import { generateShareCard } from './core/ShareCard.js';
 import { ScoreSystem } from './core/ScoreSystem.js';
+import { HighlightRecorder } from './core/HighlightRecorder.js';
 import { GameLog } from './core/GameLog.js';
 import { getDailyBackgroundUrl, getFallbackUrl, preloadBackgroundImage, initBackgroundImage } from './core/BackgroundImage.js';
 import { t, scanI18n, getLang, setLang, onLangChange } from './i18n.js';
@@ -167,6 +168,7 @@ function startTimetrialStage(stageIndex) {
 
 /** 进入时间挑战模式（当日已通关则显示锁定提示） */
 function enterTimetrial() {
+  syncRecorder();
   if (isTimetrialDoneToday()) {
     showTimetrialLocked();
     return;
@@ -235,6 +237,7 @@ function startDailyGame() {
   timerEl.textContent = '00:00';
   overlay.classList.remove('visible');
   overlayShareBtn.style.display = 'none';
+  syncRecorder();
   bgmManager.switchTo(DAILY_DIFFICULTY);
   // 难度按钮高亮同步到每日固定难度（难度条已隐藏，仅保持一致性）
   diffBtns.forEach(btn => {
@@ -251,6 +254,27 @@ const scoreSystem = new ScoreSystem();
 // === 对局日志（服务端重算反作弊）===
 const gameLog = new GameLog();
 gameLog.start('easy', game.mineSeed, gameMode);
+
+// === P4 高光回放：彩蛋模式滚动录制，FEVER / 连锁 ≥10 自动定格最近 10 秒 ===
+const overlayReplayBtn = document.getElementById('overlay-replay-btn');
+const recorder = new HighlightRecorder(canvas, 'bb.superzan.net');
+recorder.onFinalized = () => {
+  // 定格完成时若游戏已结束（高光即终局），结算面板补显导出按钮
+  if (gameMode === 'egg' && (game.gameState === 'won' || game.gameState === 'lost') && overlayReplayBtn) {
+    overlayReplayBtn.style.display = '';
+  }
+};
+/** 彩蛋模式开启滚动录制（并清掉上一局成片），其余模式停止 */
+function syncRecorder() {
+  if (overlayReplayBtn) overlayReplayBtn.style.display = 'none';
+  if (gameMode === 'egg' && HighlightRecorder.supported()) {
+    recorder.clearHighlight();
+    recorder.start();
+  } else {
+    recorder.stop();
+  }
+}
+
 const scoreDisplayEl = document.getElementById('score-display');
 const comboItemEl = document.getElementById('combo-item');
 const comboDisplayEl = document.getElementById('combo-display');
@@ -326,6 +350,8 @@ function handleScoreEvent({ type, cells, pos, cascadeCount = 0 }) {
   // 计分玩法仅彩蛋模式；经典模式无计分/连击/FEVER
   if (gameMode !== 'egg') return;
   const res = scoreSystem.onReveal(cells, type);
+  // P4 高光回放：FEVER 激活或 10 连锁以上自动录制（玩家零操作）
+  if (recorder.active && (res.feverActivated || cascadeCount >= 9)) recorder.trigger();
   if (res.gained > 0) {
     animateScoreTo(Math.floor(scoreSystem.rawScore));
     const cls = type === 'boom' ? (cascadeCount > 0 ? 'boom cascade' : 'boom') : '';
@@ -549,6 +575,8 @@ function updateUI() {
       overlayBest.textContent = bestScore !== null
         ? t('game.currentBest', bestScore.toLocaleString())
         : t('game.firstWin');
+      // P4：有高光成片时显示导出按钮（触发即终局时由 onFinalized 补显）
+      if (overlayReplayBtn) overlayReplayBtn.style.display = recorder.hasBlob() ? '' : 'none';
     } else {
       // 经典模式：无计分，展示历史最佳用时
       overlayScore.textContent = '';
@@ -591,6 +619,8 @@ function updateUI() {
     overlayRestart.textContent = t('game.playAgain');
     overlayRestart.disabled = false;
     overlayShareBtn.style.display = '';
+    // P4：彩蛋模式的高光可能伴随踩雷（epic fail 也是传播素材）
+    if (overlayReplayBtn) overlayReplayBtn.style.display = (gameMode === 'egg' && recorder.hasBlob()) ? '' : 'none';
     setTimeout(() => {
       if (game.gameState === 'lost') overlay.classList.add('visible');
     }, 1600);
@@ -825,6 +855,32 @@ overlayShareBtn.addEventListener('click', () => {
   const data = collectGameData();
   showShareCard(data);
 });
+
+// P4：导出高光回放（移动端走系统分享面板，可直接发 TikTok；桌面端下载文件）
+if (overlayReplayBtn) {
+  overlayReplayBtn.addEventListener('click', async () => {
+    const info = recorder.getBlobInfo();
+    if (!info) return;
+    try {
+      if (typeof gtag === 'function') gtag('event', 'share', { method: 'replay' });
+    } catch (e) { /* GA 未加载时忽略 */ }
+    const file = new File([info.blob], 'bean-boom-highlight.' + info.ext, { type: info.mime });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'Bean Boom' });
+        return;
+      } catch (e) { /* 用户取消分享，继续走下载 */ }
+    }
+    const url = URL.createObjectURL(info.blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  });
+}
 
 shareCloseBtn.addEventListener('click', () => {
   shareModal.classList.remove('visible');
@@ -1272,6 +1328,7 @@ function restart() {
   timerEl.textContent = '00:00';
   overlay.classList.remove('visible');
   overlayShareBtn.style.display = 'none';
+  syncRecorder();
   bgmManager.switchTo(game.difficulty);
 }
 
@@ -1284,6 +1341,7 @@ function changeDifficulty(diff) {
   renderer.setDifficulty(diff);
   timer.reset();
   resetScoreUI();
+  syncRecorder();
   gameLog.start(diff, game.mineSeed, gameMode);
   renderer.render(game.grid);
   mineCountEl.textContent = game.getRemainingMines();
@@ -1443,6 +1501,10 @@ if (gameMode === 'timetrial') {
 // 每日挑战模式：初始化今日棋盘（固定种子，全球同局）
 if (gameMode === 'daily') {
   startDailyGame();
+}
+// P4：默认模式（彩蛋/经典）下开启或停止高光录制（TT/daily 已在各自初始化中处理）
+if (gameMode !== 'timetrial' && gameMode !== 'daily') {
+  syncRecorder();
 }
 // 注意：初始 applyModeUI() 在 initLeaderboard 中调用——
 // 它依赖下方 lb* DOM 常量与 LB_PERIODS（const 暂时性死区，提前调用会抛

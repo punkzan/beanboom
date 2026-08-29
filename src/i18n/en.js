@@ -63,6 +63,7 @@ export const en = {
   'game.won': 'You win!',
   'game.timeUsed': (s)=> `Time: ${s}`,
   'game.submit': 'Submit Score',
+  'replay.export': 'Export Replay',
   'game.currentBest': (s)=> `Best: ${s}`,
   'game.firstWin': 'First win! Enter your name to record',
   'game.newRecord': '🎉 New record saved!',

@@ -63,6 +63,7 @@ export const zh = {
   'game.won': '胜利！',
   'game.timeUsed': (s)=> `用时 ${s}`,
   'game.submit': '提交成绩',
+  'replay.export': '导出高光回放',
   'game.currentBest': (s)=> `当前最佳: ${s}`,
   'game.firstWin': '首次完成，输入名字记录吧',
   'game.newRecord': '🎉 新纪录已记录！',
