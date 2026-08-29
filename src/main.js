@@ -7,7 +7,7 @@ import { InputHandler } from './input/InputHandler.js';
 import { SoundManager } from './audio/SoundManager.js';
 import { BGMManager } from './audio/BGMManager.js';
 import { DIFFICULTIES, TIME_TRIAL_STAGES } from './constants.js';
-import { addRecord, getBestTime, getRecords, getYearlyChampions, refreshRecords, addScoreRecord, getScoreRecords, getBestScore, refreshScoreRecords } from './core/Leaderboard.js';
+import { addRecord, getBestTime, getRecords, getYearlyChampions, refreshRecords, addScoreRecord, getScoreRecords, getBestScore, refreshScoreRecords, refreshTTRecords, postTTRecord, getTTRecords, getCountryStandings, getTTCountryStandings } from './core/Leaderboard.js';
 import { getSeoConfig, getAdsConfig, getActivities, getLatestActivities, fetchFooterContent, fetchFriendLinks } from './core/SiteConfig.js';
 import { register, login, logout, getCurrentUser } from './core/Auth.js';
 import { getChallenges, participate, getMyChallenges, updateProgress, capturePaypalPayment } from './core/ChallengeAPI.js';
@@ -92,6 +92,8 @@ let ttStage = 0;          // 当前关卡索引（0 = 第一局）
 let ttRemaining = 0;      // 剩余秒数
 let ttIntervalId = null;  // 倒计时 interval
 let ttTimeUp = false;     // 本次失败是否因倒计时归零
+let ttStage1Used = 0;     // 第一关用时（秒），通关后与第二关合计提交日榜
+let ttResultSubmitted = false; // 今日挑战成绩是否已提交
 
 function ttStop() {
   if (ttIntervalId) {
@@ -129,6 +131,10 @@ function ttStartCountdown() {
 /** 开启/重试时间挑战的某一局 */
 function startTimetrialStage(stageIndex) {
   ttStage = stageIndex;
+  if (stageIndex === 0) {
+    ttStage1Used = 0;
+    ttResultSubmitted = false;
+  }
   const stage = TIME_TRIAL_STAGES[stageIndex];
   animManager.clear();
   game.mode = 'classic'; // 时间挑战为纯净扫雷玩法（无连锁爆破）
@@ -179,6 +185,25 @@ function showTimetrialLocked() {
   overlayRestart.disabled = false;
   overlayShareBtn.style.display = 'none';
   overlay.classList.add('visible');
+}
+
+/** 两关全通后：提交总用时到今日挑战榜，反馈地区排名，然后切回经典模式 */
+function submitTTResult() {
+  ttResultSubmitted = true;
+  const name = overlayNameInput.value.trim() || t('common.anonymous');
+  const region = overlayRegionInput.value.trim() || '';
+  const total = ttStage1Used + (TIME_TRIAL_STAGES[1].countdown - ttRemaining);
+  overlayRestart.disabled = true;
+  postTTRecord(total, name, region).then(() => {
+    renderLeaderboard();
+    if (region) {
+      const rank = getTTRecords().filter(r => r.region === region && r.time < total).length + 1;
+      overlayBest.textContent = t('game.regionRank', rank, region);
+      setTimeout(() => setGameMode('classic'), 1500);
+    } else {
+      setGameMode('classic');
+    }
+  });
 }
 
 // === 计分系统（概念 D：连击 / 模式评分）===
@@ -417,19 +442,25 @@ function updateUI() {
       overlayShareBtn.style.display = '';
       overlayScore.textContent = '';
       if (ttStage === 0) {
-        // 第一关通过 → 提示进入第二关（困难 · 120s）
+        // 第一关通过 → 记录用时，提示进入第二关（困难 · 120s）
+        ttStage1Used = used;
         const next = TIME_TRIAL_STAGES[1];
         overlayTitle.textContent = t('tt.stage1Clear');
         overlaySubtitle.textContent = t('tt.stageUsed', formatSeconds(used));
         overlayBest.textContent = t('tt.nextStageInfo', t('game.diff.' + next.difficulty), next.countdown);
         overlayRestart.textContent = t('tt.nextStage');
       } else {
-        // 第二关通过 → 当天全部通关，写入每日锁定
+        // 第二关通过 → 当天全部通关，写入每日锁定 + 提交今日挑战榜
         localStorage.setItem(TT_DONE_KEY, getTodayStr());
         overlayTitle.textContent = t('tt.completeTitle');
         overlaySubtitle.textContent = t('tt.completeSubtitle');
-        overlayBest.textContent = t('tt.stageUsed', formatSeconds(used));
-        overlayRestart.textContent = t('tt.switchClassic');
+        overlayBest.textContent = t('tt.totalUsed', formatSeconds(ttStage1Used + used));
+        // 显示名字/地区输入，点击按钮提交两关总用时
+        overlayInputs.style.display = '';
+        const _u = getCurrentUser();
+        overlayNameInput.value = _u ? _u.username : '';
+        overlayRegionInput.value = _u ? (_u.region || '') : '';
+        overlayRestart.textContent = t('tt.submit');
       }
       setTimeout(() => {
         if (game.gameState === 'won') overlay.classList.add('visible');
@@ -1214,15 +1245,13 @@ function applyModeUI() {
   if (comboItemEl) comboItemEl.style.display = isEgg ? '' : 'none';
   // 时间挑战：难度由关卡决定，隐藏难度切换条
   if (diffBarEl) diffBarEl.style.display = isTT ? 'none' : '';
-  // 时间挑战：不上榜，隐藏全球排行榜与年度冠军
-  if (lbInline) lbInline.style.display = isTT ? 'none' : '';
+  // 全球排行榜三模式都显示（时间挑战为今日挑战榜，含国家榜视图）
+  if (lbInline) lbInline.style.display = '';
   // 计时标签：时间挑战显示"倒计时"
   if (timerLabelEl) timerLabelEl.textContent = isTT ? t('game.countdown') : t('game.time');
   renderChallengeSection();
-  if (!isTT) {
-    renderLeaderboard();
-    renderYearlyChampions();
-  }
+  renderLeaderboard();
+  renderYearlyChampions();
 }
 
 function setGameMode(mode) {
@@ -1333,8 +1362,12 @@ if (gameMode === 'timetrial') {
 // 按钮事件
 document.getElementById('restart-btn').addEventListener('click', restart);
 overlayRestart.addEventListener('click', () => {
-  // === 时间挑战：不入排行榜，按关卡流程处理 ===
+  // === 时间挑战：按关卡流程处理；两关全通后先提交日榜 ===
   if (gameMode === 'timetrial') {
+    if (game.gameState === 'won' && ttStage === 1 && !ttResultSubmitted) {
+      submitTTResult(); // 通关结算：提交今日挑战榜，完成后自动切回经典模式
+      return;
+    }
     if (isTimetrialDoneToday()) {
       setGameMode('classic'); // 当日已通关（或刚通关）→ 切回经典模式
     } else if (game.gameState === 'won') {
@@ -1376,6 +1409,12 @@ overlayRestart.addEventListener('click', () => {
       overlayRestart.textContent = t('game.newRecord');
       overlayRestart.disabled = true;
       setTimeout(restart, 900);
+    } else if (region && gameMode === 'classic') {
+      // 国家榜反馈：本次成绩在本地区的排名（全部记录，用时升序）
+      const regionRank = getRecords(game.difficulty, 'all').filter(r => r.region === region && r.time < seconds).length + 1;
+      overlayBest.textContent = t('game.regionRank', regionRank, region);
+      overlayRestart.disabled = true;
+      setTimeout(restart, 1500);
     } else {
       restart();
     }
@@ -1394,6 +1433,7 @@ const lbYearlyChampions = document.getElementById('lb-yearly-champions');
 
 let currentLbDiff = 'easy';
 let currentLbPeriod = 'daily';
+let currentLbView = 'players'; // players = 个人榜 | country = 国家榜（按地区聚合）
 
 // 各难度对应的榜单时间维度（按模式区分，全难度统一）
 // 经典模式：用时榜（日/月/年/总）；彩蛋模式：得分榜（日/月/总）
@@ -1403,42 +1443,67 @@ const LB_PERIODS = { classic: LB_PERIODS_CLASSIC, egg: LB_PERIODS_EGG };
 const LB_DEFAULT_PERIOD = { classic: { easy: 'daily', medium: 'daily', hard: 'daily' }, egg: { easy: 'daily', medium: 'daily', hard: 'daily' } };
 
 function renderLeaderboard() {
-  // 难度 tab 高亮
+  const ttMode = gameMode === 'timetrial';
+  const isCountry = currentLbView === 'country' && gameMode !== 'egg'; // 国家榜仅经典/时间挑战模式
+  // 难度 tab：时间挑战难度由关卡决定，隐藏难度维度
   lbDiffTabs.querySelectorAll('.lb-tab').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.lbDiff === currentLbDiff);
+    btn.style.display = ttMode ? 'none' : '';
+    btn.classList.toggle('active', !ttMode && btn.dataset.lbDiff === currentLbDiff);
   });
-  // 按模式+难度显示对应的榜单时间维度，隐藏不相关的 tab
+  // 时间维度 tab + 国家榜切换（经典/时间挑战显示，彩蛋隐藏）
   const periods = (LB_PERIODS[gameMode] || LB_PERIODS_EGG)[currentLbDiff] || ['all'];
   if (!periods.includes(currentLbPeriod)) {
     currentLbPeriod = (LB_DEFAULT_PERIOD[gameMode] || LB_DEFAULT_PERIOD.egg)[currentLbDiff] || 'daily';
   }
   lbPeriodTabs.classList.remove('hidden');
   lbPeriodTabs.querySelectorAll('.lb-tab').forEach(btn => {
-    const visible = periods.includes(btn.dataset.lbPeriod);
+    if (btn.dataset.lbView === 'country') {
+      const visible = gameMode !== 'egg';
+      btn.style.display = visible ? '' : 'none';
+      btn.classList.toggle('active', visible && currentLbView === 'country');
+      return;
+    }
+    const visible = !ttMode && periods.includes(btn.dataset.lbPeriod);
     btn.style.display = visible ? '' : 'none';
-    btn.classList.toggle('active', visible && btn.dataset.lbPeriod === currentLbPeriod);
+    btn.classList.toggle('active', visible && currentLbView === 'players' && btn.dataset.lbPeriod === currentLbPeriod);
   });
-  const records = gameMode === 'egg'
-    ? getScoreRecords(currentLbDiff, currentLbPeriod)
-    : getRecords(currentLbDiff, currentLbPeriod);
+  // 数据：时间挑战显示今日挑战榜；国家榜按地区聚合
+  const records = ttMode
+    ? (isCountry ? getTTCountryStandings() : getTTRecords())
+    : isCountry
+      ? getCountryStandings(currentLbDiff, currentLbPeriod)
+      : gameMode === 'egg'
+        ? getScoreRecords(currentLbDiff, currentLbPeriod)
+        : getRecords(currentLbDiff, currentLbPeriod);
   if (!records.length) {
     lbScrollTrack.innerHTML = '<div class="lb-empty">' + t('lb.empty') + '</div>';
     return;
   }
-  const metricHtml = gameMode === 'egg'
-    ? (r) => `<span class="lb-time">⭐ ${Number(r.score).toLocaleString()}</span>`
-    : (r) => `<span class="lb-time">${formatSeconds(r.time)}</span>`;
-  const rowsHtml = records.map((r, i) => {
-    const rank = i + 1;
-    const rankText = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : String(rank);
-    return `<div class="lb-row${rank === 1 ? ' lb-row-top' : ''}">
-      <span class="lb-rank">${rankText}</span>
+  const rankText = (rank) => rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : String(rank);
+  let rowsHtml;
+  if (isCountry) {
+    // 国家榜：排名 | 地区 | 完成人次 | 最优用时 | 最快玩家
+    rowsHtml = records.map((r, i) => `
+      <div class="lb-row${i === 0 ? ' lb-row-top' : ''}">
+      <span class="lb-rank">${rankText(i + 1)}</span>
+      <span class="lb-name">🌍 ${escapeHtml(r.region)}</span>
+      <span class="lb-region">${escapeHtml(t('lb.countryPlayers', r.count))}</span>
+      <span class="lb-time">${formatSeconds(r.bestTime)}</span>
+      <span class="lb-date">${escapeHtml(r.topPlayer)}</span>
+      </div>`).join('');
+  } else {
+    const metricHtml = gameMode === 'egg'
+      ? (r) => `<span class="lb-time">⭐ ${Number(r.score).toLocaleString()}</span>`
+      : (r) => `<span class="lb-time">${formatSeconds(r.time)}</span>`;
+    rowsHtml = records.map((r, i) => `
+      <div class="lb-row${i === 0 ? ' lb-row-top' : ''}">
+      <span class="lb-rank">${rankText(i + 1)}</span>
       <span class="lb-name">${escapeHtml(r.name)}</span>
       <span class="lb-region">${escapeHtml(r.region || '—')}</span>
       ${metricHtml(r)}
       <span class="lb-date">${formatDateTime(r.timestamp)}</span>
-    </div>`;
-  }).join('');
+      </div>`).join('');
+  }
   lbScrollTrack.innerHTML = rowsHtml;
 }
 
@@ -1467,10 +1532,10 @@ function renderYearlyChampions() {
   });
 }
 
-// 🏆 按钮滚动到全球排行榜
+// 🏆 按钮滚动到全球排行榜（时间挑战显示今日挑战榜）
 lbTriggerBtn.addEventListener('click', () => {
-  if (gameMode === 'timetrial') return; // 时间挑战不上榜
-  currentLbDiff = game.difficulty;
+  currentLbView = 'players';
+  if (gameMode !== 'timetrial') currentLbDiff = game.difficulty;
   currentLbPeriod = (LB_DEFAULT_PERIOD[gameMode] || LB_DEFAULT_PERIOD.egg)[game.difficulty] || 'daily';
   renderLeaderboard();
   lbInline.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1488,15 +1553,22 @@ lbDiffTabs.addEventListener('click', (e) => {
 lbPeriodTabs.addEventListener('click', (e) => {
   const btn = e.target.closest('.lb-tab');
   if (!btn) return;
+  if (btn.dataset.lbView === 'country') {
+    // 国家榜为切换视图（时间挑战无时间维度按钮，可再点一次切回个人榜）
+    currentLbView = currentLbView === 'country' ? 'players' : 'country';
+    renderLeaderboard();
+    return;
+  }
   currentLbPeriod = btn.dataset.lbPeriod;
+  currentLbView = 'players';
   renderLeaderboard();
 });
 
-// 初始渲染全球排行榜（先从服务端拉取全局数据，再渲染；双模式两套榜单都拉）
+// 初始渲染全球排行榜（先从服务端拉取全局数据，再渲染；三套榜单都拉）
 (async function initLeaderboard() {
   // 应用初始模式 UI（localStorage 恢复的模式）——须在全部 lb*/LB_PERIODS 常量声明之后执行
   applyModeUI();
-  await Promise.all([refreshRecords(), refreshScoreRecords()]);
+  await Promise.all([refreshRecords(), refreshScoreRecords(), refreshTTRecords()]);
   renderLeaderboard();
   renderYearlyChampions();
 })();

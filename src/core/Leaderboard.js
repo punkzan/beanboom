@@ -294,3 +294,72 @@ export function getBestScore(difficulty) {
   const list = data[difficulty] || [];
   return list.length ? list[0].score : null;
 }
+
+// ==================== 时间挑战日榜 ====================
+
+const TT_STORAGE_KEY = 'minesweeper-beads-tt-records';
+
+/** 从服务端拉取今日时间挑战榜并更新本地缓存 */
+export async function refreshTTRecords() {
+  try {
+    const res = await fetch(BASE + '/tt-records');
+    if (!res.ok) return;
+    localStorage.setItem(TT_STORAGE_KEY, JSON.stringify(await res.json()));
+  } catch (e) {
+    // 网络异常：保留 localStorage 缓存
+  }
+}
+
+/** 提交时间挑战总用时（两关全通后调用一次） @returns {Promise<boolean>} 是否提交成功 */
+export async function postTTRecord(totalSeconds, name, region) {
+  try {
+    const res = await fetch(BASE + '/tt-records', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ time: totalSeconds, name: name || t('common.anonymous'), region: region || '' }),
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    if (data.records) localStorage.setItem(TT_STORAGE_KEY, JSON.stringify(data.records));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/** 今日时间挑战榜（已按总用时升序，读本地缓存） */
+export function getTTRecords() {
+  try {
+    return JSON.parse(localStorage.getItem(TT_STORAGE_KEY) || '[]')
+      .map(r => ({ ...r, name: r.name || t('common.anonymous'), region: r.region || '' }));
+  } catch (e) {
+    return [];
+  }
+}
+
+// ==================== 国家榜（按地区聚合） ====================
+
+/** 按地区聚合：每个地区一行（最优用时 / 完成人次 / 最快玩家），按最优用时升序 */
+function aggregateByRegion(list) {
+  const map = {};
+  for (const r of list) {
+    if (!r.region) continue;
+    const c = map[r.region] || (map[r.region] = { region: r.region, bestTime: r.time, count: 0, topPlayer: r.name });
+    if (r.time < c.bestTime) {
+      c.bestTime = r.time;
+      c.topPlayer = r.name;
+    }
+    c.count++;
+  }
+  return Object.values(map).sort((a, b) => a.bestTime - b.bestTime).slice(0, 50);
+}
+
+/** 经典模式国家榜：某难度某时间窗的用时记录按地区聚合 */
+export function getCountryStandings(difficulty, period = 'all') {
+  return aggregateByRegion(getRecords(difficulty, period));
+}
+
+/** 时间挑战国家榜：今日挑战总用时按地区聚合 */
+export function getTTCountryStandings() {
+  return aggregateByRegion(getTTRecords());
+}

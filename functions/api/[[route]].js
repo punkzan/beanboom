@@ -18,6 +18,7 @@ const KV_KEYS = {
   friendLinks: 'friend_links',
   records: 'records',           // 经典模式：用时排行榜
   scoreRecords: 'score_records', // 彩蛋模式：得分排行榜
+  ttRecords: 'tt_records',      // 时间挑战：每日总用时榜（仅存当日数据）
 };
 
 // 排行榜各难度存储上限
@@ -619,6 +620,43 @@ app.post('/api/score-records', async (c) => {
 
   await kvPut(c.env, KV_KEYS.scoreRecords, records);
   return c.json({ wasBest, records });
+});
+
+// -- 时间挑战日榜：获取今日成绩（两关总用时升序） --
+app.get('/api/tt-records', async (c) => {
+  const all = await kvGet(c.env, KV_KEYS.ttRecords, []);
+  const today = todayStr();
+  return c.json(all.filter(r => r.date === today).sort((a, b) => a.time - b.time).slice(0, 100));
+});
+
+// -- 时间挑战日榜：提交两关总用时（每名玩家每日一条，取更好成绩） --
+// 注：时间挑战为客户端倒计时且日志仅覆盖单关，不做服务端重放验证（低风险，上限 60+120s）
+app.post('/api/tt-records', async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const { time, name, region } = body;
+  if (typeof time !== 'number' || time <= 0 || time > 300 || !name) {
+    return c.json({ error: 'Missing or invalid fields (time, name required)' }, 400);
+  }
+  const cleanName = String(name).slice(0, 12);
+  const all = await kvGet(c.env, KV_KEYS.ttRecords, []);
+  const today = todayStr();
+  const list = all.filter(r => r.date === today);
+  // 同名同日只保留更好成绩；顺带丢弃非当日数据（KV 自清理）
+  const mine = list.find(r => r.name === cleanName);
+  if (mine) {
+    if (time >= mine.time) {
+      return c.json({ records: list.sort((a, b) => a.time - b.time).slice(0, 100) });
+    }
+    mine.time = time;
+    mine.timestamp = Date.now();
+    mine.region = String(region || '').slice(0, 20);
+  } else {
+    list.push({ time, timestamp: Date.now(), date: today, name: cleanName, region: String(region || '').slice(0, 20) });
+  }
+  list.sort((a, b) => a.time - b.time);
+  const trimmed = list.slice(0, 200);
+  await kvPut(c.env, KV_KEYS.ttRecords, trimmed);
+  return c.json({ records: trimmed.slice(0, 100) });
 });
 
 // -- 友情链接 --
